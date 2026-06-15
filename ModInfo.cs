@@ -1,0 +1,9 @@
+﻿namespace TTS_Company
+{
+    internal static class ModInfo
+    {
+        internal const string modGUID = "PixelIndieDev_TTSCompany";
+        internal const string modName = "TTS Company";
+        internal const string modVersion = "1.0.0.0";
+    }
+}

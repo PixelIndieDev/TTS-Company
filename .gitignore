@@ -1,0 +1,10 @@
+obj/
+bin/
+Properties/
+.vs/
+*.slnx
+*.sln
+*.user
+*.nuget.props
+*.nuget.targets
+packages/

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Target Name="ILRepacker" AfterTargets="Build">
+        <ItemGroup>
+            <InputAssemblies Include="$(TargetPath)" />
+            <InputAssemblies Include="$(TargetDir)NVorbis.dll" />
+            <InputAssemblies Include="$(TargetDir)System.Buffers.dll" Condition="Exists('$(TargetDir)System.Buffers.dll')" />
+            <InputAssemblies Include="$(TargetDir)System.Memory.dll" Condition="Exists('$(TargetDir)System.Memory.dll')" />
+            <InputAssemblies Include="$(TargetDir)System.Numerics.Vectors.dll" Condition="Exists('$(TargetDir)System.Numerics.Vectors.dll')" />
+            <InputAssemblies Include="$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll" Condition="Exists('$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll')" />
+            <InputAssemblies Include="$(TargetDir)System.ValueTuple.dll" Condition="Exists('$(TargetDir)System.ValueTuple.dll')" />
+            <IlRepackDirs Include="@(ReferencePath->'%(RootDir)%(Directory)')" />
+        </ItemGroup>
+        <ILRepack
+            Parallel="true"
+            Internalize="true"
+            InputAssemblies="@(InputAssemblies)"
+            LibraryPath="@(IlRepackDirs->Distinct())"
+            TargetKind="SameAsPrimaryAssembly"
+            OutputFile="$(TargetPath)"
+        />
+    </Target>
+</Project>
