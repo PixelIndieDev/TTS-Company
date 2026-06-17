@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,13 +15,24 @@ namespace TTS_Company
     {
         // Keep track of all running running coroutines
         private static readonly Dictionary<ulong, ActiveTTSState> ActiveTTSCoroutines = new Dictionary<ulong, ActiveTTSState>();
-
         private class ActiveTTSState
         {
             public Coroutine Coroutine;
             public CancellationTokenSource Cts;
         }
 
+        // -------------------- preload voice models --------------------
+        public async static Task<(bool Success, string Error)> PreloadTTSVoiceModelInMemory(string voiceModelName)
+        {
+            return await Plugin._tts.PreloadVoiceAsync(VoiceHelper.CleanupVoiceModelname(voiceModelName));
+        }
+
+        public static bool HasTTSVoiceModelBeenLoadedIntoMemory(string voiceModelName)
+        {
+            return Plugin._tts.isVoiceModelLoaded(voiceModelName);
+        }
+
+        // -------------------- add audio sources --------------------
         public static bool AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, TTSAudioSourceSettings audioSourceSettings = null)
         {
             if (!networkObjectRefOfSpeaker.TryGet(out NetworkObject networkObject))
@@ -33,6 +43,39 @@ namespace TTS_Company
 
             audioSourceSettings = audioSourceSettings ?? new TTSAudioSourceSettings(); // if null, use the default
             return TTSAudioSourceManager.AddPermanentTTSAudioSource(networkObject.gameObject, audioSourceName, audioSourceSettings);
+        }
+
+        // -------------------- play TTS --------------------
+        public static Coroutine PreGenerateTTS(string textToSpeak, PiperVoiceSettings voiceSettings = null)
+        {
+            LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(PreGenerateTTS));
+
+            // if null, use the default
+            voiceSettings = voiceSettings ?? new PiperVoiceSettings();
+
+            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(textToSpeak, voiceSettings);
+            if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState activeState))
+            {
+                if (activeState.Cts != null)
+                {
+                    activeState.Cts.Cancel();
+                }
+
+                if (activeState.Coroutine != null)
+                {
+                    Plugin.instance.StopCoroutine(activeState.Coroutine);
+                }
+
+                ActiveTTSCoroutines.Remove(trackingKeyHash);
+            }
+
+            CancellationTokenSource newCts = new CancellationTokenSource(TTSTimeoutHelper.GetTTSTimeout(textToSpeak, voiceSettings));
+            ActiveTTSState newState = new ActiveTTSState { Cts = newCts };
+
+            newState.Coroutine = Plugin.instance.StartCoroutine(PreGenerateTTS(trackingKeyHash, textToSpeak, voiceSettings, newCts));
+
+            ActiveTTSCoroutines[trackingKeyHash] = newState;
+            return newState.Coroutine;
         }
 
         public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
@@ -49,7 +92,7 @@ namespace TTS_Company
                 networkObjectId = netObj.NetworkObjectId;
             }
 
-            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectId, audioSourceName);
+            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(textToSpeak, voiceSettings);
 
             if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState activeState))
             {
@@ -73,6 +116,38 @@ namespace TTS_Company
 
             ActiveTTSCoroutines[trackingKeyHash] = newState;
             return newState.Coroutine;
+        }
+
+        private static IEnumerator PreGenerateTTS(ulong trackingKeyHash, string textToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)
+        {
+            LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(PreGenerateTTS));
+
+            try
+            {
+                Task<TTSResult> ttsTask = Plugin._tts.GenerateTTSAsync(textToSpeak, voiceSettings, cts.Token);
+
+                yield return new WaitUntil(() => ttsTask.IsCompleted);
+
+                if (ttsTask.IsFaulted || ttsTask.IsCanceled)
+                {
+                    yield break;
+                }
+
+                TTSResult result = ttsTask.Result;
+                if (!result.Success)
+                {
+                    yield break;
+                }
+            }
+            finally
+            {
+                cts.Dispose();
+
+                if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState current) && current.Cts == cts)
+                {
+                    ActiveTTSCoroutines.Remove(trackingKeyHash);
+                }
+            }
         }
 
         private static IEnumerator SpeakTTSInternalRoutine(ulong trackingKeyHash, NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)

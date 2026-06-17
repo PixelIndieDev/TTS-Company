@@ -105,10 +105,15 @@
     <Compile Include="Components\Enums\TTSGenPriority.cs" />
     <Compile Include="Components\Helpers\HashHelper.cs" />
     <Compile Include="Components\Helpers\TTSTimeoutHelper.cs" />
+    <Compile Include="Components\Helpers\VoiceHelper.cs" />
     <Compile Include="Components\Helpers\ZipHelper.cs" />
     <Compile Include="Components\Managers\Components\TTSAudioSourcesComponent.cs" />
     <Compile Include="Components\Managers\GlobalReadyManager.cs" />
     <Compile Include="Components\Managers\TTSAudioSourceManager.cs" />
+    <Compile Include="Components\Server\Components\BusyGeneration.cs" />
+    <Compile Include="Components\Helpers\JSONHelper.cs" />
+    <Compile Include="Components\Server\Components\TTSRawResult.cs" />
+    <Compile Include="Components\Server\PiperTTSServer.cs" />
     <Compile Include="Components\TTSGenerator.cs" />
     <Compile Include="Components\Inputs\PiperVoiceSettings.cs" />
     <Compile Include="Components\Inputs\TTSAudioSourceSettings.cs" />

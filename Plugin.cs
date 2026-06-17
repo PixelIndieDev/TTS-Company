@@ -10,6 +10,7 @@ using TTS_Company.Components.Enums;
 using TTS_Company.Debug;
 using TTS_Company.Debug.Inputs;
 using TTS_Company.Patches;
+using UnityEngine;
 
 namespace TTS_Company
 {
@@ -28,12 +29,17 @@ namespace TTS_Company
 
         internal static ManualLogSource logSource;
 
+        private bool _isShuttingDown = false;
+        private bool _shutdownComplete = false;
+
         void Awake()
         {
             if (instance == null)
             {
                 instance = this;
             }
+
+            Application.wantsToQuit += OnWantsToQuit;
 
             logSource = BepInEx.Logging.Logger.CreateLogSource(ModInfo.modGUID);
 
@@ -51,15 +57,89 @@ namespace TTS_Company
             LethalConfigManager.AddConfigItem(configEntryPriorityValue);
 
             _tts.SetMaxConcurrentRequests(configEntryPriority.Value);
+            OnAwake();
 
             harmony.PatchAll(typeof(NetworkPatch));
 
             LogConstants.PLUGIN_LOADED.Log(nameof(Plugin), ModInfo.modName, ModInfo.modVersion);
         }
 
-        void Destroy()
+        async void OnAwake()
         {
-            _tts.Dispose();
+            bool canBeLoaded = await _tts.InitializeAsync();
+            if (!canBeLoaded)
+            {
+                LogConstants.PLUGIN_TTS_COULD_NOT_BE_INITIALIZED.Log(nameof(Plugin), "new TTSGenerator()");
+            }
+
+            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_female-medium");
+            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-norman-medium");
+            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_GB-alba-medium");
+            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_male-medium");
+            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("nl_NL-pim-medium");
+        }
+
+        private bool OnWantsToQuit()
+        {
+            LogConstants.PLUGIN_ON_QUIT.Log(nameof(Plugin), ModInfo.modName, ModInfo.modVersion);
+
+            if (_shutdownComplete)
+            {
+                return true;
+            }
+
+            if (_isShuttingDown)
+            {
+                return false;
+            }
+
+            _isShuttingDown = true;
+            ExecuteAsyncShutdown();
+
+            return false;
+        }
+
+        private async void ExecuteAsyncShutdown()
+        {
+            try
+            {
+                if (_tts != null)
+                {
+                    LogConstants.CODE_TRIGGERED.Log(nameof(Plugin), nameof(ExecuteAsyncShutdown));
+                    await _tts.ShutdownAsync();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(Plugin), nameof(ExecuteAsyncShutdown), ex.Message);
+            }
+            finally
+            {
+                _shutdownComplete = true;
+
+                if (_tts != null)
+                {
+                    _tts.Dispose();
+                }
+
+                Application.Quit();
+            }
+        }
+
+        void OnDisable()
+        {
+            if (!_isShuttingDown && _tts != null)
+            {
+                _tts.Dispose();
+            }
+        }
+
+        void OnDestroy()
+        {
+            if (!_isShuttingDown && _tts != null)
+            {
+                _tts.Dispose();
+            }
         }
     }
 }

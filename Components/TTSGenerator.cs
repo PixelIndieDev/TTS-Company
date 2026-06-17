@@ -10,13 +10,16 @@ using System.Threading.Tasks;
 using TTS_Company.Components.Constants;
 using TTS_Company.Components.Enums;
 using TTS_Company.Components.Helpers;
+using TTS_Company.Components.Server.Components;
 using UnityEngine;
 
 namespace TTS_Company.Components
 {
     internal class TTSGenerator
     {
-        private readonly ConcurrentDictionary<string, Task<TTSResult>> _inFlightRequests = new ConcurrentDictionary<string, Task<TTSResult>>();
+        private readonly PiperTTSServer _server = new PiperTTSServer();
+
+        private readonly ConcurrentDictionary<string, BusyGeneration> _inFlightRequests = new ConcurrentDictionary<string, BusyGeneration>();
         internal int MaxConcurrentRequests
         {
             get => _maxConcurrent;
@@ -61,7 +64,7 @@ namespace TTS_Company.Components
                 return;
             }
 
-            _isAvailable = true;
+            SetMaxConcurrentRequests(TTSGenPriority.Normal);
         }
 
         private void SetMaxConcurrentRequests(int maxConcurrentRequests)
@@ -92,11 +95,108 @@ namespace TTS_Company.Components
             }
         }
 
+        internal async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            if (_isAvailable)
+            {
+                return true;
+            }
+
+            if (!ZipHelper.CheckForPiperTTS())
+            {
+                LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), TTSConstants.PIPER_EXE_NAME);
+                return false;
+            }
+            if (!ZipHelper.CheckForFFmpeg())
+            {
+                LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), FFmpegConstants.FFMPEG_EXE_NAME);
+                return false;
+            }
+
+            bool started = await _server.StartAsync(TTSConstants.PIPER_SERVER_STARTUP_TIMEOUT_MS, cancellationToken).ConfigureAwait(false);
+
+            _isAvailable = started;
+            return started;
+        }
+
+        internal async Task ShutdownAsync()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            _isAvailable = false;
+
+            await _server.ShutdownAsync().ConfigureAwait(false);
+
+            _semaphore?.Dispose();
+        }
+
+        internal void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+
+            try
+            {
+                ShutdownAsync().GetAwaiter().GetResult();
+            }
+            catch
+            {
+
+            }
+
+            _semaphore?.Dispose();
+        }
+
+        // -------------------- voice loading --------------------
+        // voice loading must be called before calling GenerateTTSAsync()
+        internal Task<(bool Success, string Error)> PreloadVoiceAsync(string voiceName, bool useCuda = false, CancellationToken cancellationToken = default)
+        {
+            if (!_isAvailable || _disposed)
+            {
+                return Task.FromResult((false, "TTS server is not available."));
+            }
+
+            if (string.IsNullOrWhiteSpace(voiceName))
+            {
+                return Task.FromResult((false, "voiceName must not be empty."));
+            }
+
+            return _server.LoadModelAsync(voiceName, useCuda, cancellationToken);
+        }
+
+        internal Task<(bool Success, string Error)> UnloadVoiceAsync(string voiceName, CancellationToken cancellationToken = default)
+        {
+            if (!_isAvailable || _disposed)
+            {
+                return Task.FromResult((false, "TTS server is not available."));
+            }
+
+            if (string.IsNullOrWhiteSpace(voiceName))
+            {
+                return Task.FromResult((false, "voiceName must not be empty."));
+            }
+
+            return _server.UnloadModelAsync(voiceName, cancellationToken);
+        }
+
+        internal bool isVoiceModelLoaded(string voiceModelName)
+        {
+            return _server.HasVoiceModelBeenLoaded(voiceModelName);
+        }
+
         internal async Task<TTSResult> GenerateTTSAsync(string textToSpeak, PiperVoiceSettings settings, CancellationToken cancellationToken)
         {
             if (!_isAvailable || _disposed)
             {
-                return new TTSResult { AudioClip = null, Success = false };
+                return new TTSResult { AudioClip = null, Success = false, Error = "TTS server is not available." };
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -123,38 +223,41 @@ namespace TTS_Company.Components
             {
                 LogConstants.TTS_GENERATOR_FOUND_CACHED_TTS.Log(nameof(TTSGenerator), hashCacheFileName);
 
-                AudioClip clip = await LoadAudioClipFromDiskAsync(fullCachePath, hashCacheFileName);
+                AudioClip clip = await LoadAudioClipFromDiskAsync(fullCachePath, hashCacheFileName).ConfigureAwait(false);
                 return new TTSResult { AudioClip = clip, Success = clip != null };
             }
 
-            Task<TTSResult> generationTask = _inFlightRequests.GetOrAdd(hashCacheFileName, _ => RunGenerationAsync(hashCacheFileName, fullCachePath, textToSpeak, settings));
+            BusyGeneration inFlight = _inFlightRequests.GetOrAdd(hashCacheFileName, _ => new BusyGeneration(ct => RunGenerationAsync(hashCacheFileName, fullCachePath, textToSpeak, settings, ct)));
+            inFlight.AddBusy();
 
             try
             {
                 var cancellationTcs = new TaskCompletionSource<TTSResult>();
-                using (cancellationToken.Register(() => cancellationTcs.TrySetCanceled()))
+                using (cancellationToken.Register(() => cancellationTcs.TrySetCanceled(cancellationToken)))
                 {
-                    Task<TTSResult> winner = await Task.WhenAny(generationTask, cancellationTcs.Task);
+                    Task<TTSResult> winner = await Task.WhenAny(inFlight.Task, cancellationTcs.Task).ConfigureAwait(false);
 
                     if (winner == cancellationTcs.Task)
                     {
                         LogConstants.TTS_GENERATOR_TTS_CANCELLED.Log(nameof(TTSGenerator), textToSpeak, hashCacheFileName);
-                        throw new OperationCanceledException(cancellationToken);
+                        await cancellationTcs.Task.ConfigureAwait(false);
                     }
 
-                    return await generationTask;
+                    return await inFlight.Task.ConfigureAwait(false);
                 }
             }
             finally
             {
-                if (generationTask.IsCompleted)
+                inFlight.RemoveBusy();
+
+                if (inFlight.Task.IsCompleted)
                 {
                     _inFlightRequests.TryRemove(hashCacheFileName, out _);
                 }
             }
         }
 
-        private async Task<TTSResult> RunGenerationAsync(string hashCacheFileName, string fullCachePath, string textToSpeak, PiperVoiceSettings settings)
+        private async Task<TTSResult> RunGenerationAsync(string hashCacheFileName, string fullCachePath, string textToSpeak, PiperVoiceSettings settings, CancellationToken sharedCancellationToken)
         {
             await _semaphore.WaitAsync();
             try
@@ -170,20 +273,32 @@ namespace TTS_Company.Components
                     };
                 }
 
-                LogConstants.TTS_GENERATOR_GENERATING_TTS.Log(nameof(TTSGenerator), textToSpeak, hashCacheFileName);
-                TTSResult result = await RunPiper(hashCacheFileName, fullCachePath, textToSpeak, settings, CancellationToken.None);
+                TTSResult endResult = new TTSResult();
 
-                if (result.Success)
+                bool isServerAlive = await _server.PingAsync(sharedCancellationToken);
+                if (!isServerAlive)
                 {
-                    result.AudioClip = await LoadAudioClipFromDiskAsync(fullCachePath, hashCacheFileName);
-                    result.Success = result.AudioClip != null;
-                    if (!result.Success)
-                    {
-                        result.Error = TTSConstants.TTS_GENERATION_TO_AUDIO_CLIP_NO_SUCCESS;
-                    };
+                    return endResult;
                 }
 
-                return result;
+                LogConstants.TTS_GENERATOR_GENERATING_TTS.Log(nameof(TTSGenerator), textToSpeak, hashCacheFileName);
+                TTSRawResult synthResult = await _server.SynthesizeAsync(textToSpeak, hashCacheFileName, settings, sharedCancellationToken).ConfigureAwait(false);
+                if (!synthResult.IsSuccess)
+                {
+                    endResult.AudioClip = null;
+                    endResult.Success = false;
+                    LogConstants.CODE_GENERIC_FAIL.Log(nameof(TTSGenerator), "synthResult", synthResult.Error);
+                    return endResult;
+                }
+
+                bool wasConvertedToOgg = await ConvertPcmToOggAsync(synthResult.Pcm, hashCacheFileName, fullCachePath, sharedCancellationToken);
+                if (wasConvertedToOgg)
+                {
+                    endResult.AudioClip = await LoadAudioClipFromDiskAsync(fullCachePath, hashCacheFileName);
+                    endResult.Success = endResult.AudioClip != null;
+                }
+
+                return endResult;
             }
             finally
             {
@@ -197,33 +312,14 @@ namespace TTS_Company.Components
             }
         }
 
-        private static Task<TTSResult> RunPiper(string fileHashName, string oggOutputPath, string textToSpeak, PiperVoiceSettings settings, CancellationToken cancellationToken)
+        private static Task<bool> ConvertPcmToOggAsync(byte[] pcmData, string fileHashName, string oggOutputPath, CancellationToken cancellationToken)
         {
             return Task.Run(async () =>
             {
-                var result = new TTSResult();
-
-                string piperArgs = BuildArguments(settings);
-                LogConstants.TTS_GENERATOR_RUN_PIPER_ARGUMENTS.Log(nameof(TTSGenerator), "piperTTS", piperArgs);
                 string ffmpegArgs = $"-f s16le -ar {FFmpegConstants.FFMPEG_OGG_SAMPLE_RATE} -ac {FFmpegConstants.FFMPEG_OGG_CHANNELS_AMOUNT} -i pipe:0 -c:a libvorbis -q:a {FFmpegConstants.FFMPEG_OGG_QUALITY_LEVEL} -y \"{oggOutputPath}\"";
-                LogConstants.TTS_GENERATOR_RUN_PIPER_ARGUMENTS.Log(nameof(TTSGenerator), "FFmpeg", ffmpegArgs);
 
                 try
                 {
-                    using (var piperProcess = new Process
-                    {
-                        StartInfo = new ProcessStartInfo
-                        {
-                            FileName = TTSConstants.PIPER_EXECUTABLE_LOCATION,
-                            Arguments = piperArgs,
-                            UseShellExecute = false,
-                            RedirectStandardInput = true,
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = true,
-                            CreateNoWindow = true,
-                            WorkingDirectory = Path.GetDirectoryName(TTSConstants.PIPER_EXECUTABLE_LOCATION)
-                        }
-                    })
                     using (var ffmpegProcess = new Process
                     {
                         StartInfo = new ProcessStartInfo
@@ -238,92 +334,50 @@ namespace TTS_Company.Components
                         }
                     })
                     {
-                        piperProcess.StartInfo.EnvironmentVariables["OMP_NUM_THREADS"] = "1";
-                        piperProcess.StartInfo.EnvironmentVariables["OMP_WAIT_POLICY"] = "PASSIVE";
-
-                        piperProcess.Start();
                         ffmpegProcess.Start();
 
-                        // Drain stderr concurrently — critical to prevent buffer deadlock
-                        Task<string> piperErrorTask = piperProcess.StandardError.ReadToEndAsync();
                         Task<string> ffmpegErrorTask = ffmpegProcess.StandardError.ReadToEndAsync();
 
-                        // Write input to piper and close its stdin
-                        await piperProcess.StandardInput.WriteLineAsync(textToSpeak);
-                        piperProcess.StandardInput.Close();
+                        using (Stream stdin = ffmpegProcess.StandardInput.BaseStream)
+                        {
+                            await stdin.WriteAsync(pcmData, 0, pcmData.Length, cancellationToken);
+                            await stdin.FlushAsync(cancellationToken);
+                        }
 
-                        // Pipe piper stdout → ffmpeg stdin, then close ffmpeg stdin
-                        Task pipeTask = PipeWithCancellationAsync(piperProcess.StandardOutput.BaseStream, ffmpegProcess.StandardInput.BaseStream, ffmpegProcess, cancellationToken);
-
-                        // Poll piper for exit, watching for cancellation
-                        await WaitForExitAsync(piperProcess, cancellationToken, ffmpegProcess);
-
-                        // Wait for pipe to fully flush
-                        await pipeTask;
-
-                        // Poll ffmpeg for exit
                         await WaitForExitAsync(ffmpegProcess, cancellationToken);
 
-                        // Await stderr drains (they should be done by now since processes exited)
-                        string piperStderr = await piperErrorTask;
                         string ffmpegStderr = await ffmpegErrorTask;
-
-                        int piperExitCode = piperProcess.ExitCode;
                         int ffmpegExitCode = ffmpegProcess.ExitCode;
-
-                        if (piperExitCode != 0)
-                        {
-                            result.Error = $"Piper exited with code {piperExitCode}. stderr: {piperStderr}";
-                            TryDeleteCorruptedCache(oggOutputPath, fileHashName);
-                            return result;
-                        }
 
                         if (ffmpegExitCode != 0)
                         {
-                            result.Error = $"FFmpeg exited with code {ffmpegExitCode}. stderr: {ffmpegStderr}";
                             TryDeleteCorruptedCache(oggOutputPath, fileHashName);
-                            return result;
+                            return false;
                         }
 
                         if (!File.Exists(oggOutputPath) || new FileInfo(oggOutputPath).Length == 0)
                         {
-                            result.Error = TTSConstants.TTS_GENERATION_OGG_FILE_CREATION_NO_SUCCESS;
                             TryDeleteCorruptedCache(oggOutputPath, fileHashName);
-                            return result;
+                            return false;
                         }
-                        result.Success = true;
+
+                        return true;
                     }
                 }
                 catch (OperationCanceledException)
                 {
-                    result.Error = TTSConstants.TTS_GENERATION_CANCELLED;
                     TryDeleteCorruptedCache(oggOutputPath, fileHashName);
-                    throw;
+                    return false;
                 }
                 catch (Exception ex)
                 {
                     TryDeleteCorruptedCache(oggOutputPath, fileHashName);
-                    result.Error = ex.Message;
+                    return false;
                 }
-
-                return result;
             });
         }
 
         // ------------------- Helpers -------------------
-
-        private static string BuildArguments(PiperVoiceSettings s)
-        {
-            var args = new System.Text.StringBuilder();
-            args.Append($"--model \"{s.ModelName}\"");
-            args.Append($" --length_scale {(1.0f / s.SpeechRate).ToString("F4", System.Globalization.CultureInfo.InvariantCulture)}");
-            args.Append($" --noise_scale {s.NoiseScale.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)}");
-            args.Append($" --noise_w {s.NoiseScaleW.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)}");
-            args.Append($" --sentence_silence {s.SentenceSilence.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)}");
-            args.Append(" --output-raw");
-            return args.ToString();
-        }
-
         private static void KillProcesses(Process p1, Process p2)
         {
             try 
@@ -364,33 +418,6 @@ namespace TTS_Company.Components
             catch (Exception ex)
             {
                 LogConstants.TTS_GENERATOR_FAILED_TO_DELETE_0KB_CACHE.Log(nameof(TTSGenerator), hashCacheFileName, ex.Message);
-            }
-        }
-
-        private static async Task PipeWithCancellationAsync(Stream source, Stream destination, Process destinationProcess, CancellationToken ct)
-        {
-            try
-            {
-                await source.CopyToAsync(destination, 81920, ct);
-            }
-            catch (OperationCanceledException)
-            {
-                LogConstants.CODE_GENERIC_CANCELLED.Log(nameof(TTSGenerator), "PipeWithCancellationAsync");
-            }
-            catch (Exception e)
-            {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "PipeWithCancellationAsync", e.Message);
-            }
-            finally
-            {
-                try
-                {
-                    destination.Close();
-                }
-                catch
-                {
-                    LogConstants.CODE_GENERIC_CATCH.Log(nameof(TTSGenerator), "PipeWithCancellationAsync");
-                }
             }
         }
 
@@ -518,9 +545,9 @@ namespace TTS_Company.Components
                 LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.ModelName", "ModelPath must be set in settings");
                 return false;
             }
-            if (string.IsNullOrWhiteSpace(settings.ModelName) || !File.Exists(settings.ModelName))
+            if (string.IsNullOrWhiteSpace(settings.ModelPath) || !File.Exists(settings.ModelPath))
             {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.ModelName", "Piper model not found or valid");
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.ModelPath", "Piper model not found or valid");
                 return false;
             }
             if (settings.SpeechRate <= 0f)
@@ -530,17 +557,6 @@ namespace TTS_Company.Components
             }
             // checks passed
             return true;
-        }
-
-        internal void Dispose()
-        {
-            if (_disposed)
-            {
-                return;
-            }
-
-            _disposed = true;
-            _semaphore?.Dispose();
         }
     }
 }

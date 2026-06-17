@@ -3,6 +3,7 @@ using System.IO;
 using TTS_Company.Components;
 using TTS_Company.Components.Constants;
 using Unity.Netcode;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace TTS_Company.Debug
@@ -19,7 +20,17 @@ namespace TTS_Company.Debug
             "I guess...this voice lines works.",
             "Testing complete.",
             "This is a voice line test.",
-            "Warning! Retreat immediately!"
+            "Warning! Retreat immediately!",
+            "FUCK!"
+        };
+
+        private static readonly string[] voiceModels = new[]
+        {
+            "en_US-hfc_female-medium",
+            "en_US-norman-medium",
+            "en_GB-alba-medium",
+            "en_US-hfc_male-medium",
+            "nl_NL-pim-medium"
         };
 
         public static void triggerDEBUGTTS(InputAction.CallbackContext obj)
@@ -49,29 +60,27 @@ namespace TTS_Company.Debug
                     {
                         NetworkObjectReference reference = new NetworkObjectReference(networkObject);
 
-                        TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME);
+                        for (int i = 0; i < 8; i++)
+                        {
+                            TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i);
+                        }
 
-                        TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, "DEBUG_KEY_2");
-                        TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, "DEBUG_KEY_3");
-                        TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, "DEBUG_KEY_4");
-                        TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, "DEBUG_KEY_5");
-                        TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, "DEBUG_KEY_6");
-                        TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, "DEBUG_KEY_7");
-                        TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, "DEBUG_KEY_8");
+                        for (int i = 0; i < 1; i++)
+                        {
+                            PiperVoiceSettings voice = new PiperVoiceSettings();
+                            voice.ModelName = GetRandomVoice();
 
-                        //RandomVoiceLines[randomIndex]
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME, RandomVoiceLines[0]); // RandomVoiceLines[randomIndex]
-
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, "DEBUG_KEY_2", RandomVoiceLines[1]);
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, "DEBUG_KEY_3", RandomVoiceLines[2]);
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, "DEBUG_KEY_4", RandomVoiceLines[3]);
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, "DEBUG_KEY_5", RandomVoiceLines[4]);
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, "DEBUG_KEY_6", RandomVoiceLines[5]);
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, "DEBUG_KEY_7", RandomVoiceLines[6]);
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, "DEBUG_KEY_8", RandomVoiceLines[7]);
+                            TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i, RandomVoiceLines[i], voice);
+                        }
                     }
                 }
             }
+        }
+
+        private static string GetRandomVoice()
+        {
+            int randomIndex = Random.Range(0, voiceModels.Length);
+            return voiceModels[randomIndex];
         }
     }
 }

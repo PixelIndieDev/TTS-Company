@@ -2,7 +2,7 @@
 
 namespace TTS_Company.Components
 {
-    public class TTSAudioSourceSettings // public as this needs to be able to be accessed by other mods
+    public sealed class TTSAudioSourceSettings // public as this needs to be able to be accessed by other mods
     {
         public bool bypassEffects { get; set; } = false;
         public bool bypassListenerEffects { get; set; } = false;
@@ -17,6 +17,7 @@ namespace TTS_Company.Components
         public float dopplerLevel { get; set; } = 1.0f;
         public float minDistance { get; set; } = 1.0f;
         public float maxDistance { get; set; } = 40.0f;
+
         public AudioRolloffMode rolloffMode { get; set; } = AudioRolloffMode.Linear;
     }
 }

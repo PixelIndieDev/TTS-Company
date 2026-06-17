@@ -1,4 +1,6 @@
 ﻿using BepInEx.Logging;
+using System;
+using System.IO;
 
 namespace TTS_Company.Components.Constants
 {
@@ -30,6 +32,7 @@ namespace TTS_Company.Components.Constants
         internal static readonly LogMessage CODE_GENERIC_EXCEPTION = new LogMessage(LogLevel.Error, "{1} got exception: {2}");
         internal static readonly LogMessage CODE_GENERIC_ERROR = new LogMessage(LogLevel.Error, "{1} got error: {2}");
         internal static readonly LogMessage CODE_GENERIC_CATCH = new LogMessage(LogLevel.Warning, "{1} was catched");
+        internal static readonly LogMessage CODE_GENERIC_FAIL = new LogMessage(LogLevel.Error, "{1} failed with error: {2}");
 
         // -------------------- TTS timeout helper --------------------
         // debug
@@ -59,8 +62,23 @@ namespace TTS_Company.Components.Constants
 
         // -------------------- plugin --------------------
         internal static readonly LogMessage PLUGIN_LOADED = new LogMessage(LogLevel.Info, "{1} + (version - {2}) : loaded successfully");
+        internal static readonly LogMessage PLUGIN_ON_QUIT = new LogMessage(LogLevel.Info, "Game wants to quit, stopping background processes of {1} + (version - {2})");
+        // errors
+        internal static readonly LogMessage PLUGIN_TTS_COULD_NOT_BE_INITIALIZED = new LogMessage(LogLevel.Fatal, "{1} could not be initialized");
 
         // -------------------- TTS Company API --------------------
         internal static readonly LogMessage API_NETWORK_OBJECT_NOT_FOUND = new LogMessage(LogLevel.Info, "NetworkObject {1} not found");
+
+        // -------------------- Piper TTS Server --------------------
+        internal static readonly LogMessage PIPER_TTS_SERVER_SUCCESS_STARTUP = new LogMessage(LogLevel.Info, "Started piper tts server on port {1} (pid {2})");
+        internal static readonly LogMessage PIPER_TTS_SERVER_STOPPED = new LogMessage(LogLevel.Info, "Stopped piper tts server");
+        internal static readonly LogMessage PIPER_TTS_LOADED_VOICE_MODEL = new LogMessage(LogLevel.Info, "Loaded voice model '{1}' using {2}");
+        // errors
+        internal static readonly LogMessage PIPER_TTS_SERVER_EXE_NOT_FOUND = new LogMessage(LogLevel.Fatal, "Server executable not found at: {1}");
+        internal static readonly LogMessage PIPER_TTS_SERVER_FAILED_TO_START = new LogMessage(LogLevel.Fatal, "Failed to start piper tts server process with exception: {1}");
+        internal static readonly LogMessage PIPER_TTS_SERVER_VOICE_FOLDER_NOT_FOUND = new LogMessage(LogLevel.Fatal, "Voice model directory not found at: {1}");
+        internal static readonly LogMessage PIPER_TTS_SERVER_STARTUP_ISSUE = new LogMessage(LogLevel.Fatal, "Server process exited during startup (exit code {1} | stderr: {2})");
+        internal static readonly LogMessage PIPER_TTS_SERVER_OUTPUT_DRAIN = new LogMessage(LogLevel.Warning, "Piper tts server drain: {1}");
+        internal static readonly LogMessage PIPER_TTS_VOICE_MODEL_NOT_LOADED = new LogMessage(LogLevel.Warning, "Voice model '{1}' was not loaded beforehand as it has 0 assemblies that want it");
     }
 }
