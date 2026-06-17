@@ -1,7 +1,7 @@
 # TTS-Company
 A text-to-speech library mod for Lethal Company that integrates the lightweight, local Piper TTS engine. This library makes it easy to add TTS speech to your Lethal Company mods.
 
-All players in the lobby are required to have the `TTS-Company` mod installed. Any players missing the mod will not be able to hear any generated text-to-speech audio.
+> All players in the lobby are required to have the `TTS-Company` mod installed. Any players missing the mod will not be able to hear any generated text-to-speech audio.
 
 ## What it does
 - Provides a API for other mods to generate local, low-latency text-to-speech audio.
