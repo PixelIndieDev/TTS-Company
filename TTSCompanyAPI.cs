@@ -122,7 +122,7 @@ namespace TTS_Company
 
         public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
         {
-            return SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, audioSourceName, [textToSpeak], voiceSettings, audioSourceSettings);
+            return SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, audioSourceName, new[] { textToSpeak }, voiceSettings, audioSourceSettings);
         }
 
         private static IEnumerator SpeakMultipleTTSInternalRoutine(ulong trackingKeyHash, NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string[] textsToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)
