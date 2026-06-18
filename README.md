@@ -29,9 +29,9 @@ This mod makes use of the following third-party software:
 -  **Usage:** Included as modified source code, compiled into a frozen server executable via PyInstaller.
 
 #### Concentus
-- **License:** MS-PL (Microsoft Public License) 
-- **Usage:** Used as a pure C# library for local Opus audio encoding and decoding. 
+- **License:** Microsoft Public License
+- **Usage:** Used as a pure C# library for local Opus audio encoding and decoding.
 
 #### Concentus.OggFile
-- **License:** MIT License 
+- **License:** MIT License
 - **Usage:** Used alongside Concentus to parse, package, and structure the processed audio data into the `.ogg` file container format.
