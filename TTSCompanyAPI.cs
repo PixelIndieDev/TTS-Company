@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -78,44 +79,101 @@ namespace TTS_Company
             return newState.Coroutine;
         }
 
-        public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
+        public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string[] textsToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(SpeakTTSAtNetworkObject));
+
+            if (textsToSpeak == null || textsToSpeak.Length == 0)
+            {
+                return null;
+            }
 
             // if null, use the default
             voiceSettings = voiceSettings ?? new PiperVoiceSettings();
             audioSourceSettings = audioSourceSettings ?? new TTSAudioSourceSettings();
 
-            ulong networkObjectId = 0;
-            if (networkObjectRefOfSpeaker.TryGet(out NetworkObject netObj))
-            {
-                networkObjectId = netObj.NetworkObjectId;
-            }
-
-            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(textToSpeak, voiceSettings);
+            string combinedText = string.Join("|", textsToSpeak);
+            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(combinedText, voiceSettings);
 
             if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState activeState))
             {
-                if (activeState.Cts != null)
-                {
-                    activeState.Cts.Cancel();
-                }
-
-                if (activeState.Coroutine != null)
-                {
-                    Plugin.instance.StopCoroutine(activeState.Coroutine);
-                }
-
+                if (activeState.Cts != null) activeState.Cts.Cancel();
+                if (activeState.Coroutine != null) Plugin.instance.StopCoroutine(activeState.Coroutine);
                 ActiveTTSCoroutines.Remove(trackingKeyHash);
             }
 
-            CancellationTokenSource newCts = new CancellationTokenSource(TTSTimeoutHelper.GetTTSTimeout(textToSpeak, voiceSettings));
+            TimeSpan totalTimeout = TimeSpan.Zero;
+            foreach (var text in textsToSpeak)
+            {
+                totalTimeout += TTSTimeoutHelper.GetTTSTimeout(text, voiceSettings);
+            }
+
+            CancellationTokenSource newCts = new CancellationTokenSource(totalTimeout);
             ActiveTTSState newState = new ActiveTTSState { Cts = newCts };
 
-            newState.Coroutine = Plugin.instance.StartCoroutine(SpeakTTSInternalRoutine(trackingKeyHash, networkObjectRefOfSpeaker, audioSourceName, textToSpeak, voiceSettings, newCts));
+            newState.Coroutine = Plugin.instance.StartCoroutine(SpeakMultipleTTSInternalRoutine(trackingKeyHash, networkObjectRefOfSpeaker, audioSourceName, textsToSpeak, voiceSettings, newCts));
 
             ActiveTTSCoroutines[trackingKeyHash] = newState;
             return newState.Coroutine;
+        }
+
+        //public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
+        //{
+
+        //}
+
+        private static IEnumerator SpeakMultipleTTSInternalRoutine(ulong trackingKeyHash, NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string[] textsToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)
+        {
+            LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(SpeakMultipleTTSInternalRoutine));
+
+            try
+            {
+                if (!networkObjectRefOfSpeaker.TryGet(out NetworkObject networkObject))
+                {
+                    yield break;
+                }
+
+                GameObject receivedGameObject = networkObject.gameObject;
+                if (receivedGameObject == null || !receivedGameObject.activeInHierarchy)
+                {
+                    yield break;
+                }
+
+                Task<TTSResult>[] ttsTasks = new Task<TTSResult>[textsToSpeak.Length];
+                for (int i = 0; i < textsToSpeak.Length; i++)
+                {
+                    ttsTasks[i] = Plugin._tts.GenerateTTSAsync(textsToSpeak[i], voiceSettings, cts.Token);
+                }
+
+                yield return new WaitUntil(() => Task.WhenAll(ttsTasks).IsCompleted);
+
+                // if any audio clip failed, then cancel talking
+                for (int i = 0; i < ttsTasks.Length; i++)
+                {
+                    var task = ttsTasks[i];
+                    if (task.IsFaulted || task.IsCanceled || !task.Result.Success || task.Result.AudioClip == null)
+                    {
+                        yield break;
+                    }
+                }
+
+                for (int i = 0; i < ttsTasks.Length; i++)
+                {
+                    TTSResult result = ttsTasks[i].Result;
+                    TTSAudioSourceManager.PlayAudioSource(receivedGameObject, audioSourceName, result.AudioClip);
+
+                    yield return new WaitForSeconds(result.AudioClip.length);
+                }
+            }
+            finally
+            {
+                cts.Dispose();
+
+                if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState current) && current.Cts == cts)
+                {
+                    ActiveTTSCoroutines.Remove(trackingKeyHash);
+                }
+            }
         }
 
         private static IEnumerator PreGenerateTTS(ulong trackingKeyHash, string textToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)

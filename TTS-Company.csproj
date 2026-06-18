@@ -43,14 +43,17 @@
     <Reference Include="BepInEx">
       <HintPath>D:\ThunderStore Data\LethalCompany\profiles\Default\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
+    <Reference Include="Concentus, Version=2.2.2.0, Culture=neutral, PublicKeyToken=2f7fb9b49ffdfe20, processorArchitecture=MSIL">
+      <HintPath>packages\Concentus.2.2.2\lib\net452\Concentus.dll</HintPath>
+    </Reference>
+    <Reference Include="Concentus.Oggfile, Version=1.0.7.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Concentus.Oggfile.1.0.7\lib\net452\Concentus.Oggfile.dll</HintPath>
+    </Reference>
     <Reference Include="LethalCompanyInputUtils">
       <HintPath>D:\ThunderStore Data\LethalCompany\cache\Rune580-LethalCompany_InputUtils\0.7.13\plugins\LethalCompanyInputUtils\LethalCompanyInputUtils.dll</HintPath>
     </Reference>
     <Reference Include="LethalConfig">
       <HintPath>D:\ThunderStore Data\LethalCompany\cache\AinaVT-LethalConfig\1.4.6\plugins\LethalConfig\LethalConfig.dll</HintPath>
-    </Reference>
-    <Reference Include="NVorbis, Version=0.10.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\NVorbis.0.10.5\lib\net45\NVorbis.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -141,7 +144,5 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets'))" />
-    <Error Condition="!Exists('packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets'))" />
   </Target>
-  <Import Project="packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets" Condition="Exists('packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" />
 </Project>

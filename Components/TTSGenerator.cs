@@ -1,4 +1,7 @@
-﻿using NVorbis;
+﻿using Concentus;
+using Concentus.Enums;
+using Concentus.Oggfile;
+using Concentus.Structs;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -53,17 +56,6 @@ namespace TTS_Company.Components
 
         internal TTSGenerator()
         {
-            if (!ZipHelper.CheckForPiperTTS())
-            {
-                LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), TTSConstants.PIPER_EXE_NAME);
-                return;
-            }
-            if (!ZipHelper.CheckForFFmpeg())
-            {
-                LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), FFmpegConstants.FFMPEG_EXE_NAME);
-                return;
-            }
-
             SetMaxConcurrentRequests(TTSGenPriority.Normal);
         }
 
@@ -105,11 +97,6 @@ namespace TTS_Company.Components
             if (!ZipHelper.CheckForPiperTTS())
             {
                 LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), TTSConstants.PIPER_EXE_NAME);
-                return false;
-            }
-            if (!ZipHelper.CheckForFFmpeg())
-            {
-                LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), FFmpegConstants.FFMPEG_EXE_NAME);
                 return false;
             }
 
@@ -155,7 +142,6 @@ namespace TTS_Company.Components
             _semaphore?.Dispose();
         }
 
-        // -------------------- voice loading --------------------
         // voice loading must be called before calling GenerateTTSAsync()
         internal Task<(bool Success, string Error)> PreloadVoiceAsync(string voiceName, bool useCuda = false, CancellationToken cancellationToken = default)
         {
@@ -314,95 +300,56 @@ namespace TTS_Company.Components
 
         private static Task<bool> ConvertPcmToOggAsync(byte[] pcmData, string fileHashName, string oggOutputPath, CancellationToken cancellationToken)
         {
-            return Task.Run(async () =>
-            {
-                string ffmpegArgs = $"-f s16le -ar {FFmpegConstants.FFMPEG_OGG_SAMPLE_RATE} -ac {FFmpegConstants.FFMPEG_OGG_CHANNELS_AMOUNT} -i pipe:0 -c:a libvorbis -q:a {FFmpegConstants.FFMPEG_OGG_QUALITY_LEVEL} -y \"{oggOutputPath}\"";
+            LogConstants.CODE_TRIGGERED.Log(nameof(TTSGenerator), nameof(ConvertPcmToOggAsync));
 
+            return Task.Run(() =>
+            {
                 try
                 {
-                    using (var ffmpegProcess = new Process
+                    short[] srcShorts = new short[pcmData.Length / 2];
+                    Buffer.BlockCopy(pcmData, 0, srcShorts, 0, pcmData.Length);
+                    short[] resampledShorts = Resample22050To24000(srcShorts);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    using (FileStream fs = new FileStream(oggOutputPath, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
-                        StartInfo = new ProcessStartInfo
-                        {
-                            FileName = FFmpegConstants.FFMPEG_EXE_FILE_LOCATION,
-                            Arguments = ffmpegArgs,
-                            UseShellExecute = false,
-                            RedirectStandardInput = true,
-                            RedirectStandardOutput = false,
-                            RedirectStandardError = true,
-                            CreateNoWindow = true
-                        }
-                    })
-                    {
-                        ffmpegProcess.Start();
+                        IOpusEncoder encoder = OpusCodecFactory.CreateEncoder(OggConstants.OGG_SAMPLE_RATE, OggConstants.OGG_CHANNELS_AMOUNT, OpusApplication.OPUS_APPLICATION_VOIP);
+                        encoder.Bitrate = OggConstants.OGG_SAMPLE_RATE;
 
-                        Task<string> ffmpegErrorTask = ffmpegProcess.StandardError.ReadToEndAsync();
-
-                        using (Stream stdin = ffmpegProcess.StandardInput.BaseStream)
-                        {
-                            await stdin.WriteAsync(pcmData, 0, pcmData.Length, cancellationToken);
-                            await stdin.FlushAsync(cancellationToken);
-                        }
-
-                        await WaitForExitAsync(ffmpegProcess, cancellationToken);
-
-                        string ffmpegStderr = await ffmpegErrorTask;
-                        int ffmpegExitCode = ffmpegProcess.ExitCode;
-
-                        if (ffmpegExitCode != 0)
-                        {
-                            TryDeleteCorruptedCache(oggOutputPath, fileHashName);
-                            return false;
-                        }
-
-                        if (!File.Exists(oggOutputPath) || new FileInfo(oggOutputPath).Length == 0)
-                        {
-                            TryDeleteCorruptedCache(oggOutputPath, fileHashName);
-                            return false;
-                        }
-
-                        return true;
+                        OpusOggWriteStream oggStream = new OpusOggWriteStream(encoder, fs);
+                        oggStream.WriteSamples(resampledShorts, 0, resampledShorts.Length);
+                        oggStream.Finish();
                     }
-                }
-                catch (OperationCanceledException)
-                {
-                    TryDeleteCorruptedCache(oggOutputPath, fileHashName);
-                    return false;
+
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     TryDeleteCorruptedCache(oggOutputPath, fileHashName);
+                    LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), nameof(ConvertPcmToOggAsync), ex);
                     return false;
                 }
             });
         }
 
         // ------------------- Helpers -------------------
-        private static void KillProcesses(Process p1, Process p2)
+        private static short[] Resample22050To24000(short[] input)
         {
-            try 
-            {
-                if (!p1.HasExited)
-                {
-                    p1.Kill();
-                }
-            } 
-            catch 
-            {
-                LogConstants.TTS_GENERATOR_PROCESS_FAILED_TO_STOP.Log(nameof(TTSGenerator), 1);
-            }
+            double ratio = 22050.0 / 24000.0;
+            int dstLength = (int)(input.Length * (24000.0 / 22050.0));
+            short[] output = new short[dstLength];
 
-            try
+            for (int i = 0; i < dstLength; i++)
             {
-                if (!p2.HasExited)
-                {
-                    p2.Kill();
-                }
+                double srcIndex = i * ratio;
+                int indexLeft = (int)Math.Floor(srcIndex);
+                int indexRight = Math.Min(indexLeft + 1, input.Length - 1);
+                double t = srcIndex - indexLeft;
+
+                output[i] = (short)((1 - t) * input[indexLeft] + t * input[indexRight]);
             }
-            catch
-            {
-                LogConstants.TTS_GENERATOR_PROCESS_FAILED_TO_STOP.Log(nameof(TTSGenerator), 2);
-            }
+            return output;
         }
 
         private static void TryDeleteCorruptedCache(string fullCachePath, string hashCacheFileName)
@@ -418,45 +365,6 @@ namespace TTS_Company.Components
             catch (Exception ex)
             {
                 LogConstants.TTS_GENERATOR_FAILED_TO_DELETE_0KB_CACHE.Log(nameof(TTSGenerator), hashCacheFileName, ex.Message);
-            }
-        }
-
-        private static async Task WaitForExitAsync(Process process, CancellationToken ct, Process companionToKillIfDead = null)
-        {
-            while (!process.HasExited)
-            {
-                if (ct.IsCancellationRequested)
-                {
-                    if (companionToKillIfDead != null)
-                    {
-                        KillProcesses(process, companionToKillIfDead);
-                    }
-                    else
-                    {
-                        try 
-                        {
-                            if (!process.HasExited) 
-                            { 
-                                process.Kill();
-                            }
-                        }
-                        catch 
-                        {
-                            LogConstants.CODE_GENERIC_CATCH.Log(nameof(TTSGenerator), "WaitForExitAsync");
-                        }
-                    }
-
-                    ct.ThrowIfCancellationRequested();
-                }
-
-                if (companionToKillIfDead != null && companionToKillIfDead.HasExited)
-                {
-                    KillProcesses(process, companionToKillIfDead);
-                    LogConstants.TTS_GENERATOR_FFMPEG_EXITED_PREMATURE.Log(nameof(TTSGenerator));
-                    return;
-                }
-
-                await Task.Delay(50, ct);
             }
         }
 
@@ -476,7 +384,7 @@ namespace TTS_Company.Components
 
         private static IEnumerator LoadCoroutine(string absoluteFilePath, string clipName, TaskCompletionSource<AudioClip> tcs)
         {
-            Task<float[]> decodeTask = Task.Run(() => DecodeOggVorbisOffThread(absoluteFilePath));
+            Task<float[]> decodeTask = Task.Run(() => DecodeOggOffThread(absoluteFilePath));
 
             yield return new WaitUntil(() => decodeTask.IsCompleted);
 
@@ -493,29 +401,31 @@ namespace TTS_Company.Components
                 yield break;
             }
 
-            AudioClip clip = AudioClip.Create(clipName, decodeTask.Result.Length, FFmpegConstants.FFMPEG_OGG_CHANNELS_AMOUNT, FFmpegConstants.FFMPEG_OGG_SAMPLE_RATE, false);
+            AudioClip clip = AudioClip.Create(clipName, decodeTask.Result.Length, OggConstants.OGG_CHANNELS_AMOUNT, OggConstants.OGG_SAMPLE_RATE, false);
             clip.SetData(decodeTask.Result, 0);
             tcs.SetResult(clip);
         }
 
-        private static float[] DecodeOggVorbisOffThread(string absoluteFilePath)
+        private static float[] DecodeOggOffThread(string absoluteFilePath)
         {
             try
             {
-                using (var reader = new VorbisReader(absoluteFilePath))
+                using (FileStream fs = new FileStream(absoluteFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    int channels = reader.Channels;
-                    int frequency = reader.SampleRate;
+                    IOpusDecoder decoder = OpusCodecFactory.CreateDecoder(OggConstants.OGG_SAMPLE_RATE, OggConstants.OGG_CHANNELS_AMOUNT);
+                    OpusOggReadStream oggStream = new OpusOggReadStream(decoder, fs);
 
-                    var sampleList = new List<float>((int)(reader.TotalSamples > 0 ? reader.TotalSamples * channels : 22050 * 5)); // rough preallocation guess
-                    float[] buffer = new float[4096];
+                    List<float> sampleList = new List<float>();
 
-                    int read;
-                    while ((read = reader.ReadSamples(buffer, 0, buffer.Length)) > 0)
+                    while (oggStream.HasNextPacket)
                     {
-                        for (int i = 0; i < read; i++)
+                        short[] packet = oggStream.DecodeNextPacket();
+                        if (packet != null)
                         {
-                            sampleList.Add(buffer[i]);
+                            for (int i = 0; i < packet.Length; i++)
+                            {
+                                sampleList.Add(packet[i] / 32768f);
+                            }
                         }
                     }
                     return sampleList.ToArray();
@@ -523,7 +433,7 @@ namespace TTS_Company.Components
             }
             catch (Exception ex)
             {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), nameof(DecodeOggVorbisOffThread), ex.Message);
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), nameof(DecodeOggOffThread), ex.Message);
                 return null;
             }
         }

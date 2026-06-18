@@ -52,7 +52,33 @@ namespace TTS_Company.Debug
 
             if (localPlayer != null)
             {
-                int randomIndex = UnityEngine.Random.Range(0, RandomVoiceLines.Length);
+                string[] customStrings = new[]
+                {
+                    "Warning, ",
+                    "ENTITYNAME",
+                    " detected near your position."
+                };
+
+                string[] customStrings2 = new[]
+                {
+                    "WATCH OUT, ",
+                    "ENTITYNAME",
+                    " BEHIND YOU!"
+                };
+
+                string[][] allCustomStrings = new[] { customStrings, customStrings2 };
+
+                string[] enemyNames = new[]
+                {
+                    "Barber",
+                    "Bracken",
+                    "Bunker Spider",
+                    "Coil-Head",
+                    "Hoarding Bug",
+                    "Hygrodere",
+                    "Jester",
+                    "Nutcracker"
+                };
 
                 if (Plugin.instance != null)
                 {
@@ -68,9 +94,15 @@ namespace TTS_Company.Debug
                         for (int i = 0; i < 1; i++)
                         {
                             PiperVoiceSettings voice = new PiperVoiceSettings();
-                            voice.ModelName = GetRandomVoice();
+                            //voice.ModelName = GetRandomVoice();
 
-                            TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i, RandomVoiceLines[i], voice);
+                            int randomIndex = Random.Range(0, allCustomStrings.Length);
+                            string[] chosenArray = allCustomStrings[0];
+
+                            randomIndex = Random.Range(0, customStrings.Length);
+                            chosenArray[1] = enemyNames[randomIndex];
+
+                            TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i, chosenArray, voice);
                         }
                     }
                 }
