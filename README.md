@@ -17,3 +17,21 @@ A text-to-speech library mod for Lethal Company that integrates the lightweight,
 ## License & Credits
 This mod includes and utilizes the **Piper TTS** source code, modified and compiled into a frozen server executable via PyInstaller. 
 - **Piper TTS** is licensed under the **GPL-3.0 License**
+
+## License & Credits
+This project is licensed under the **GPL-3.0 License** due to its dependencies and bundled components.
+
+### Third-Party Software & Libraries
+This mod makes use of the following third-party software:
+
+#### Piper TTS
+-  **License:** GPL-3.0 License
+-  **Usage:** Included as modified source code, compiled into a frozen server executable via PyInstaller.
+
+#### Concentus
+- **License:** MS-PL (Microsoft Public License) 
+- **Usage:** Used as a pure C# library for local Opus audio encoding and decoding. 
+
+#### Concentus.OggFile
+- **License:** MIT License 
+- **Usage:** Used alongside Concentus to parse, package, and structure the processed audio data into the `.ogg` file container format.
