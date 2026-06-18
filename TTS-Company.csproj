@@ -102,7 +102,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Components\Constants\FFmpegConstants.cs" />
+    <Compile Include="Components\Constants\OggConstants.cs" />
     <Compile Include="Components\Constants\LogConstants.cs" />
     <Compile Include="Components\Constants\TTSConstants.cs" />
     <Compile Include="Components\Enums\TTSGenPriority.cs" />
@@ -134,7 +134,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Assets\ffmpeg.zip" />
     <EmbeddedResource Include="Assets\piperTTS.zip" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

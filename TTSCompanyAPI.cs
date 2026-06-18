@@ -22,6 +22,9 @@ namespace TTS_Company
             public CancellationTokenSource Cts;
         }
 
+        private static readonly PiperVoiceSettings DefaultVoiceSettings = new PiperVoiceSettings();
+        private static readonly TTSAudioSourceSettings DefaultAudioSourceSettings = new TTSAudioSourceSettings();
+
         // -------------------- preload voice models --------------------
         public async static Task<(bool Success, string Error)> PreloadTTSVoiceModelInMemory(string voiceModelName)
         {
@@ -42,7 +45,7 @@ namespace TTS_Company
                 return false;
             }
 
-            audioSourceSettings = audioSourceSettings ?? new TTSAudioSourceSettings(); // if null, use the default
+            audioSourceSettings = audioSourceSettings ?? DefaultAudioSourceSettings; // if null, use the default
             return TTSAudioSourceManager.AddPermanentTTSAudioSource(networkObject.gameObject, audioSourceName, audioSourceSettings);
         }
 
@@ -52,7 +55,7 @@ namespace TTS_Company
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(PreGenerateTTS));
 
             // if null, use the default
-            voiceSettings = voiceSettings ?? new PiperVoiceSettings();
+            voiceSettings = voiceSettings ?? DefaultVoiceSettings;
 
             ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(textToSpeak, voiceSettings);
             if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState activeState))
@@ -89,8 +92,8 @@ namespace TTS_Company
             }
 
             // if null, use the default
-            voiceSettings = voiceSettings ?? new PiperVoiceSettings();
-            audioSourceSettings = audioSourceSettings ?? new TTSAudioSourceSettings();
+            voiceSettings = voiceSettings ?? DefaultVoiceSettings;
+            audioSourceSettings = audioSourceSettings ?? DefaultAudioSourceSettings;
 
             string combinedText = string.Join("|", textsToSpeak);
             ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(combinedText, voiceSettings);
@@ -117,10 +120,10 @@ namespace TTS_Company
             return newState.Coroutine;
         }
 
-        //public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
-        //{
-
-        //}
+        public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
+        {
+            return SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, audioSourceName, [textToSpeak], voiceSettings, audioSourceSettings);
+        }
 
         private static IEnumerator SpeakMultipleTTSInternalRoutine(ulong trackingKeyHash, NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string[] textsToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)
         {
