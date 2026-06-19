@@ -102,6 +102,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Components\Constants\ExampleConstants.cs" />
     <Compile Include="Components\Constants\OggConstants.cs" />
     <Compile Include="Components\Constants\LogConstants.cs" />
     <Compile Include="Components\Constants\TTSConstants.cs" />

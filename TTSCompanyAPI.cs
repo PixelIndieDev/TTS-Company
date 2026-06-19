@@ -10,7 +10,6 @@ using TTS_Company.Components.Helpers;
 using TTS_Company.Components.Managers;
 using Unity.Netcode;
 using UnityEngine;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace TTS_Company
 {
@@ -31,17 +30,36 @@ namespace TTS_Company
         private static readonly Regex SentenceRegex = new Regex(@"[^.!?]+[.!?]?", RegexOptions.Compiled);
 
         // -------------------- preload voice models --------------------
+
+        /// <summary>
+        /// Asynchronously loads a specific Piper voice model into memory.
+        /// </summary>
+        /// <param name="voiceModelName">The name of the voice model to preload (e.g., "en_US-hfc_female-medium").</param>
+        /// <returns>A task that returns a tuple indicating whether the preloading succeeded, and an error message if it failed.</returns>
         public async static Task<(bool Success, string Error)> PreloadTTSVoiceModelInMemory(string voiceModelName)
         {
             return await Plugin._tts.PreloadVoiceAsync(VoiceHelper.CleanupVoiceModelname(voiceModelName));
         }
 
+        /// <summary>
+        /// Checks whether a specific Piper voice model has been successfully loaded into memory.
+        /// </summary>
+        /// <param name="voiceModelName">The name of the voice model to check (e.g., "en_US-hfc_female-medium").</param>
+        /// <returns><c>true</c> if the voice model is currently loaded in memory; otherwise, <c>false</c>.</returns>
         public static bool HasTTSVoiceModelBeenLoadedIntoMemory(string voiceModelName)
         {
             return Plugin._tts.isVoiceModelLoaded(voiceModelName);
         }
 
         // -------------------- add audio sources --------------------
+
+        /// <summary>
+        /// Attaches a permanent TTS audio source component to a specific networked object.
+        /// </summary>
+        /// <param name="networkObjectRefOfSpeaker">A reference to the Unity Netcode <see cref="NetworkObject"/> that will parent the audio source.</param>
+        /// <param name="audioSourceName">A unique string identifier/name for this specific audio source.</param>
+        /// <param name="audioSourceSettings">Optional configuration settings for the spatial/audio properties. Falls back to default settings if null.</param>
+        /// <returns><c>true</c> if the audio source was successfully added; otherwise, <c>false</c>.</returns>
         public static bool AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, TTSAudioSourceSettings audioSourceSettings = null)
         {
             if (!networkObjectRefOfSpeaker.TryGet(out NetworkObject networkObject))
@@ -55,6 +73,13 @@ namespace TTS_Company
         }
 
         // -------------------- generate TTS --------------------
+
+        /// <summary>
+        /// Pre-generates and caches the TTS audio for a string of text without playing it. Splits the text into individual sentences internally.
+        /// </summary>
+        /// <param name="textToSpeak">The full block of text to generate speech for.</param>
+        /// <param name="voiceSettings">Optional Piper voice configuration (model, speed, etc.). Falls back to default settings if null.</param>
+        /// <returns>The running Unity <see cref="Coroutine"/> handling the background generation, or <c>null</c> if the input is empty.</returns>
         public static Coroutine PreGenerateTTS(string textToSpeak, PiperVoiceSettings voiceSettings = null)
         {
             if (string.IsNullOrWhiteSpace(textToSpeak))
@@ -65,6 +90,12 @@ namespace TTS_Company
             return PreGenerateTTS(SplitTextToSpeak(textToSpeak), voiceSettings);
         }
 
+        /// <summary>
+        /// Pre-generates and caches the TTS audio for an array of text fragments without playing them.
+        /// </summary>
+        /// <param name="textsToSpeak">An array of text fragments to generate speech for.</param>
+        /// <param name="voiceSettings">Optional Piper voice configuration (model, speed, etc.). Falls back to default settings if null.</param>
+        /// <returns>The running Unity <see cref="Coroutine"/> handling the background generation, or <c>null</c> if the array is empty.</returns>
         public static Coroutine PreGenerateTTS(string[] textsToSpeak, PiperVoiceSettings voiceSettings = null)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(PreGenerateTTS));
@@ -106,6 +137,16 @@ namespace TTS_Company
         }
 
         // -------------------- play TTS --------------------
+
+        /// <summary>
+        /// Generates and plays an array of text fragments in sequence from a designated audio source on a networked object.
+        /// </summary>
+        /// <param name="networkObjectRefOfSpeaker">A reference to the <see cref="NetworkObject"/> that should emit the audio.</param>
+        /// <param name="audioSourceName">The identifier name of the specific audio source channel to use for playback.</param>
+        /// <param name="textsToSpeak">An array of text fragments to be spoken in chronological order.</param>
+        /// <param name="voiceSettings">Optional Piper voice configuration. Falls back to default settings if null.</param>
+        /// <param name="audioSourceSettings">Optional audio spatial configuration. Falls back to default settings if null.</param>
+        /// <returns>The running Unity <see cref="Coroutine"/> managing the generation and playback sequence, or <c>null</c> if the array is empty.</returns>
         public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string[] textsToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(SpeakTTSAtNetworkObject));
@@ -146,6 +187,15 @@ namespace TTS_Company
             return newState.Coroutine;
         }
 
+        /// <summary>
+        /// Generates and plays back a block of text on a designated audio source on a networked object. Splits text into sentences internally.
+        /// </summary>
+        /// <param name="networkObjectRefOfSpeaker">A reference to the <see cref="NetworkObject"/> that should emit the audio.</param>
+        /// <param name="audioSourceName">The identifier name of the specific audio source channel to use for playback.</param>
+        /// <param name="textToSpeak">The full block of text to be converted to speech and played.</param>
+        /// <param name="voiceSettings">Optional Piper voice configuration. Falls back to default settings if null.</param>
+        /// <param name="audioSourceSettings">Optional audio spatial configuration. Falls back to default settings if null.</param>
+        /// <returns>The running Unity <see cref="Coroutine"/> managing the generation and playback sequence, or <c>null</c> if text is empty.</returns>
         public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
         {
             if (string.IsNullOrWhiteSpace(textToSpeak))

@@ -7,7 +7,7 @@ namespace TTS_Company.Components
 {
     public sealed class PiperVoiceSettings // public as this needs to be able to be accessed by other mods
     {
-        private string modelNameWithoutPathOrExtention = "en_US-hfc_female-medium"; // lowercase as private
+        private string modelNameWithoutPathOrExtention = ExampleConstants.VOICE_MODEL_NAME; // lowercase as private
         private string modelPath; // lowercase as private
 
         public PiperVoiceSettings()
