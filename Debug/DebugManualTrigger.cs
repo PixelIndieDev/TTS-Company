@@ -80,6 +80,8 @@ namespace TTS_Company.Debug
                     "Nutcracker"
                 };
 
+                string para = "Welcome to your first day at The Company. Please remember your quota. Collect all scrap, avoid the coil-heads, and do not make eye contact with the entities. Failure to comply will result in disciplinary action.";
+
                 if (Plugin.instance != null)
                 {
                     if (localPlayer.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
@@ -102,7 +104,7 @@ namespace TTS_Company.Debug
                             randomIndex = Random.Range(0, customStrings.Length);
                             chosenArray[1] = enemyNames[randomIndex];
 
-                            TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i, chosenArray, voice);
+                            TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i, para, voice);
                         }
                     }
                 }

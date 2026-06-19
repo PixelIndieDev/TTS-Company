@@ -62,7 +62,7 @@ namespace TTS_Company.Components
         private void SetMaxConcurrentRequests(int maxConcurrentRequests)
         {
             MaxConcurrentRequests = maxConcurrentRequests;
-            LogConstants.CODE_NEW_VALUE_SET.Log(nameof(TTSGenerator), "maxConcurrentRequests", maxConcurrentRequests);
+            LogConstants.CODE_NEW_VALUE_SET.Log(nameof(TTSGenerator), "maxConcurrentRequests", MaxConcurrentRequests);
         }
 
         internal void SetMaxConcurrentRequests(TTSGenPriority priority)

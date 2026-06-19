@@ -24,14 +24,15 @@ This project is licensed under the **GPL-3.0 License** due to its dependencies a
 ### Third-Party Software & Libraries
 This mod makes use of the following third-party software:
 
-#### Piper TTS
--  **License:** GPL-3.0 License
--  **Usage:** Included as modified source code, compiled into a frozen server executable via PyInstaller.
+#### [Piper TTS](https://github.com/OHF-Voice/piper1-gpl)
+- **License:** GPL-3.0 License
+- **Usage:** Included as modified source code, compiled into a frozen server executable via PyInstaller.
+- **Source Code:** The source code used to build the server executable is included in a `.7z` archive inside the `Assets/piperTTS.zip`.
 
-#### Concentus
+#### [Concentus](https://www.nuget.org/packages/Concentus/)
 - **License:** Microsoft Public License
 - **Usage:** Used as a pure C# library for local Opus audio encoding and decoding.
 
-#### Concentus.OggFile
+#### [Concentus.OggFile](https://www.nuget.org/packages/Concentus.Oggfile/)
 - **License:** MIT License
 - **Usage:** Used alongside Concentus to parse, package, and structure the processed audio data into the `.ogg` file container format.

@@ -187,7 +187,7 @@ namespace TTS_Company.Components
             return GetAssemblyCountForModel(modelName) > 0;
         }
 
-        internal async Task<(bool Success, string Error)> LoadModelAsync(string modelName, bool useCuda, CancellationToken cancellationToken)
+        internal async Task<(bool Success, string Error)> LoadModelAsync(string modelName, CancellationToken cancellationToken)
         {
             Assembly callingAssembly = new StackFrame(1, false).GetMethod()?.DeclaringType?.Assembly;
             if (callingAssembly == null)
@@ -217,7 +217,7 @@ namespace TTS_Company.Components
                 return (true, string.Empty);
             }
 
-            string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"use_cuda\":" + (useCuda ? "true" : "false") + "}\n";
+            string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"use_cuda\":" + "false" + "}\n"; // no CUDA support in the server exe
             var response = await SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
             var result = ToResult(response);
 
@@ -228,7 +228,7 @@ namespace TTS_Company.Components
                     assemblies.Add(callingAssembly);
                 }
 
-                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName, useCuda ? "Cuda" : "CPU");
+                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName, "CPU");
             }
             else
             {

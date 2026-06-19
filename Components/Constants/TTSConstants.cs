@@ -10,7 +10,7 @@ namespace TTS_Company.Components.Constants
         internal static readonly string TTS_COMPANY_EXECUTABLE_LOCATION = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         // piper
-        internal const string PIPER_EXE_NAME = "piper.exe";
+        internal const string PIPER_EXE_NAME = "piper-server.exe";
         internal static readonly string PIPER_FOLDER_LOCATION = Path.Combine(TTS_COMPANY_EXECUTABLE_LOCATION, "PiperTTS");
         internal static readonly string PIPER_EXECUTABLE_LOCATION = Path.Combine(PIPER_FOLDER_LOCATION, PIPER_EXE_NAME);
 
