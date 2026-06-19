@@ -56,19 +56,35 @@ namespace TTS_Company
         // -------------------- generate TTS --------------------
         public static Coroutine PreGenerateTTS(string textToSpeak, PiperVoiceSettings voiceSettings = null)
         {
+            if (string.IsNullOrWhiteSpace(textToSpeak))
+            {
+                return null;
+            }
+
+            return PreGenerateTTS(SplitTextToSpeak(textToSpeak), voiceSettings);
+        }
+
+        public static Coroutine PreGenerateTTS(string[] textsToSpeak, PiperVoiceSettings voiceSettings = null)
+        {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(PreGenerateTTS));
+
+            if (textsToSpeak == null || textsToSpeak.Length == 0)
+            {
+                return null;
+            }
 
             // if null, use the default
             voiceSettings = voiceSettings ?? DefaultVoiceSettings;
 
-            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(textToSpeak, voiceSettings);
+            string combinedText = string.Join("|", textsToSpeak);
+            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(combinedText, voiceSettings);
+
             if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState activeState))
             {
                 if (activeState.Cts != null)
                 {
                     activeState.Cts.Cancel();
                 }
-
                 if (activeState.Coroutine != null)
                 {
                     Plugin.instance.StopCoroutine(activeState.Coroutine);
@@ -77,10 +93,16 @@ namespace TTS_Company
                 ActiveTTSCoroutines.Remove(trackingKeyHash);
             }
 
-            CancellationTokenSource newCts = new CancellationTokenSource(TTSTimeoutHelper.GetTTSTimeout(textToSpeak, voiceSettings));
+            TimeSpan totalTimeout = TimeSpan.Zero;
+            foreach (var text in textsToSpeak)
+            {
+                totalTimeout += TTSTimeoutHelper.GetTTSTimeout(text, voiceSettings);
+            }
+
+            CancellationTokenSource newCts = new CancellationTokenSource(totalTimeout);
             ActiveTTSState newState = new ActiveTTSState { Cts = newCts };
 
-            newState.Coroutine = Plugin.instance.StartCoroutine(PreGenerateTTS(trackingKeyHash, textToSpeak, voiceSettings, newCts));
+            newState.Coroutine = Plugin.instance.StartCoroutine(PreGenerateTTS(trackingKeyHash, textsToSpeak, voiceSettings, newCts));
 
             ActiveTTSCoroutines[trackingKeyHash] = newState;
             return newState.Coroutine;
@@ -139,27 +161,7 @@ namespace TTS_Company
                 return null;
             }
 
-            MatchCollection matches = SentenceRegex.Matches(textToSpeak);
-            List<string> sentences = new List<string>(matches.Count);
-
-            // split sentences
-            // this speeds up generation for paragraphs
-            for (int i = 0; i < matches.Count; i++)
-            {
-                string trimmed = matches[i].Value.Trim();
-                if (trimmed.Length > 0)
-                {
-                    sentences.Add(trimmed);
-                }
-            }
-
-            // regex found nothing
-            if (sentences.Count == 0)
-            {
-                sentences.Add(textToSpeak);
-            }
-
-            return SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, audioSourceName, sentences.ToArray(), voiceSettings, audioSourceSettings);
+            return SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, audioSourceName, SplitTextToSpeak(textToSpeak), voiceSettings, audioSourceSettings);
         }
 
         // -------------------- private functions --------------------
@@ -216,25 +218,30 @@ namespace TTS_Company
             }
         }
 
-        private static IEnumerator PreGenerateTTS(ulong trackingKeyHash, string textToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)
+        private static IEnumerator PreGenerateTTS(ulong trackingKeyHash, string[] textsToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(PreGenerateTTS));
 
             try
             {
-                Task<TTSResult> ttsTask = Plugin._tts.GenerateTTSAsync(textToSpeak, voiceSettings, cts.Token);
-
-                yield return new WaitUntil(() => ttsTask.IsCompleted);
-
-                if (ttsTask.IsFaulted || ttsTask.IsCanceled)
+                Task<TTSResult>[] ttsTasks = new Task<TTSResult>[textsToSpeak.Length];
+                for (int i = 0; i < textsToSpeak.Length; i++)
                 {
-                    yield break;
+                    ttsTasks[i] = Plugin._tts.GenerateTTSAsync(textsToSpeak[i], voiceSettings, cts.Token);
                 }
 
-                TTSResult result = ttsTask.Result;
-                if (!result.Success)
+                for (int i = 0; i < ttsTasks.Length; i++)
                 {
-                    yield break;
+                    Task<TTSResult> currentTask = ttsTasks[i];
+
+                    yield return new WaitUntil(() => currentTask.IsCompleted);
+
+                    // if any audio clip failed, then cancel talking
+                    if (currentTask.IsFaulted || currentTask.IsCanceled || !currentTask.Result.Success)
+                    {
+                        cts.Cancel();
+                        yield break;
+                    }
                 }
             }
             finally
@@ -246,6 +253,31 @@ namespace TTS_Company
                     ActiveTTSCoroutines.Remove(trackingKeyHash);
                 }
             }
+        }
+
+        private static string[] SplitTextToSpeak(string textToSpeak)
+        {
+            MatchCollection matches = SentenceRegex.Matches(textToSpeak);
+            List<string> sentences = new List<string>(matches.Count);
+
+            // split sentences
+            // this speeds up generation for paragraphs
+            for (int i = 0; i < matches.Count; i++)
+            {
+                string trimmed = matches[i].Value.Trim();
+                if (trimmed.Length > 0)
+                {
+                    sentences.Add(trimmed);
+                }
+            }
+
+            // regex found nothing
+            if (sentences.Count == 0)
+            {
+                sentences.Add(textToSpeak);
+            }
+
+            return sentences.ToArray();
         }
     }
 }
