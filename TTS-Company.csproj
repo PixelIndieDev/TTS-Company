@@ -116,6 +116,7 @@
     <Compile Include="Components\Server\Components\BusyGeneration.cs" />
     <Compile Include="Components\Helpers\JSONHelper.cs" />
     <Compile Include="Components\Server\Components\TTSRawResult.cs" />
+    <Compile Include="Components\Server\Managers\VoiceModelMemoryManager.cs" />
     <Compile Include="Components\Server\PiperTTSServer.cs" />
     <Compile Include="Components\TTSGenerator.cs" />
     <Compile Include="Components\Inputs\PiperVoiceSettings.cs" />

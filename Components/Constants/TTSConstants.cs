@@ -19,8 +19,8 @@ namespace TTS_Company.Components.Constants
         internal const int PIPER_SERVER_SHUTDOWN_TIMEOUT_MS = 2000;
 
         // TTS voices
-        private const string TTS_VOICE_FOLDER = "TTS-Company-Voices";
-        internal static readonly string TTS_VOICE_FOLDER_PREFIX = Path.Combine(Paths.PluginPath, TTS_VOICE_FOLDER);
+        internal const string TTS_VOICE_MODELS_FOLDER = "TTS-Company-Voices";
+        internal static readonly string TTS_VOICE_MODELS_FOLDER_LOCATION = Path.Combine(Paths.PluginPath, TTS_VOICE_MODELS_FOLDER);
 
         // TTS voice clips cache
         private const string TTS_VOICE_CACHE_SOUNDCLIPS_FOLDER = "TTS-Company-Voices-Cache";
@@ -35,10 +35,6 @@ namespace TTS_Company.Components.Constants
 
         // errors
         // errors for in the TTSResult
-        internal const string TTS_GENERATION_TO_AUDIO_CLIP_NO_SUCCESS = "OGG -> AudioClip conversion failed";
-        internal const string TTS_GENERATION_OGG_FILE_CREATION_NO_SUCCESS = "Processes succeeded but no OGG file was produced";
-        internal const string TTS_GENERATION_CANCELLED = "TTS generation was cancelled";
-
         internal const string TTS_SERVER_UNAVAILABLE = "TTS server is not available";
         internal const string TTS_VOICE_MODEL_NAME_EMPTY = "voice model name must not be empty";
 
@@ -47,6 +43,8 @@ namespace TTS_Company.Components.Constants
         internal const string TTS_VALI_MODEL_NAME = "Voice model name must be set in settings";
         internal const string TTS_VALI_MODEL_INVALID = "Piper voice model not found or valid";
         internal const string TTS_VALI_SPEECH_RATE = "Speech rate must be > 0";
+
+        internal const string TTS_MEM_MANAGER_UNKNOWN_ASSEMBLY = "Could not determine calling assembly";
 
         // debug
         internal const string DEBUG_AUDIOSOURCE_NAME = "DEBUG_KEYBIND";

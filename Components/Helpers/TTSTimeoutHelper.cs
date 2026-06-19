@@ -5,7 +5,7 @@ namespace TTS_Company.Components.Helpers
 {
     internal static class TTSTimeoutHelper
     {
-        internal static TimeSpan GetTTSTimeout(string[] textsToSpeak, PiperVoiceSettings settings, string combinedText)
+        internal static TimeSpan GetTTSTimeout(string[] textsToSpeak, PiperVoiceSettings settings)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSTimeoutHelper), nameof(GetTTSTimeout));
 
@@ -48,7 +48,7 @@ namespace TTS_Company.Components.Helpers
             float totalBuffer = TTSConstants.TTS_TIMEOUT_BASE_BUFFER + (totalWordCount * TTSConstants.TTS_TIMEOUT_PER_WORD_BUFFER);
             float totalTimeoutInSeconds = estimatedSpeechDuration + totalSilenceDuration + totalBuffer;
 
-            LogConstants.TTS_TIMEOUT_HELPER_TIMEOUT_INFO.Log(nameof(TTSTimeoutHelper), combinedText, totalTimeoutInSeconds);
+            LogConstants.TTS_TIMEOUT_HELPER_TIMEOUT_INFO.Log(nameof(TTSTimeoutHelper), string.Join("|", textsToSpeak), totalTimeoutInSeconds);
 
             TimeSpan calculatedTimeout = TimeSpan.FromSeconds(totalTimeoutInSeconds);
             return calculatedTimeout > minimumTimeout ? calculatedTimeout : minimumTimeout;

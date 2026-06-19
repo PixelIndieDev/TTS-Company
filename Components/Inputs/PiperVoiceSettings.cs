@@ -39,7 +39,7 @@ namespace TTS_Company.Components
 
         private void UpdateModelPath()
         {
-            ModelPath = Path.Combine(TTSConstants.TTS_VOICE_FOLDER_PREFIX, (modelNameWithoutPathOrExtention + ".onnx"));
+            ModelPath = Path.Combine(TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION, (modelNameWithoutPathOrExtention + ".onnx"));
         }
 
         /// <summary>Speech speed multiplier. 1.0 = normal, 0.5 = half speed, 2.0 = double speed</summary>

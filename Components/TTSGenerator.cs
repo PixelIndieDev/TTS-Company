@@ -1,12 +1,10 @@
 ﻿using Concentus;
 using Concentus.Enums;
 using Concentus.Oggfile;
-using Concentus.Structs;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +18,7 @@ namespace TTS_Company.Components
 {
     internal class TTSGenerator
     {
-        private readonly PiperTTSServer _server = new PiperTTSServer();
+        internal readonly PiperTTSServer _server = new PiperTTSServer();
 
         private readonly ConcurrentDictionary<string, BusyGeneration> _inFlightRequests = new ConcurrentDictionary<string, BusyGeneration>();
         internal int MaxConcurrentRequests
@@ -97,6 +95,12 @@ namespace TTS_Company.Components
             if (!ZipHelper.CheckForPiperTTS())
             {
                 LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), TTSConstants.PIPER_EXE_NAME);
+                return false;
+            }
+
+            if (!ZipHelper.CheckForDefaultVoiceModels())
+            {
+                LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), TTSConstants.TTS_VOICE_MODELS_FOLDER);
                 return false;
             }
 
@@ -437,7 +441,7 @@ namespace TTS_Company.Components
             }
         }
 
-        private static bool ValidateInputs(string textToSpeak, PiperVoiceSettings settings)
+        private bool ValidateInputs(string textToSpeak, PiperVoiceSettings settings)
         {
             if (string.IsNullOrWhiteSpace(textToSpeak))
             {
@@ -454,9 +458,9 @@ namespace TTS_Company.Components
                 LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.ModelName", TTSConstants.TTS_VALI_MODEL_NAME);
                 return false;
             }
-            if (string.IsNullOrWhiteSpace(settings.ModelPath) || !File.Exists(settings.ModelPath))
+            if (!_server.IsVoiceModelValid(settings.ModelName))
             {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.ModelPath", TTSConstants.TTS_VALI_MODEL_INVALID);
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - IsVoiceModelValid(settings.ModelName)", TTSConstants.TTS_VALI_MODEL_INVALID);
                 return false;
             }
             if (settings.SpeechRate <= 0f)

@@ -94,7 +94,7 @@ namespace TTS_Company
                 ActiveTTSCoroutines.Remove(trackingKeyHash);
             }
 
-            TimeSpan totalTimeout = TTSTimeoutHelper.GetTTSTimeout(textsToSpeak, voiceSettings, combinedText);
+            TimeSpan totalTimeout = TTSTimeoutHelper.GetTTSTimeout(textsToSpeak, voiceSettings);
 
             CancellationTokenSource newCts = new CancellationTokenSource(totalTimeout);
             ActiveTTSState newState = new ActiveTTSState { Cts = newCts };
@@ -119,8 +119,7 @@ namespace TTS_Company
             voiceSettings = voiceSettings ?? DefaultVoiceSettings;
             audioSourceSettings = audioSourceSettings ?? DefaultAudioSourceSettings;
 
-            string combinedText = string.Join("|", textsToSpeak);
-            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(combinedText, voiceSettings);
+            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId, audioSourceName);
 
             if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState activeState))
             {
@@ -136,7 +135,7 @@ namespace TTS_Company
                 ActiveTTSCoroutines.Remove(trackingKeyHash);
             }
 
-            TimeSpan totalTimeout = TTSTimeoutHelper.GetTTSTimeout(textsToSpeak, voiceSettings, combinedText);
+            TimeSpan totalTimeout = TTSTimeoutHelper.GetTTSTimeout(textsToSpeak, voiceSettings);
 
             CancellationTokenSource newCts = new CancellationTokenSource(totalTimeout);
             ActiveTTSState newState = new ActiveTTSState { Cts = newCts };

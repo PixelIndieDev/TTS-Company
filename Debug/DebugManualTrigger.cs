@@ -96,7 +96,7 @@ namespace TTS_Company.Debug
                         for (int i = 0; i < 1; i++)
                         {
                             PiperVoiceSettings voice = new PiperVoiceSettings();
-                            //voice.ModelName = GetRandomVoice();
+                            voice.ModelName = GetRandomVoice();
 
                             int randomIndex = Random.Range(0, allCustomStrings.Length);
                             string[] chosenArray = allCustomStrings[0];

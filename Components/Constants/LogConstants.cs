@@ -78,5 +78,12 @@ namespace TTS_Company.Components.Constants
         internal static readonly LogMessage PIPER_TTS_SERVER_STARTUP_ISSUE = new LogMessage(LogLevel.Fatal, "Server process exited during startup (exit code {1} | stderr: {2})");
         internal static readonly LogMessage PIPER_TTS_SERVER_OUTPUT_DRAIN = new LogMessage(LogLevel.Warning, "Piper tts server drain: {1}");
         internal static readonly LogMessage PIPER_TTS_VOICE_MODEL_NOT_LOADED = new LogMessage(LogLevel.Warning, "Voice model '{1}' was not loaded beforehand as it has 0 assemblies that want it");
+
+        // -------------------- voice model memory manager --------------------
+        internal static readonly LogMessage VOICE_MODEL_MEM_MANAGER_POOL_LIMIT_REACHED = new LogMessage(LogLevel.Info, "Memory pool limit reached, unloaded {1}");
+        // errors
+        internal static readonly LogMessage VOICE_MODEL_MEM_MANAGER_NO_MODEL_TO_EVICT = new LogMessage(LogLevel.Error, "Memory pool exceeded, but no models available to evict for {1}");
+        // debug
+        internal static readonly LogMessage VOICE_MODEL_MEM_MANAGER_FOUND_VOICE_MODEL_WITH_SIZE = new LogMessage(LogLevel.Debug, "Found voice model named: '{1}' with file size: '{2}'");
     }
 }

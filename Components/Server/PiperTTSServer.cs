@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -7,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,8 +25,12 @@ namespace TTS_Company.Components
         internal bool IsRunning => _process != null && !_process.HasExited;
         internal int Port => _port;
 
-        private readonly ConcurrentDictionary<string, HashSet<Assembly>> _modelAssemblies = new ConcurrentDictionary<string, HashSet<Assembly>>(StringComparer.OrdinalIgnoreCase);
-        internal IReadOnlyList<string> LoadedModels => _modelAssemblies.Keys.ToList();
+        private readonly VoiceModelMemoryManager _memoryManager;
+
+        public PiperTTSServer()
+        {
+            _memoryManager = new VoiceModelMemoryManager(this);
+        }
 
         internal async Task<bool> StartAsync(int startupTimeoutMs, CancellationToken cancellationToken)
         {
@@ -43,13 +45,14 @@ namespace TTS_Company.Components
                 return false;
             }
 
-            if (!Directory.Exists(TTSConstants.TTS_VOICE_FOLDER_PREFIX))
+            if (!Directory.Exists(TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION))
             {
-                LogConstants.PIPER_TTS_SERVER_VOICE_FOLDER_NOT_FOUND.Log(nameof(PiperTTSServer), TTSConstants.TTS_VOICE_FOLDER_PREFIX);
+                LogConstants.PIPER_TTS_SERVER_VOICE_FOLDER_NOT_FOUND.Log(nameof(PiperTTSServer), TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION);
                 return false;
             }
+            _memoryManager.InitializeModelRegistry();
 
-            string normalizedModelDir = TTSConstants.TTS_VOICE_FOLDER_PREFIX.TrimEnd('\\', '/');
+            string normalizedModelDir = TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION.TrimEnd('\\', '/');
             var psi = new ProcessStartInfo
             {
                 FileName = TTSConstants.PIPER_EXECUTABLE_LOCATION,
@@ -170,124 +173,63 @@ namespace TTS_Company.Components
             }
         }
 
-        internal int GetAssemblyCountForModel(string modelName)
-        {
-            if (_modelAssemblies.TryGetValue(modelName, out var assemblies))
-            {
-                lock (assemblies)
-                {
-                    return assemblies.Count;
-                }
-            }
-            return 0;
-        }
-
         internal bool HasVoiceModelBeenLoaded(string modelName)
         {
-            return GetAssemblyCountForModel(modelName) > 0;
+            return _memoryManager.HasVoiceModelBeenLoaded(modelName);
+        }
+
+        internal bool IsVoiceModelValid(string modelName)
+        {
+            return _memoryManager.IsVoiceModelValid(modelName);
         }
 
         internal async Task<(bool Success, string Error)> LoadModelAsync(string modelName, CancellationToken cancellationToken)
         {
-            Assembly callingAssembly = new StackFrame(1, false).GetMethod()?.DeclaringType?.Assembly;
-            if (callingAssembly == null)
-            {
-                return (false, "Could not determine calling assembly");
-            }
-
-            var assemblies = _modelAssemblies.GetOrAdd(modelName, _ => new HashSet<Assembly>());
-
-            bool needsServerLoad;
-            lock (assemblies)
-            {
-                if (assemblies.Contains(callingAssembly))
-                {
-                    return (true, string.Empty);
-                }
-
-                needsServerLoad = (assemblies.Count == 0);
-            }
-
-            if (!needsServerLoad)
-            {
-                lock (assemblies) 
-                {
-                    assemblies.Add(callingAssembly);
-                }
-                return (true, string.Empty);
-            }
-
-            string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"use_cuda\":" + "false" + "}\n"; // no CUDA support in the server exe
-            var response = await SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
-            var result = ToResult(response);
-
-            if (result.Success)
-            {
-                lock (assemblies) 
-                {
-                    assemblies.Add(callingAssembly);
-                }
-
-                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName, "CPU");
-            }
-            else
-            {
-                lock (assemblies)
-                {
-                    if (assemblies.Count == 0)
-                    {
-                        _modelAssemblies.TryRemove(modelName, out _);
-                    }
-                }
-            }
-
-            return result;
+            return await _memoryManager.LoadModelAsync(modelName, cancellationToken);
         }
 
         internal async Task<(bool Success, string Error)> UnloadModelAsync(string modelName, CancellationToken cancellationToken)
         {
-            Assembly callingAssembly = new StackFrame(1, false).GetMethod()?.DeclaringType?.Assembly;
-            if (callingAssembly == null)
-            {
-                return (false, "Could not determine calling assembly.");
-            }
+            return await _memoryManager.UnloadModelAsync(modelName, cancellationToken);
+        }
 
-            if (!_modelAssemblies.TryGetValue(modelName, out var assemblies))
+        internal async Task<Dictionary<string, object>> SendSimpleCommandAsync(string requestJsonLine, CancellationToken cancellationToken, int timeoutMs = 30000)
+        {
+            using (var client = new TcpClient())
+            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
             {
-                return (true, string.Empty);
-            }
+                cts.CancelAfter(timeoutMs);
 
-            lock (assemblies)
-            {
-                if (!assemblies.Contains(callingAssembly))
+                using (cts.Token.Register(() =>
                 {
-                    return (true, string.Empty);
-                }
-
-                if (assemblies.Count != 1)
-                {
-                    assemblies.Remove(callingAssembly);
-                    return (true, string.Empty);
-                }
-            }
-
-            string json = "{\"command\":\"unload_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\"}\n";
-            var response = await SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
-            var result = ToResult(response);
-
-            if (result.Success)
-            {
-                lock (assemblies)
-                {
-                    assemblies.Remove(callingAssembly);
-                    if (assemblies.Count == 0)
+                    try
                     {
-                        _modelAssemblies.TryRemove(modelName, out _);
+                        client.Close();
                     }
+                    catch
+                    {
+                        LogConstants.CODE_GENERIC_CATCH.Log(nameof(PiperTTSServer), "SendSimpleCommandAsync");
+                    }
+                }))
+                {
+                    await ConnectAsync(client, _port, cts.Token).ConfigureAwait(false);
+                    client.NoDelay = true;
+                    NetworkStream stream = client.GetStream();
+
+                    byte[] bytes = Encoding.UTF8.GetBytes(requestJsonLine);
+                    await stream.WriteAsync(bytes, 0, bytes.Length, cts.Token).ConfigureAwait(false);
+
+                    (string line, _) = await ReadLineWithLeftoverAsync(stream, cts.Token).ConfigureAwait(false);
+                    return JSONHelper.ParseFlatObject(line);
                 }
             }
+        }
 
-            return result;
+        internal (bool Success, string Error) ToResult(Dictionary<string, object> response)
+        {
+            bool ok = response.TryGetValue("status", out var status) && (status as string) == "ok";
+            string error = ok ? null : (response.TryGetValue("message", out var msg) ? msg as string : "unknown error");
+            return (ok, error);
         }
 
         // check if the server is still alive
@@ -306,11 +248,28 @@ namespace TTS_Company.Components
 
         internal async Task<TTSRawResult> SynthesizeAsync(string text, string hash, PiperVoiceSettings options, CancellationToken cancellationToken)
         {
-            if (GetAssemblyCountForModel(options.ModelName) == 0)
+            Plugin.logSource.LogInfo("voice model - " + options.ModelName);
+            if (!_memoryManager.HasVoiceModelBeenLoaded(options.ModelName))
             {
+                Plugin.logSource.LogInfo("voice model has not been loaded - " + options.ModelName);
                 LogConstants.PIPER_TTS_VOICE_MODEL_NOT_LOADED.Log(nameof(PiperTTSServer), options.ModelName);
                 return TTSRawResult.Cancelled();
             }
+
+            if (_memoryManager.WasVoiceModelEvicted(options.ModelName))
+            {
+                Plugin.logSource.LogInfo("voice model was evicted - " + options.ModelName);
+                var result = await _memoryManager.ReloadModelAsync(options.ModelName, cancellationToken);
+                if (!result.Success)
+                {
+                    Plugin.logSource.LogInfo("voice model was evicted, but no success");
+                    return TTSRawResult.Cancelled();
+                }
+            } else
+            {
+                _memoryManager.UpdateLastUse(options.ModelName);
+            }
+            
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -441,38 +400,6 @@ namespace TTS_Company.Components
             }
         }
 
-        private async Task<Dictionary<string, object>> SendSimpleCommandAsync(string requestJsonLine, CancellationToken cancellationToken, int timeoutMs = 30000)
-        {
-            using (var client = new TcpClient())
-            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
-            {
-                cts.CancelAfter(timeoutMs);
-
-                using (cts.Token.Register(() => 
-                { 
-                    try 
-                    {
-                        client.Close();
-                    } 
-                    catch
-                    {
-                        LogConstants.CODE_GENERIC_CATCH.Log(nameof(PiperTTSServer), "SendSimpleCommandAsync");
-                    }
-                }))
-                {
-                    await ConnectAsync(client, _port, cts.Token).ConfigureAwait(false);
-                    client.NoDelay = true;
-                    NetworkStream stream = client.GetStream();
-
-                    byte[] bytes = Encoding.UTF8.GetBytes(requestJsonLine);
-                    await stream.WriteAsync(bytes, 0, bytes.Length, cts.Token).ConfigureAwait(false);
-
-                    (string line, _) = await ReadLineWithLeftoverAsync(stream, cts.Token).ConfigureAwait(false);
-                    return JSONHelper.ParseFlatObject(line);
-                }
-            }
-        }
-
         private static async Task ConnectAsync(TcpClient client, int port, CancellationToken cancellationToken)
         {
             using (cancellationToken.Register(() => 
@@ -544,13 +471,6 @@ namespace TTS_Company.Components
             {
                 LogConstants.CODE_GENERIC_CATCH.Log(nameof(PiperTTSServer), "DrainStreamAsync");
             }
-        }
-
-        private static (bool Success, string Error) ToResult(Dictionary<string, object> response)
-        {
-            bool ok = response.TryGetValue("status", out var status) && (status as string) == "ok";
-            string error = ok ? null : (response.TryGetValue("message", out var msg) ? msg as string : "unknown error");
-            return (ok, error);
         }
 
         private static void TryKill(Process process)
