@@ -10,6 +10,7 @@ using TTS_Company.Components.Helpers;
 using TTS_Company.Components.Managers;
 using Unity.Netcode;
 using UnityEngine;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace TTS_Company
 {
@@ -93,11 +94,7 @@ namespace TTS_Company
                 ActiveTTSCoroutines.Remove(trackingKeyHash);
             }
 
-            TimeSpan totalTimeout = TimeSpan.Zero;
-            foreach (var text in textsToSpeak)
-            {
-                totalTimeout += TTSTimeoutHelper.GetTTSTimeout(text, voiceSettings);
-            }
+            TimeSpan totalTimeout = TTSTimeoutHelper.GetTTSTimeout(textsToSpeak, voiceSettings, combinedText);
 
             CancellationTokenSource newCts = new CancellationTokenSource(totalTimeout);
             ActiveTTSState newState = new ActiveTTSState { Cts = newCts };
@@ -139,11 +136,7 @@ namespace TTS_Company
                 ActiveTTSCoroutines.Remove(trackingKeyHash);
             }
 
-            TimeSpan totalTimeout = TimeSpan.Zero;
-            foreach (var text in textsToSpeak)
-            {
-                totalTimeout += TTSTimeoutHelper.GetTTSTimeout(text, voiceSettings);
-            }
+            TimeSpan totalTimeout = TTSTimeoutHelper.GetTTSTimeout(textsToSpeak, voiceSettings, combinedText);
 
             CancellationTokenSource newCts = new CancellationTokenSource(totalTimeout);
             ActiveTTSState newState = new ActiveTTSState { Cts = newCts };
