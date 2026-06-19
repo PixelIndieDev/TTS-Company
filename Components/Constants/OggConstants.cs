@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace TTS_Company.Components.Constants
+﻿namespace TTS_Company.Components.Constants
 {
     internal static class OggConstants
     {

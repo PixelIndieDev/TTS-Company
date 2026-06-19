@@ -1,5 +1,4 @@
 ﻿using System.Runtime.InteropServices;
-using static IngamePlayerSettings;
 
 namespace TTS_Company.Components.Helpers
 {
@@ -13,19 +12,6 @@ namespace TTS_Company.Components.Helpers
         {
             [FieldOffset(0)] public float FloatValue;
             [FieldOffset(0)] public int IntValue;
-        }
-
-        internal static ulong GetTrackingKeyHashPreGenerating( ulong networkObjectId, string audioSourceName)
-        {
-            unchecked
-            {
-                ulong hash = OffsetBasis;
-
-                CombineULong(ref hash, networkObjectId);
-                CombineString(ref hash, audioSourceName);
-
-                return hash;
-            }
         }
 
         internal static ulong GetTrackingKeyHash(string textToSpeak, PiperVoiceSettings settings)
@@ -102,16 +88,6 @@ namespace TTS_Company.Components.Helpers
             hash *= Prime;
             hash ^= (byte)((roundedBits >> 24) & 0xFF);
             hash *= Prime;
-        }
-
-        private static void CombineULong(ref ulong hash, ulong value)
-        {
-            for (int i = 0; i < 8; i++)
-            {
-                hash ^= (byte)(value & 0xFF);
-                hash *= Prime;
-                value >>= 8;
-            }
         }
     }
 }

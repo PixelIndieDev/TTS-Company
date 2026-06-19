@@ -4,7 +4,7 @@ using TTS_Company.Components.Constants;
 
 namespace TTS_Company.Components.Helpers
 {
-    internal static class TTSTimeoutHelper // not really needed as an class at this point, but it is neater
+    internal static class TTSTimeoutHelper
     {
         internal static TimeSpan GetTTSTimeout(string textToSpeak, PiperVoiceSettings settings)
         {
