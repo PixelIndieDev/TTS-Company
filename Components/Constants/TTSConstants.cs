@@ -39,6 +39,15 @@ namespace TTS_Company.Components.Constants
         internal const string TTS_GENERATION_OGG_FILE_CREATION_NO_SUCCESS = "Processes succeeded but no OGG file was produced";
         internal const string TTS_GENERATION_CANCELLED = "TTS generation was cancelled";
 
+        internal const string TTS_SERVER_UNAVAILABLE = "TTS server is not available";
+        internal const string TTS_VOICE_MODEL_NAME_EMPTY = "voice model name must not be empty";
+
+        internal const string TTS_VALI_TEXT_TO_SPEAK = "TTS text cannot be empty";
+        internal const string TTS_VALI_SETTINGS = "PiperVoiceSettings cannot be NULL";
+        internal const string TTS_VALI_MODEL_NAME = "Voice model name must be set in settings";
+        internal const string TTS_VALI_MODEL_INVALID = "Piper voice model not found or valid";
+        internal const string TTS_VALI_SPEECH_RATE = "Speech rate must be > 0";
+
         // debug
         internal const string DEBUG_AUDIOSOURCE_NAME = "DEBUG_KEYBIND";
     }

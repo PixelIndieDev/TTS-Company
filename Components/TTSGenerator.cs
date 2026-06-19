@@ -147,12 +147,12 @@ namespace TTS_Company.Components
         {
             if (!_isAvailable || _disposed)
             {
-                return Task.FromResult((false, "TTS server is not available."));
+                return Task.FromResult((false, TTSConstants.TTS_SERVER_UNAVAILABLE));
             }
 
             if (string.IsNullOrWhiteSpace(voiceName))
             {
-                return Task.FromResult((false, "voiceName must not be empty."));
+                return Task.FromResult((false, TTSConstants.TTS_VOICE_MODEL_NAME_EMPTY));
             }
 
             return _server.LoadModelAsync(voiceName, cancellationToken);
@@ -162,12 +162,12 @@ namespace TTS_Company.Components
         {
             if (!_isAvailable || _disposed)
             {
-                return Task.FromResult((false, "TTS server is not available."));
+                return Task.FromResult((false, TTSConstants.TTS_SERVER_UNAVAILABLE));
             }
 
             if (string.IsNullOrWhiteSpace(voiceName))
             {
-                return Task.FromResult((false, "voiceName must not be empty."));
+                return Task.FromResult((false, TTSConstants.TTS_VOICE_MODEL_NAME_EMPTY));
             }
 
             return _server.UnloadModelAsync(voiceName, cancellationToken);
@@ -182,7 +182,7 @@ namespace TTS_Company.Components
         {
             if (!_isAvailable || _disposed)
             {
-                return new TTSResult { AudioClip = null, Success = false, Error = "TTS server is not available." };
+                return new TTSResult { AudioClip = null, Success = false, Error = TTSConstants.TTS_SERVER_UNAVAILABLE };
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -346,7 +346,6 @@ namespace TTS_Company.Components
                 int indexLeft = (int)Math.Floor(srcIndex);
                 int indexRight = Math.Min(indexLeft + 1, input.Length - 1);
                 double t = srcIndex - indexLeft;
-
                 output[i] = (short)((1 - t) * input[indexLeft] + t * input[indexRight]);
             }
             return output;
@@ -442,27 +441,27 @@ namespace TTS_Company.Components
         {
             if (string.IsNullOrWhiteSpace(textToSpeak))
             {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - textToSpeak", "TTS text cannot be empty");
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - textToSpeak", TTSConstants.TTS_VALI_TEXT_TO_SPEAK);
                 return false;
             }
             if (settings == null)
             {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings", "settings cannot be NULL");
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings", TTSConstants.TTS_VALI_SETTINGS);
                 return false;
             }
             if (string.IsNullOrWhiteSpace(settings.ModelName))
             {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.ModelName", "ModelPath must be set in settings");
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.ModelName", TTSConstants.TTS_VALI_MODEL_NAME);
                 return false;
             }
             if (string.IsNullOrWhiteSpace(settings.ModelPath) || !File.Exists(settings.ModelPath))
             {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.ModelPath", "Piper model not found or valid");
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.ModelPath", TTSConstants.TTS_VALI_MODEL_INVALID);
                 return false;
             }
             if (settings.SpeechRate <= 0f)
             {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.SpeechRate", "SpeechRate must be > 0");
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), "ValidateInputs - settings.SpeechRate", TTSConstants.TTS_VALI_SPEECH_RATE);
                 return false;
             }
             // checks passed
