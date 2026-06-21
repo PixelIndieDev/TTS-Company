@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Reflection;
 using TTS_Company.Components.Constants;
-using TTS_Company.Debug;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -24,7 +23,6 @@ namespace TTS_Company.Patches
             UnityEngine.Object.DontDestroyOnLoad(TTSSyncPrefab);
 
             var networkObject = TTSSyncPrefab.AddComponent<NetworkObject>();
-            //TTSSyncPrefab.AddComponent<TTSNetworkSyncManager>();
 
             var fieldInfo = typeof(NetworkObject).GetField("GlobalObjectIdHash", BindingFlags.Instance | BindingFlags.NonPublic);
             fieldInfo.SetValue(networkObject, GetHash(ModInfo.modGUID));

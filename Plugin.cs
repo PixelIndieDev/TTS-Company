@@ -17,6 +17,7 @@ namespace TTS_Company
     [BepInPlugin(ModInfo.modGUID, ModInfo.modName, ModInfo.modVersion)]
     [BepInDependency("com.rune580.LethalCompanyInputUtils")]
     [BepInDependency("ainavt.lc.lethalconfig")]
+    [BepInDependency("LethalNetworkAPI")]
     public class Plugin : BaseUnityPlugin
     {
         private readonly Harmony harmony = new Harmony(ModInfo.modGUID);
@@ -57,11 +58,12 @@ namespace TTS_Company
             LethalConfigManager.AddConfigItem(configEntryPriorityValue);
 
             _tts.SetMaxConcurrentRequests(configEntryPriority.Value);
-            OnAwake();
 
             harmony.PatchAll(typeof(NetworkPatch));
 
             LogConstants.PLUGIN_LOADED.Log(nameof(Plugin), ModInfo.modName, ModInfo.modVersion);
+
+            OnAwake();
         }
 
         async void OnAwake()
@@ -73,10 +75,10 @@ namespace TTS_Company
             }
 
             TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_female-medium");
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-norman-medium");
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_GB-alba-medium");
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_male-medium");
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("nl_NL-pim-medium");
+            //TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-norman-medium");
+            //TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_GB-alba-medium");
+            //TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_male-medium");
+            //TTSCompanyAPI.PreloadTTSVoiceModelInMemory("nl_NL-pim-medium");
         }
 
         private bool OnWantsToQuit()

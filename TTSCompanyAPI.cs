@@ -24,7 +24,6 @@ namespace TTS_Company
         }
 
         private static readonly PiperVoiceSettings DefaultVoiceSettings = new PiperVoiceSettings();
-        private static readonly TTSAudioSourceSettings DefaultAudioSourceSettings = new TTSAudioSourceSettings();
 
         // matches sentence endings in ., !, or ?, or catches the trailing text
         private static readonly Regex SentenceRegex = new Regex(@"[^.!?]+[.!?]?", RegexOptions.Compiled);
@@ -60,7 +59,7 @@ namespace TTS_Company
         /// <param name="audioSourceName">A unique string identifier/name for this specific audio source.</param>
         /// <param name="audioSourceSettings">Optional configuration settings for the spatial/audio properties. Falls back to default settings if null.</param>
         /// <returns><c>true</c> if the audio source was successfully added; otherwise, <c>false</c>.</returns>
-        public static bool AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, TTSAudioSourceSettings audioSourceSettings = null)
+        public static bool AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, TTSAudioSourceSettings audioSourceSettings = default)
         {
             if (!networkObjectRefOfSpeaker.TryGet(out NetworkObject networkObject))
             {
@@ -68,7 +67,6 @@ namespace TTS_Company
                 return false;
             }
 
-            audioSourceSettings = audioSourceSettings ?? DefaultAudioSourceSettings; // if null, use the default
             return TTSAudioSourceManager.AddPermanentTTSAudioSource(networkObject.gameObject, audioSourceName, audioSourceSettings);
         }
 
@@ -147,7 +145,7 @@ namespace TTS_Company
         /// <param name="voiceSettings">Optional Piper voice configuration. Falls back to default settings if null.</param>
         /// <param name="audioSourceSettings">Optional audio spatial configuration. Falls back to default settings if null.</param>
         /// <returns>The running Unity <see cref="Coroutine"/> managing the generation and playback sequence, or <c>null</c> if the array is empty.</returns>
-        public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string[] textsToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
+        public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string[] textsToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = default)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(SpeakTTSAtNetworkObject));
 
@@ -158,7 +156,6 @@ namespace TTS_Company
 
             // if null, use the default
             voiceSettings = voiceSettings ?? DefaultVoiceSettings;
-            audioSourceSettings = audioSourceSettings ?? DefaultAudioSourceSettings;
 
             ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId, audioSourceName);
 
@@ -196,7 +193,7 @@ namespace TTS_Company
         /// <param name="voiceSettings">Optional Piper voice configuration. Falls back to default settings if null.</param>
         /// <param name="audioSourceSettings">Optional audio spatial configuration. Falls back to default settings if null.</param>
         /// <returns>The running Unity <see cref="Coroutine"/> managing the generation and playback sequence, or <c>null</c> if text is empty.</returns>
-        public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
+        public static Coroutine SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string audioSourceName, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = default)
         {
             if (string.IsNullOrWhiteSpace(textToSpeak))
             {

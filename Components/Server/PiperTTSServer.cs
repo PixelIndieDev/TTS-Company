@@ -265,11 +265,12 @@ namespace TTS_Company.Components
                     Plugin.logSource.LogInfo("voice model was evicted, but no success");
                     return TTSRawResult.Cancelled();
                 }
-            } else
+            }
+            else
             {
                 _memoryManager.UpdateLastUse(options.ModelName);
             }
-            
+
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -282,7 +283,7 @@ namespace TTS_Company.Components
 
                 using (cancellationToken.Register(() =>
                 {
-                    try 
+                    try
                     {
                         client.Close();
                     }
@@ -402,7 +403,7 @@ namespace TTS_Company.Components
 
         private static async Task ConnectAsync(TcpClient client, int port, CancellationToken cancellationToken)
         {
-            using (cancellationToken.Register(() => 
+            using (cancellationToken.Register(() =>
             {
                 try
                 {

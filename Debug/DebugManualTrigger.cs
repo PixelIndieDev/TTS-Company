@@ -77,7 +77,8 @@ namespace TTS_Company.Debug
                     "Hoarding Bug",
                     "Hygrodere",
                     "Jester",
-                    "Nutcracker"
+                    "Nutcracker",
+                    "Jerma985"
                 };
 
                 string para = "Welcome to your first day at The Company. Please remember your quota. Collect all scrap, avoid the coil-heads, and do not make eye contact with the entities. Failure to comply will result in disciplinary action.";
@@ -90,13 +91,13 @@ namespace TTS_Company.Debug
 
                         for (int i = 0; i < 8; i++)
                         {
-                            TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i);
+                            //TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i);
                         }
 
                         for (int i = 0; i < 1; i++)
                         {
                             PiperVoiceSettings voice = new PiperVoiceSettings();
-                            voice.ModelName = GetRandomVoice();
+                            //voice.ModelName = GetRandomVoice();
 
                             int randomIndex = Random.Range(0, allCustomStrings.Length);
                             string[] chosenArray = allCustomStrings[0];
@@ -104,7 +105,7 @@ namespace TTS_Company.Debug
                             randomIndex = Random.Range(0, customStrings.Length);
                             chosenArray[1] = enemyNames[randomIndex];
 
-                            TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i, para, voice);
+                            TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i, RandomVoiceLines[0], voice);
                         }
                     }
                 }

@@ -44,33 +44,31 @@ namespace TTS_Company.Components.Managers.Components
             return true;
         }
 
-        internal bool UpdateAudioSourceSettings(string audioSourceIdentifier, TTSAudioSourceSettings audioSourceSettings)
+        internal bool UpdateAudioSourceSettings(string audioSourceIdentifier, TTSAudioSourceSettings audioSourceSettings = default)
         {
-            if (audioSourceSettings == null) return false;
-
             GetAudioSource(audioSourceIdentifier, out AudioSource audioSource);
             if (audioSource == null) return false;
 
             audioSource.spatialize = false;
             audioSource.spatializePostEffects = false;
 
-            audioSource.bypassEffects = audioSourceSettings.bypassEffects;
-            audioSource.bypassListenerEffects = audioSourceSettings.bypassListenerEffects;
-            audioSource.bypassReverbZones = audioSourceSettings.bypassReverbZones;
+            audioSource.bypassEffects = audioSourceSettings._bypassEffects;
+            audioSource.bypassListenerEffects = audioSourceSettings._bypassListenerEffects;
+            audioSource.bypassReverbZones = audioSourceSettings._bypassReverbZones;
 
             audioSource.playOnAwake = false; // call play() manually, so not play on awake
 
             audioSource.loop = false;
-            audioSource.priority = audioSourceSettings.priority;
-            audioSource.volume = audioSourceSettings.volume;
+            audioSource.priority = audioSourceSettings._priority;
+            audioSource.volume = audioSourceSettings._volume;
 
-            audioSource.spatialBlend = audioSourceSettings.spatialBlend;
-            audioSource.reverbZoneMix = audioSourceSettings.reverbZoneMix;
+            audioSource.spatialBlend = audioSourceSettings._spatialBlend;
+            audioSource.reverbZoneMix = audioSourceSettings._reverbZoneMix;
 
-            audioSource.dopplerLevel = audioSourceSettings.dopplerLevel;
-            audioSource.minDistance = audioSourceSettings.minDistance;
-            audioSource.maxDistance = audioSourceSettings.maxDistance;
-            audioSource.rolloffMode = audioSourceSettings.rolloffMode;
+            audioSource.dopplerLevel = audioSourceSettings._dopplerLevel;
+            audioSource.minDistance = audioSourceSettings._minDistance;
+            audioSource.maxDistance = audioSourceSettings._maxDistance;
+            audioSource.rolloffMode = audioSourceSettings._rolloffMode;
 
             return true;
         }
