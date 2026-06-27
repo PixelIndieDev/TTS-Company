@@ -22,14 +22,13 @@ namespace TTS_Company.Patches
             TTSSyncPrefab.hideFlags |= HideFlags.HideAndDontSave;
             UnityEngine.Object.DontDestroyOnLoad(TTSSyncPrefab);
 
-            var networkObject = TTSSyncPrefab.AddComponent<NetworkObject>();
+            NetworkObject networkObject = TTSSyncPrefab.AddComponent<NetworkObject>();
 
-            var fieldInfo = typeof(NetworkObject).GetField("GlobalObjectIdHash", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo fieldInfo = typeof(NetworkObject).GetField("GlobalObjectIdHash", BindingFlags.Instance | BindingFlags.NonPublic);
             fieldInfo.SetValue(networkObject, GetHash(ModInfo.modGUID));
 
             NetworkManager.Singleton.PrefabHandler.AddNetworkPrefab(TTSSyncPrefab);
 
-            Plugin.logSource.LogInfo("[TTSSync] Registered TTSNetworkSyncManager prefab.");
             LogConstants.CODE_TRIGGERED.Log(nameof(NetworkPatch), nameof(RegisterPrefab));
 
             return;

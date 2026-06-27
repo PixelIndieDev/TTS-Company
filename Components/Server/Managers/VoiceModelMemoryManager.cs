@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using TTS_Company.Components.Constants;
+using TTS_Company.Components.Helpers;
 
 namespace TTS_Company.Components.Server.Components
 {
@@ -21,20 +22,20 @@ namespace TTS_Company.Components.Server.Components
 
         private readonly ConcurrentDictionary<string, long> _modelSizes = new ConcurrentDictionary<string, long>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, DateTime> _modelLastAccess = new ConcurrentDictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
-        private readonly ConcurrentDictionary<string, HashSet<Assembly>> _modelAssemblies = new ConcurrentDictionary<string, HashSet<Assembly>>(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, HashSet<ulong>> _modelAssemblies = new ConcurrentDictionary<string, HashSet<ulong>>(StringComparer.OrdinalIgnoreCase);
 
         private readonly ConcurrentDictionary<string, bool> _evictedModels = new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
-        public VoiceModelMemoryManager(PiperTTSServer piperServer)
+        internal VoiceModelMemoryManager(PiperTTSServer piperServer)
         {
             _piperServer = piperServer ?? throw new ArgumentNullException(nameof(piperServer));
             _maxMemoryPoolBytes = ConvertMBToLong(DetermineOptimalPoolSizeMegabytes());
         }
 
-        public void InitializeModelRegistry()
+        internal void InitializeModelRegistry()
         {
-            var dirInfo = new DirectoryInfo(TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION);
-            foreach (var file in dirInfo.EnumerateFiles("*.onnx", SearchOption.TopDirectoryOnly))
+            DirectoryInfo dirInfo = new DirectoryInfo(TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION);
+            foreach (FileInfo file in dirInfo.EnumerateFiles("*.onnx", SearchOption.TopDirectoryOnly))
             {
                 string modelName = Path.GetFileNameWithoutExtension(file.Name);
                 _modelSizes[modelName] = file.Length;
@@ -45,7 +46,7 @@ namespace TTS_Company.Components.Server.Components
 
         internal int GetAssemblyCountForModel(string modelName)
         {
-            if (_modelAssemblies.TryGetValue(modelName, out var assemblies))
+            if (_modelAssemblies.TryGetValue(modelName, out HashSet<ulong> assemblies))
             {
                 lock (assemblies)
                 {
@@ -77,6 +78,30 @@ namespace TTS_Company.Components.Server.Components
             _modelLastAccess[modelName] = DateTime.UtcNow;
         }
 
+        internal string GetRandomTTSVoiceName()
+        {
+            int totalCount = _modelAssemblies.Count;
+            if (totalCount == 0)
+            {
+                return null;
+            }
+
+            // Pick a target index
+            int targetIndex = UnityEngine.Random.Range(0, totalCount);
+            int currentIndex = 0;
+
+            // Iterate through the dictionary without calling '.Keys'
+            foreach (KeyValuePair<string, HashSet<ulong>> kvp in _modelAssemblies)
+            {
+                if (currentIndex == targetIndex)
+                {
+                    return kvp.Key;
+                }
+                currentIndex++;
+            }
+            return string.Empty;
+        }
+
         internal async Task<(bool Success, string Error)> ReloadModelAsync(string modelName, CancellationToken cancellationToken)
         {
             UpdateLastUse(modelName);
@@ -84,8 +109,8 @@ namespace TTS_Company.Components.Server.Components
             await EnforceDynamicMemoryLimitsAsync(modelName, cancellationToken).ConfigureAwait(false);
 
             string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"use_cuda\":" + "false" + "}\n";
-            var response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
-            var result = _piperServer.ToResult(response);
+            Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
+            (bool Success, string Error) result = _piperServer.ToResult(response);
             if (result.Success)
             {
                 _evictedModels.TryRemove(modelName, out _);
@@ -104,7 +129,8 @@ namespace TTS_Company.Components.Server.Components
             }
 
             UpdateLastUse(modelName);
-            var assemblies = _modelAssemblies.GetOrAdd(modelName, _ => new HashSet<Assembly>());
+            ulong callingAHash = HashHelper.GetCallingAssemblyHash(callingAssembly);
+            HashSet<ulong> assemblies = _modelAssemblies.GetOrAdd(modelName, _ => new HashSet<ulong>());
 
             bool needsServerLoad;
             lock (assemblies)
@@ -115,7 +141,7 @@ namespace TTS_Company.Components.Server.Components
                 }
                 else
                 {
-                    if (assemblies.Contains(callingAssembly))
+                    if (assemblies.Contains(callingAHash))
                     {
                         return (true, string.Empty);
                     }
@@ -127,7 +153,7 @@ namespace TTS_Company.Components.Server.Components
             {
                 lock (assemblies)
                 {
-                    assemblies.Add(callingAssembly);
+                    assemblies.Add(callingAHash);
                 }
                 return (true, string.Empty);
             }
@@ -135,15 +161,15 @@ namespace TTS_Company.Components.Server.Components
             await EnforceDynamicMemoryLimitsAsync(modelName, cancellationToken);
 
             string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"use_cuda\":" + "false" + "}\n"; // no CUDA support in the server exe
-            var response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
-            var result = _piperServer.ToResult(response);
+            Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
+            (bool Success, string Error) result = _piperServer.ToResult(response);
 
             if (result.Success)
             {
                 _evictedModels.TryRemove(modelName, out _);
                 lock (assemblies)
                 {
-                    assemblies.Add(callingAssembly);
+                    assemblies.Add(callingAHash);
                 }
 
                 LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName, "CPU");
@@ -157,6 +183,8 @@ namespace TTS_Company.Components.Server.Components
                         _modelAssemblies.TryRemove(modelName, out _);
                     }
                 }
+
+                LogConstants.PIPER_TTS_FAILED_LOADING_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName);
             }
 
             return result;
@@ -170,21 +198,22 @@ namespace TTS_Company.Components.Server.Components
                 return (false, TTSConstants.TTS_MEM_MANAGER_UNKNOWN_ASSEMBLY);
             }
 
-            if (!_modelAssemblies.TryGetValue(modelName, out var assemblies))
+            ulong callingAHash = HashHelper.GetCallingAssemblyHash(callingAssembly);
+            if (!_modelAssemblies.TryGetValue(modelName, out HashSet<ulong> assemblies))
             {
                 return (true, string.Empty);
             }
 
             lock (assemblies)
             {
-                if (!assemblies.Contains(callingAssembly))
+                if (!assemblies.Contains(callingAHash))
                 {
                     return (true, string.Empty);
                 }
 
                 if (assemblies.Count != 1)
                 {
-                    assemblies.Remove(callingAssembly);
+                    assemblies.Remove(callingAHash);
                     return (true, string.Empty);
                 }
             }
@@ -193,7 +222,7 @@ namespace TTS_Company.Components.Server.Components
             {
                 lock (assemblies)
                 {
-                    assemblies.Remove(callingAssembly);
+                    assemblies.Remove(callingAHash);
                     if (assemblies.Count == 0)
                     {
                         _modelAssemblies.TryRemove(modelName, out _);
@@ -204,20 +233,24 @@ namespace TTS_Company.Components.Server.Components
             }
 
             string json = "{\"command\":\"unload_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\"}\n";
-            var response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
-            var result = _piperServer.ToResult(response);
+            Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
+            (bool Success, string Error) result = _piperServer.ToResult(response);
 
             if (result.Success)
             {
                 lock (assemblies)
                 {
-                    assemblies.Remove(callingAssembly);
+                    assemblies.Remove(callingAHash);
                     if (assemblies.Count == 0)
                     {
                         _modelAssemblies.TryRemove(modelName, out _);
                         _modelLastAccess.TryRemove(modelName, out _);
                     }
                 }
+                LogConstants.PIPER_TTS_UNLOADED_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName);
+            } else
+            {
+                LogConstants.PIPER_TTS_FAILED_UNLOADING_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName);
             }
 
             return result;
@@ -236,7 +269,7 @@ namespace TTS_Company.Components.Server.Components
                     break;
                 }
 
-                var oldestModel = _modelLastAccess.Where(kvp => _modelAssemblies.ContainsKey(kvp.Key) && !_evictedModels.ContainsKey(kvp.Key) && !kvp.Key.Equals(targetModelName, StringComparison.OrdinalIgnoreCase)).OrderBy(kvp => kvp.Value).Select(kvp => kvp.Key).FirstOrDefault();
+                string oldestModel = _modelLastAccess.Where(kvp => _modelAssemblies.ContainsKey(kvp.Key) && !_evictedModels.ContainsKey(kvp.Key) && !kvp.Key.Equals(targetModelName, StringComparison.OrdinalIgnoreCase)).OrderBy(kvp => kvp.Value).Select(kvp => kvp.Key).FirstOrDefault();
 
                 if (string.IsNullOrEmpty(oldestModel))
                 {
@@ -283,7 +316,7 @@ namespace TTS_Company.Components.Server.Components
 
         private static int DetermineOptimalPoolSizeMegabytes()
         {
-            var memStatus = new MEMORYSTATUSEX();
+            MEMORYSTATUSEX memStatus = new MEMORYSTATUSEX();
             memStatus.dwLength = (uint)Marshal.SizeOf(typeof(MEMORYSTATUSEX));
 
             if (GlobalMemoryStatusEx(ref memStatus))

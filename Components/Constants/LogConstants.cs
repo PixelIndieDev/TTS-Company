@@ -4,6 +4,8 @@ namespace TTS_Company.Components.Constants
 {
     internal static class LogConstants
     {
+        internal static ManualLogSource logSource = Logger.CreateLogSource(ModInfo.modGUID);
+
         internal readonly struct LogMessage
         {
             internal string Message { get; }
@@ -15,7 +17,7 @@ namespace TTS_Company.Components.Constants
                 Message = message;
             }
 
-            internal void Log(params object[] args) => Plugin.logSource.Log(Level, string.Format(DEFAULT_ERROR_LOG_PREFIX + Message, args));
+            internal void Log(params object[] args) => logSource.Log(Level, string.Format(DEFAULT_ERROR_LOG_PREFIX + Message, args));
         }
 
         // -------------------- prefix --------------------
@@ -54,6 +56,7 @@ namespace TTS_Company.Components.Constants
         internal static readonly LogMessage TTS_GENERATOR_FAILED_TO_DELETE_0KB_CACHE = new LogMessage(LogLevel.Error, "Failed to delete 0KB cache file with hash: '{1}' - {2}");
         internal static readonly LogMessage TTS_GENERATOR_FFMPEG_EXITED_PREMATURE = new LogMessage(LogLevel.Fatal, "FFmpeg exited prematurely");
         internal static readonly LogMessage TTS_GENERATOR_NO_CACHED_AUDIO_FOUND = new LogMessage(LogLevel.Error, "Cached audio file with hash: '{1}' not found at: {2}");
+        internal static readonly LogMessage TTS_GENERATOR_ARGUMENT_OUT_OF_RANGE_EX = new LogMessage(LogLevel.Fatal, "MaxConcurrentRequests value must be at least 1");
         // debug
         internal static readonly LogMessage TTS_GENERATOR_RUN_PIPER_ARGUMENTS = new LogMessage(LogLevel.Debug, "Arguments for {1} are: {2}");
         internal static readonly LogMessage TTS_GENERATOR_DELETE_0KB_CACHE = new LogMessage(LogLevel.Debug, "Deleting 0KB cache file with hash: '{1}'");
@@ -65,13 +68,19 @@ namespace TTS_Company.Components.Constants
         internal static readonly LogMessage PLUGIN_TTS_COULD_NOT_BE_INITIALIZED = new LogMessage(LogLevel.Fatal, "{1} could not be initialized");
 
         // -------------------- TTS Company API --------------------
-        internal static readonly LogMessage API_NETWORK_OBJECT_NOT_FOUND = new LogMessage(LogLevel.Info, "NetworkObject {1} not found");
+        internal static readonly LogMessage API_TRIGGER_PRELOAD_VOICE_MODEL = new LogMessage(LogLevel.Info, "Started preloading voice model: {1}");
+        internal static readonly LogMessage API_TRIGGER_UNLOAD_VOICE_MODEL = new LogMessage(LogLevel.Info, "Started unloading voice model: {1}");
+        // errors
+        internal static readonly LogMessage API_NETWORK_OBJECT_NOT_FOUND = new LogMessage(LogLevel.Warning, "NetworkObject {1} not found");
 
         // -------------------- Piper TTS Server --------------------
         internal static readonly LogMessage PIPER_TTS_SERVER_SUCCESS_STARTUP = new LogMessage(LogLevel.Info, "Started piper tts server on port {1} (pid {2})");
         internal static readonly LogMessage PIPER_TTS_SERVER_STOPPED = new LogMessage(LogLevel.Info, "Stopped piper tts server");
         internal static readonly LogMessage PIPER_TTS_LOADED_VOICE_MODEL = new LogMessage(LogLevel.Info, "Loaded voice model '{1}' using {2}");
+        internal static readonly LogMessage PIPER_TTS_UNLOADED_VOICE_MODEL = new LogMessage(LogLevel.Info, "Unloaded voice model '{1}'");
         // errors
+        internal static readonly LogMessage PIPER_TTS_FAILED_LOADING_VOICE_MODEL = new LogMessage(LogLevel.Warning, "Voice model '{1}' could not be loaded");
+        internal static readonly LogMessage PIPER_TTS_FAILED_UNLOADING_VOICE_MODEL = new LogMessage(LogLevel.Warning, "Voice model '{1}' could not be unloaded");
         internal static readonly LogMessage PIPER_TTS_SERVER_EXE_NOT_FOUND = new LogMessage(LogLevel.Fatal, "Server executable not found at: {1}");
         internal static readonly LogMessage PIPER_TTS_SERVER_FAILED_TO_START = new LogMessage(LogLevel.Fatal, "Failed to start piper tts server process with exception: {1}");
         internal static readonly LogMessage PIPER_TTS_SERVER_VOICE_FOLDER_NOT_FOUND = new LogMessage(LogLevel.Fatal, "Voice model directory not found at: {1}");
@@ -85,5 +94,12 @@ namespace TTS_Company.Components.Constants
         internal static readonly LogMessage VOICE_MODEL_MEM_MANAGER_NO_MODEL_TO_EVICT = new LogMessage(LogLevel.Error, "Memory pool exceeded, but no models available to evict for {1}");
         // debug
         internal static readonly LogMessage VOICE_MODEL_MEM_MANAGER_FOUND_VOICE_MODEL_WITH_SIZE = new LogMessage(LogLevel.Debug, "Found voice model named: '{1}' with file size: '{2}'");
+
+        // -------------------- TTS audio source manager --------------------
+        internal static readonly LogMessage TTS_AUDIO_SOURCE_MANAGER_FAIL_PLAYING_NO_AUDIO_SOURCE = new LogMessage(LogLevel.Warning, "{1} failed as no audio source was found on {2}");
+
+        // -------------------- TTS company networking --------------------
+        // errors
+        internal static readonly LogMessage TTS_COMPANY_NETWORKING_TASK_CANCELLED = new LogMessage(LogLevel.Warning, "Host cancelled session {1} with reason: {2}");
     }
 }

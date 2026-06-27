@@ -7,7 +7,7 @@ namespace TTS_Company.Components.Helpers
 {
     internal static class ZipHelper
     {
-        private static Assembly assembly = Assembly.GetExecutingAssembly();
+        private static readonly Assembly assembly = Assembly.GetExecutingAssembly();
 
         private const string zipName_piper = "piperTTS";
         private const string zipName_voiceModels = "voiceModels";

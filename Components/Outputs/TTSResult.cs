@@ -9,8 +9,5 @@ namespace TTS_Company.Components
 
         /// <summary>True when audio was generated successfully.</summary>
         public bool Success { get; set; } = false;
-
-        /// <summary>Error message populated when Success is false.</summary>
-        public string Error { get; set; } = string.Empty;
     }
 }

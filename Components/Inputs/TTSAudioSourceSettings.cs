@@ -2,41 +2,22 @@
 
 namespace TTS_Company.Components
 {
-    public struct TTSAudioSourceSettings // public as this needs to be able to be accessed by other mods
+    public sealed class TTSAudioSourceSettings // public as this needs to be able to be accessed by other mods
     {
-        public bool _bypassEffects;
-        public bool _bypassListenerEffects;
-        public bool _bypassReverbZones;
+        [SerializeField] public bool _bypassEffects { get; set; } = false;
+        [SerializeField] public bool _bypassListenerEffects { get; set; } = false;
+        [SerializeField] public bool _bypassReverbZones { get; set; } = false;
 
-        public int _priority;
-        public float _volume;
+        [SerializeField] public int _priority { get; set; } = 128;
+        [SerializeField] public float _volume { get; set; } = 1.0f;
 
-        public float _spatialBlend;
-        public float _reverbZoneMix;
+        [SerializeField] public float _spatialBlend { get; set; } = 1.0f;
+        [SerializeField] public float _reverbZoneMix { get; set; } = 1.0f;
 
-        public float _dopplerLevel;
-        public float _minDistance;
-        public float _maxDistance;
+        [SerializeField] public float _dopplerLevel { get; set; } = 1.0f;
+        [SerializeField] public float _minDistance { get; set; } = 1.0f;
+        [SerializeField] public float _maxDistance { get; set; } = 40.0f;
 
-        public AudioRolloffMode _rolloffMode;
-
-        internal TTSAudioSourceSettings(bool bypassEffects = false, bool bypassListenerEffects = false, bool bypassReverbZones = false, int priority = 128, float volume = 1.0f, float spatialBlend = 1.0f, float reverbZoneMix = 1.0f, float dopplerLevel = 1.0f, float minDistance = 1.0f, float maxDistance = 40.0f, AudioRolloffMode rolloffMode = AudioRolloffMode.Linear)
-        {
-            _bypassEffects = bypassEffects;
-            _bypassListenerEffects = bypassListenerEffects;
-            _bypassReverbZones = bypassReverbZones;
-
-            _priority = priority;
-            _volume = volume;
-
-            _spatialBlend = spatialBlend;
-            _reverbZoneMix = reverbZoneMix;
-
-            _dopplerLevel = dopplerLevel;
-            _minDistance = minDistance;
-            _maxDistance = maxDistance;
-
-            _rolloffMode = rolloffMode;
-        }
+        [SerializeField] public AudioRolloffMode _rolloffMode { get; set; } = AudioRolloffMode.Linear;
     }
 }

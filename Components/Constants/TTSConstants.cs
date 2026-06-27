@@ -26,6 +26,11 @@ namespace TTS_Company.Components.Constants
         private const string TTS_VOICE_CACHE_SOUNDCLIPS_FOLDER = "TTS-Company-Voices-Cache";
         internal static readonly string TTS_VOICE_CACHE_SOUNDCLIPS_PATH = Path.Combine(TTS_COMPANY_EXECUTABLE_LOCATION, TTS_VOICE_CACHE_SOUNDCLIPS_FOLDER);
 
+        // TTS Task
+        internal const float TTS_START_SPEAKING_AT_MULTIPLIER = 0.35f; // 35%
+        internal const int TTS_MINIMUM_START_INDEX = 0;
+        internal const int TTS_MAXIMUM_START_INDEX = 3; // capped at 'TTS_MAXIMUM_START_INDEX' makes it so that the tts doesn't lock up too much (with the talking part) when requested an entire novel
+
         // TTS timout
         // in seconds
         internal const float TTS_TIMEOUT_MINIMUM_TIME = 4.0f;

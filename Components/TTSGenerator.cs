@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace TTS_Company.Components
 {
-    internal class TTSGenerator
+    internal sealed class TTSGenerator
     {
         internal readonly PiperTTSServer _server = new PiperTTSServer();
 
@@ -28,12 +28,12 @@ namespace TTS_Company.Components
             {
                 if (value < 1)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(value), "Must be at least 1.");
+                    LogConstants.TTS_GENERATOR_ARGUMENT_OUT_OF_RANGE_EX.Log(nameof(TTSGenerator));
                 }
 
                 _maxConcurrent = value;
 
-                var oldSemaphore = _semaphore;
+                SemaphoreSlim oldSemaphore = _semaphore;
                 _semaphore = new SemaphoreSlim(value, value);
 
                 // Don't dispose, let the garbage collector clear it after its tasks are done
@@ -140,7 +140,7 @@ namespace TTS_Company.Components
             }
             catch
             {
-
+                LogConstants.CODE_GENERIC_CATCH.Log(nameof(TTSGenerator), nameof(Dispose));
             }
 
             _semaphore?.Dispose();
@@ -186,7 +186,7 @@ namespace TTS_Company.Components
         {
             if (!_isAvailable || _disposed)
             {
-                return new TTSResult { AudioClip = null, Success = false, Error = TTSConstants.TTS_SERVER_UNAVAILABLE };
+                return new TTSResult { AudioClip = null, Success = false };
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -222,7 +222,7 @@ namespace TTS_Company.Components
 
             try
             {
-                var cancellationTcs = new TaskCompletionSource<TTSResult>();
+                TaskCompletionSource<TTSResult> cancellationTcs = new TaskCompletionSource<TTSResult>();
                 using (cancellationToken.Register(() => cancellationTcs.TrySetCanceled(cancellationToken)))
                 {
                     Task<TTSResult> winner = await Task.WhenAny(inFlight.Task, cancellationTcs.Task).ConfigureAwait(false);
@@ -379,8 +379,8 @@ namespace TTS_Company.Components
                 return Task.FromResult<AudioClip>(null);
             }
 
-            var tcs = new TaskCompletionSource<AudioClip>();
-            Plugin.instance.StartCoroutine(LoadCoroutine(absoluteFilePath, clipName, tcs));
+            TaskCompletionSource<AudioClip> tcs = new TaskCompletionSource<AudioClip>();
+            TTSCompanyPlugin.instance.StartCoroutine(LoadCoroutine(absoluteFilePath, clipName, tcs));
 
             return tcs.Task;
         }

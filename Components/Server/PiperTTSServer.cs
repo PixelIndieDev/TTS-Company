@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -25,7 +24,7 @@ namespace TTS_Company.Components
         internal bool IsRunning => _process != null && !_process.HasExited;
         internal int Port => _port;
 
-        private readonly VoiceModelMemoryManager _memoryManager;
+        internal readonly VoiceModelMemoryManager _memoryManager;
 
         public PiperTTSServer()
         {
@@ -53,7 +52,7 @@ namespace TTS_Company.Components
             _memoryManager.InitializeModelRegistry();
 
             string normalizedModelDir = TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION.TrimEnd('\\', '/');
-            var psi = new ProcessStartInfo
+            ProcessStartInfo psi = new ProcessStartInfo
             {
                 FileName = TTSConstants.PIPER_EXECUTABLE_LOCATION,
                 Arguments = $"\"{normalizedModelDir}\"",
@@ -65,8 +64,8 @@ namespace TTS_Company.Components
                 WorkingDirectory = Path.GetDirectoryName(TTSConstants.PIPER_EXECUTABLE_LOCATION)
             };
 
-            var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-            var exitTcs = new TaskCompletionSource<bool>();
+            Process process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+            TaskCompletionSource<bool> exitTcs = new TaskCompletionSource<bool>();
             process.Exited += (_, __) => exitTcs.TrySetResult(true);
 
             try
@@ -147,7 +146,7 @@ namespace TTS_Company.Components
             {
                 if (!process.HasExited)
                 {
-                    var exitTcs = new TaskCompletionSource<bool>();
+                    TaskCompletionSource<bool> exitTcs = new TaskCompletionSource<bool>();
                     process.EnableRaisingEvents = true;
                     process.Exited += (_, __) => exitTcs.TrySetResult(true);
                     if (process.HasExited)
@@ -195,8 +194,8 @@ namespace TTS_Company.Components
 
         internal async Task<Dictionary<string, object>> SendSimpleCommandAsync(string requestJsonLine, CancellationToken cancellationToken, int timeoutMs = 30000)
         {
-            using (var client = new TcpClient())
-            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+            using (TcpClient client = new TcpClient())
+            using (CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
             {
                 cts.CancelAfter(timeoutMs);
 
@@ -227,8 +226,8 @@ namespace TTS_Company.Components
 
         internal (bool Success, string Error) ToResult(Dictionary<string, object> response)
         {
-            bool ok = response.TryGetValue("status", out var status) && (status as string) == "ok";
-            string error = ok ? null : (response.TryGetValue("message", out var msg) ? msg as string : "unknown error");
+            bool ok = response.TryGetValue("status", out object status) && (status as string) == "ok";
+            string error = ok ? null : (response.TryGetValue("message", out object msg) ? msg as string : "unknown error");
             return (ok, error);
         }
 
@@ -237,8 +236,8 @@ namespace TTS_Company.Components
         {
             try
             {
-                var response = await SendSimpleCommandAsync("{\"command\":\"ping\"}\n", cancellationToken).ConfigureAwait(false);
-                return response.TryGetValue("alive", out var alive) && alive is bool b && b;
+                Dictionary<string, object> response = await SendSimpleCommandAsync("{\"command\":\"ping\"}\n", cancellationToken).ConfigureAwait(false);
+                return response.TryGetValue("alive", out object alive) && alive is bool b && b;
             }
             catch
             {
@@ -248,21 +247,17 @@ namespace TTS_Company.Components
 
         internal async Task<TTSRawResult> SynthesizeAsync(string text, string hash, PiperVoiceSettings options, CancellationToken cancellationToken)
         {
-            Plugin.logSource.LogInfo("voice model - " + options.ModelName);
             if (!_memoryManager.HasVoiceModelBeenLoaded(options.ModelName))
             {
-                Plugin.logSource.LogInfo("voice model has not been loaded - " + options.ModelName);
                 LogConstants.PIPER_TTS_VOICE_MODEL_NOT_LOADED.Log(nameof(PiperTTSServer), options.ModelName);
                 return TTSRawResult.Cancelled();
             }
 
             if (_memoryManager.WasVoiceModelEvicted(options.ModelName))
             {
-                Plugin.logSource.LogInfo("voice model was evicted - " + options.ModelName);
-                var result = await _memoryManager.ReloadModelAsync(options.ModelName, cancellationToken);
+                (bool Success, string Error) result = await _memoryManager.ReloadModelAsync(options.ModelName, cancellationToken);
                 if (!result.Success)
                 {
-                    Plugin.logSource.LogInfo("voice model was evicted, but no success");
                     return TTSRawResult.Cancelled();
                 }
             }
@@ -303,15 +298,15 @@ namespace TTS_Company.Components
                     await stream.WriteAsync(requestBytes, 0, requestBytes.Length, cancellationToken).ConfigureAwait(false);
 
                     (string line, byte[] leftover) = await ReadLineWithLeftoverAsync(stream, cancellationToken).ConfigureAwait(false);
-                    var response = JSONHelper.ParseFlatObject(line);
+                    Dictionary<string, object> response = JSONHelper.ParseFlatObject(line);
 
-                    string status = response.TryGetValue("status", out var statusVal) ? statusVal as string : null;
+                    string status = response.TryGetValue("status", out object statusVal) ? statusVal as string : null;
 
                     switch (status)
                     {
                         case "ok":
-                            int sampleRate = response.TryGetValue("sample_rate", out var srVal) && srVal != null ? Convert.ToInt32(srVal, CultureInfo.InvariantCulture) : 22050;
-                            using (var ms = new MemoryStream())
+                            int sampleRate = response.TryGetValue("sample_rate", out object srVal) && srVal != null ? Convert.ToInt32(srVal, CultureInfo.InvariantCulture) : 22050;
+                            using (MemoryStream ms = new MemoryStream())
                             {
                                 if (leftover.Length > 0)
                                 {
@@ -324,7 +319,7 @@ namespace TTS_Company.Components
                         case "cancelled":
                             return TTSRawResult.Cancelled();
                         case "error":
-                            string message = response.TryGetValue("message", out var msgVal) ? msgVal as string : "unknown error";
+                            string message = response.TryGetValue("message", out object msgVal) ? msgVal as string : "unknown error";
                             return TTSRawResult.Failure(message);
                         default:
                             return TTSRawResult.Failure($"unexpected response status: '{status}'");
@@ -355,7 +350,7 @@ namespace TTS_Company.Components
 
         private static string BuildSynthesizeRequest(string modelPath, string text, string hash, PiperVoiceSettings options)
         {
-            var sb = new StringBuilder(text.Length + 128);
+            StringBuilder sb = new StringBuilder(text.Length + 128);
             sb.Append("{\"command\":\"synthesize\"");
             sb.Append(",\"model\":\"").Append(JSONHelper.Escape(modelPath)).Append('"');
             sb.Append(",\"text\":\"").Append(JSONHelper.Escape(text)).Append('"');
@@ -378,7 +373,7 @@ namespace TTS_Company.Components
 
             try
             {
-                using (var client = new TcpClient())
+                using (TcpClient client = new TcpClient())
                 {
                     Task connectTask = client.ConnectAsync(IPAddress.Loopback, port);
                     if (await Task.WhenAny(connectTask, Task.Delay(1000)).ConfigureAwait(false) != connectTask)
@@ -422,7 +417,7 @@ namespace TTS_Company.Components
         private static async Task<(string Line, byte[] Leftover)> ReadLineWithLeftoverAsync(NetworkStream stream, CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[4096];
-            using (var ms = new MemoryStream())
+            using (MemoryStream ms = new MemoryStream())
             {
                 while (true)
                 {

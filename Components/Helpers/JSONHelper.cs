@@ -14,7 +14,7 @@ namespace TTS_Company.Components.Server.Components
                 return string.Empty;
             }
 
-            var sb = new StringBuilder(s.Length + 8);
+            StringBuilder sb = new StringBuilder(s.Length + 8);
             foreach (char c in s)
             {
                 switch (c)
@@ -57,7 +57,7 @@ namespace TTS_Company.Components.Server.Components
 
         internal static Dictionary<string, object> ParseFlatObject(string json)
         {
-            var result = new Dictionary<string, object>();
+            Dictionary<string, object> result = new Dictionary<string, object>();
             if (string.IsNullOrEmpty(json))
             {
                 return result;
@@ -128,7 +128,7 @@ namespace TTS_Company.Components.Server.Components
         private static string ParseString(string json, ref int i)
         {
             Expect(json, ref i, '"');
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
 
             while (true)
             {

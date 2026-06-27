@@ -1,53 +1,52 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using UnityEngine;
 
 namespace TTS_Company.Components.Managers.Components
 {
     internal sealed class TTSAudioSourcesComponent : MonoBehaviour
     {
-        private readonly ConcurrentDictionary<string, AudioSource> audioSources = new ConcurrentDictionary<string, AudioSource>(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<ulong, AudioSource> audioSources = new ConcurrentDictionary<ulong, AudioSource>();
 
-        internal bool AddAudioSource(string audioSourceIdentifier)
+        internal bool AddAudioSource(ulong callingAssemblyHash)
         {
-            if (!DoesAudioSourceExist(audioSourceIdentifier))
+            if (!DoesAudioSourceExist(callingAssemblyHash))
             {
                 AudioSource audioSource = gameObject.AddComponent<AudioSource>();
-                return audioSources.TryAdd(audioSourceIdentifier, audioSource);
+                return audioSources.TryAdd(callingAssemblyHash, audioSource);
             }
             return false;
         }
 
-        internal bool DoesAudioSourceExist(string audioSourceIdentifier)
+        internal bool DoesAudioSourceExist(ulong callingAssemblyHash)
         {
-            return audioSources.ContainsKey(audioSourceIdentifier);
+            return audioSources.ContainsKey(callingAssemblyHash);
         }
 
-        internal bool GetAudioSource(string audioSourceIdentifier, out AudioSource source) => audioSources.TryGetValue(audioSourceIdentifier, out source);
+        internal bool GetAudioSource(ulong callingAssemblyHash, out AudioSource source) => audioSources.TryGetValue(callingAssemblyHash, out source);
 
-        internal bool PlayAudioClip(string audioSourceIdentifier, AudioClip newAudioClip)
+        internal bool PlayAudioClip(ulong callingAssemblyHash, AudioClip newAudioClip)
         {
             if (newAudioClip == null)
             {
                 return false;
             }
 
-            GetAudioSource(audioSourceIdentifier, out AudioSource audioSource);
-            if (audioSource == null)
+            if (!GetAudioSource(callingAssemblyHash, out AudioSource audioSource))
             {
                 return false;
             }
 
             audioSource.clip = newAudioClip;
-
             audioSource.Play();
             return true;
         }
 
-        internal bool UpdateAudioSourceSettings(string audioSourceIdentifier, TTSAudioSourceSettings audioSourceSettings = default)
+        internal bool UpdateAudioSourceSettings(ulong callingAssemblyHash, TTSAudioSourceSettings audioSourceSettings)
         {
-            GetAudioSource(audioSourceIdentifier, out AudioSource audioSource);
-            if (audioSource == null) return false;
+            if (GetAudioSource(callingAssemblyHash, out AudioSource audioSource))
+            {
+                return false;
+            }
 
             audioSource.spatialize = false;
             audioSource.spatializePostEffects = false;
@@ -73,9 +72,9 @@ namespace TTS_Company.Components.Managers.Components
             return true;
         }
 
-        internal bool RemoveAudioSource(string audioSourceIdentifier)
+        internal bool RemoveAudioSource(ulong callingAssemblyHash)
         {
-            if (audioSources.TryRemove(audioSourceIdentifier, out var source))
+            if (audioSources.TryRemove(callingAssemblyHash, out AudioSource source))
             {
                 Destroy(source);
                 return true;

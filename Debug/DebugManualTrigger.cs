@@ -1,5 +1,4 @@
-﻿using BepInEx;
-using System.IO;
+﻿using GameNetcodeStuff;
 using TTS_Company.Components;
 using TTS_Company.Components.Constants;
 using Unity.Netcode;
@@ -8,7 +7,7 @@ using UnityEngine.InputSystem;
 
 namespace TTS_Company.Debug
 {
-    internal class DebugManualTrigger
+    internal static class DebugManualTrigger
     {
         private static readonly string[] RandomVoiceLines = new[]
         {
@@ -24,16 +23,7 @@ namespace TTS_Company.Debug
             "FUCK!"
         };
 
-        private static readonly string[] voiceModels = new[]
-        {
-            "en_US-hfc_female-medium",
-            "en_US-norman-medium",
-            "en_GB-alba-medium",
-            "en_US-hfc_male-medium",
-            "nl_NL-pim-medium"
-        };
-
-        public static void triggerDEBUGTTS(InputAction.CallbackContext obj)
+        public async static void triggerDEBUGTTS(InputAction.CallbackContext obj)
         {
             if (!obj.performed)
             {
@@ -48,7 +38,7 @@ namespace TTS_Company.Debug
                 return;
             }
 
-            var localPlayer = StartOfRound.Instance.localPlayerController;
+            PlayerControllerB localPlayer = StartOfRound.Instance.localPlayerController;
 
             if (localPlayer != null)
             {
@@ -81,41 +71,31 @@ namespace TTS_Company.Debug
                     "Jerma985"
                 };
 
-                string para = "Welcome to your first day at The Company. Please remember your quota. Collect all scrap, avoid the coil-heads, and do not make eye contact with the entities. Failure to comply will result in disciplinary action.";
-
-                if (Plugin.instance != null)
+                if (TTSCompanyPlugin.instance == null)
                 {
-                    if (localPlayer.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+                    return;
+                }
+
+                if (localPlayer.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+                {
+                    NetworkObjectReference reference = new NetworkObjectReference(networkObject);
+                    TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference);
+
+                    for (int i = 0; i < 1; i++)
                     {
-                        NetworkObjectReference reference = new NetworkObjectReference(networkObject);
+                        PiperVoiceSettings voice = new PiperVoiceSettings();
+                        voice.ModelName = TTSCompanyUtils.GetRandomTTSVoice();
 
-                        for (int i = 0; i < 8; i++)
-                        {
-                            //TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i);
-                        }
+                        int randomIndex = Random.Range(0, allCustomStrings.Length);
+                        string[] chosenArray = allCustomStrings[randomIndex];
 
-                        for (int i = 0; i < 1; i++)
-                        {
-                            PiperVoiceSettings voice = new PiperVoiceSettings();
-                            //voice.ModelName = GetRandomVoice();
+                        randomIndex = Random.Range(0, enemyNames.Length);
+                        chosenArray[1] = enemyNames[randomIndex];
 
-                            int randomIndex = Random.Range(0, allCustomStrings.Length);
-                            string[] chosenArray = allCustomStrings[0];
-
-                            randomIndex = Random.Range(0, customStrings.Length);
-                            chosenArray[1] = enemyNames[randomIndex];
-
-                            TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, TTSConstants.DEBUG_AUDIOSOURCE_NAME + i, RandomVoiceLines[0], voice);
-                        }
+                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, chosenArray, voice);
                     }
                 }
             }
-        }
-
-        private static string GetRandomVoice()
-        {
-            int randomIndex = Random.Range(0, voiceModels.Length);
-            return voiceModels[randomIndex];
         }
     }
 }

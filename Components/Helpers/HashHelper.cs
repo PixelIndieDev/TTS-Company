@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Collections.Concurrent;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace TTS_Company.Components.Helpers
 {
@@ -7,22 +9,20 @@ namespace TTS_Company.Components.Helpers
         private const ulong Prime = 0x100000001b3;
         private const ulong OffsetBasis = 0xcbf29ce484222325;
 
-        [StructLayout(LayoutKind.Explicit)]
-        private struct FloatConverter
-        {
-            [FieldOffset(0)] public float FloatValue;
-            [FieldOffset(0)] public int IntValue;
-        }
+        private static readonly ConcurrentDictionary<Assembly, ulong> _assemblyHashCache = new ConcurrentDictionary<Assembly, ulong>();
 
-        internal static ulong GetTrackingKeyHash(ulong networkObjectId, string audioSourceName)
+        internal static ulong GetTrackingKeyHash(ulong networkObjectId, Assembly callingAssembly)
         {
             unchecked
             {
-                ulong hash = OffsetBasis;
+                if (!_assemblyHashCache.TryGetValue(callingAssembly, out ulong hash))
+                {
+                    hash = OffsetBasis;
+                    CombineString(ref hash, callingAssembly.FullName);
+                    _assemblyHashCache.TryAdd(callingAssembly, hash);
+                }
 
                 CombineULong(ref hash, networkObjectId);
-                CombineString(ref hash, audioSourceName);
-
                 return hash;
             }
         }
@@ -48,6 +48,17 @@ namespace TTS_Company.Components.Helpers
             }
         }
 
+        internal static ulong GetCallingAssemblyHash(Assembly callingAssembly)
+        {
+            unchecked
+            {
+                ulong hash = OffsetBasis;
+
+                CombineString(ref hash, callingAssembly.FullName);
+                return hash;
+            }
+        }
+
         internal static string GetHashTTSFileNameWithFileType(string textToSpeak, PiperVoiceSettings settings)
         {
             unchecked
@@ -69,6 +80,7 @@ namespace TTS_Company.Components.Helpers
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void CombineString(ref ulong hash, string value)
         {
             if (string.IsNullOrEmpty(value))
@@ -78,39 +90,33 @@ namespace TTS_Company.Components.Helpers
 
             for (int i = 0; i < value.Length; i++)
             {
-                char c = value[i];
-
-                hash ^= (byte)(c & 0xFF);
-                hash *= Prime;
-                hash ^= (byte)(c >> 8);
-                hash *= Prime;
+                uint c = value[i];
+                hash = (hash ^ (c & 0xFF)) * Prime;
+                hash = (hash ^ (c >> 8)) * Prime;
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void CombineFloat(ref ulong hash, float value)
         {
-            // Multply by 10 and round to nearest integer
-            // Example: 1.234f -> 12.34f -> 12
-            int roundedBits = UnityEngine.Mathf.RoundToInt(value * 10f);
-
-            hash ^= (byte)(roundedBits & 0xFF);
-            hash *= Prime;
-            hash ^= (byte)((roundedBits >> 8) & 0xFF);
-            hash *= Prime;
-            hash ^= (byte)((roundedBits >> 16) & 0xFF);
-            hash *= Prime;
-            hash ^= (byte)((roundedBits >> 24) & 0xFF);
-            hash *= Prime;
+            uint bits = Unsafe.As<float, uint>(ref value);
+            hash = (hash ^ (bits & 0xFF)) * Prime;
+            hash = (hash ^ ((bits >> 8) & 0xFF)) * Prime;
+            hash = (hash ^ ((bits >> 16) & 0xFF)) * Prime;
+            hash = (hash ^ (bits >> 24)) * Prime;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void CombineULong(ref ulong hash, ulong value)
         {
-            for (int i = 0; i < 8; i++)
-            {
-                hash ^= (byte)(value & 0xFF);
-                hash *= Prime;
-                value >>= 8;
-            }
+            hash = (hash ^ (value & 0xFF)) * Prime;
+            hash = (hash ^ ((value >> 8) & 0xFF)) * Prime;
+            hash = (hash ^ ((value >> 16) & 0xFF)) * Prime;
+            hash = (hash ^ ((value >> 24) & 0xFF)) * Prime;
+            hash = (hash ^ ((value >> 32) & 0xFF)) * Prime;
+            hash = (hash ^ ((value >> 40) & 0xFF)) * Prime;
+            hash = (hash ^ ((value >> 48) & 0xFF)) * Prime;
+            hash = (hash ^ (value >> 56)) * Prime;
         }
     }
 }
