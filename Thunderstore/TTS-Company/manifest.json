@@ -1,10 +1,11 @@
-{
-  "name": "TTSCompany",
-  "version_number": "1.0.0",
-  "website_url": "https://github.com/PixelIndieDev/AmmoBag",
-  "description": "A simple mod that allows you to reload the shotgun using shells stored inside a Belt Bag",
-  "dependencies": [
-    "BepInEx-BepInExPack-5.4.2305",
-    "xilophor-LethalNetworkAPI-3.3.3"
-  ]
+﻿{
+"name": "TTSCompany",
+"version_number": "1.0.0",
+"website_url": "https://github.com/PixelIndieDev/TTS-Company",
+"description": "This library makes it easy to add TTS speech to your Lethal Company mods",
+"dependencies": [
+"BepInEx-BepInExPack-5.4.2305",
+"xilophor-LethalNetworkAPI-3.4.3",
+"AinaVT-LethalConfig-1.4.6"
+]
 }

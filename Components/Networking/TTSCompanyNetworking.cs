@@ -127,6 +127,14 @@ namespace TTS_Company.Components.Networking
                 task._lastStartSpeakingIndex += task._textsWaited - task._lastStartSpeakingIndex;
             }
             task._textsWaited += 1;
+
+            if (task._textsWaited >= task._textsToSpeak.Length)
+            {
+                if (ActiveTasks_Speak.TryRemove(task._taskId, out TTSTask_Speak completedTask))
+                {
+                    completedTask._cts?.Dispose();
+                }
+            }
         }
 
         // server only
@@ -138,10 +146,11 @@ namespace TTS_Company.Components.Networking
             }
 
             _nextSessionId_Speak += 1;
+            ulong currentSessionId = _nextSessionId_Speak;
 
             TTSTask_Speak session = new TTSTask_Speak(LNetworkUtils.AllConnectedClients, data._textsToSpeak.Length)
             {
-                _taskId = _nextSessionId_Speak,
+                _taskId = currentSessionId,
                 _speakingObject = data._networkObjectRefOfSpeaker,
                 _textsToSpeak = data._textsToSpeak,
                 _callingAssemblyHash = data._callingAssemblyHash,
@@ -153,16 +162,16 @@ namespace TTS_Company.Components.Networking
 
             // if a session already targets the same NetworkObject+callingAssembly, cancel it
             CancelAnyExistingSessionFor(data._networkObjectRefOfSpeaker, data._callingAssemblyHash, "Superseded by new session");
-            ActiveTasks_Speak[_nextSessionId_Speak] = session;
+            ActiveTasks_Speak[currentSessionId] = session;
 
             TimeSpan timeout = TTSTimeoutHelper.GetTTSTimeout(data._textsToSpeak, data._voiceSettings);
             session._cts.Token.Register(() =>
             {
-                HostCancelSession(_nextSessionId_Speak, "Timed out");
+                HostCancelSession(currentSessionId, "Timed out");
             });
             session._cts.CancelAfter(timeout);
 
-            TTS_networkMessage_SpeakTTS_Clients.SendClients(new TTSSpeakTTS_PLUS_NET(data, _nextSessionId_Speak));
+            TTS_networkMessage_SpeakTTS_Clients.SendClients(new TTSSpeakTTS_PLUS_NET(data, currentSessionId));
         }
 
         // server only, called by StartActiveTask() & UpdateActiveTask()

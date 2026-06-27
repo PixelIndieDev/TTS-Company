@@ -1,6 +1,8 @@
 ﻿using BepInEx;
+using System;
 using System.IO;
 using System.Reflection;
+using TTS_Company.Components.Enums;
 
 namespace TTS_Company.Components.Constants
 {
@@ -38,6 +40,9 @@ namespace TTS_Company.Components.Constants
         internal const float TTS_TIMEOUT_BASE_BUFFER = 4.0f;
         internal const float TTS_TIMEOUT_PER_WORD_BUFFER = 0.05f;
 
+        internal static float TTS_TIMEOUT_BASE_BUFFER_SCALED = 0.0f;
+        internal static float TTS_TIMEOUT_PER_WORD_BUFFER_SCALED = 0.0f;
+
         // errors
         // errors for in the TTSResult
         internal const string TTS_SERVER_UNAVAILABLE = "TTS server is not available";
@@ -53,5 +58,26 @@ namespace TTS_Company.Components.Constants
 
         // debug
         internal const string DEBUG_AUDIOSOURCE_NAME = "DEBUG_KEYBIND";
+
+        internal static void UpdateTimeoutBuffers()
+        {
+            TTS_TIMEOUT_BASE_BUFFER_SCALED = TTS_TIMEOUT_BASE_BUFFER * GetTimeoutBufferScaling(true);
+            TTS_TIMEOUT_PER_WORD_BUFFER_SCALED = TTS_TIMEOUT_PER_WORD_BUFFER * GetTimeoutBufferScaling(false);
+        }
+
+        private static float GetTimeoutBufferScaling(bool isBase)
+        {
+            switch (TTSCompanyPlugin.configEntryTimeoutBuffer.Value)
+            {
+                case TimeoutBufferScaling.Low:
+                    return isBase ? 0.6f : 0.95f;
+                default: // normal priority
+                    return isBase ? 1.0f : 1.0f;
+                case TimeoutBufferScaling.High:
+                    return isBase ? 1.4f : 1.1f;
+                case TimeoutBufferScaling.Max:
+                    return isBase ? 1.8f : 1.2f;
+            }
+        }
     }
 }

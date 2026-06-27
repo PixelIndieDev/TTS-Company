@@ -113,6 +113,7 @@
     <Compile Include="Components\Constants\OggConstants.cs" />
     <Compile Include="Components\Constants\LogConstants.cs" />
     <Compile Include="Components\Constants\TTSConstants.cs" />
+    <Compile Include="Components\Enums\TimeoutBufferScaling.cs" />
     <Compile Include="Components\Enums\TTSGenPriority.cs" />
     <Compile Include="Components\Helpers\HashHelper.cs" />
     <Compile Include="Components\Helpers\TTSTimeoutHelper.cs" />
@@ -163,8 +164,24 @@
   <Import Project="packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets" Condition="Exists('packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+      <ModInfoPath>$(ProjectDir)ModInfo.cs</ModInfoPath>
+      <ManifestPath>$(ProjectDir)Thunderstore\TTS-Company\manifest.json</ManifestPath>
     </PropertyGroup>
-    <Error Condition="!Exists('packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets'))" />
+    <ReadLinesFromFile File="$(ModInfoPath)">
+      <Output TaskParameter="Lines" ItemName="ModInfoLines" />
+    </ReadLinesFromFile>
+    <ReadLinesFromFile File="$(ManifestPath)">
+      <Output TaskParameter="Lines" ItemName="ManifestLines" />
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <ModInfoText>@(ModInfoLines, '%0A')</ModInfoText>
+      <ManifestText>@(ManifestLines, '%0A')</ManifestText>
+      <RawVersion>$([System.Text.RegularExpressions.Regex]::Match($(ModInfoText), `(?&lt;=modVersion\s*=\s*")[^"\r\n]*`))</RawVersion>
+      <ManifestVersion>$([System.Text.RegularExpressions.Regex]::Match($(RawVersion), `^\d+\.\d+\.\d+`))</ManifestVersion>
+      <Pattern>(?&lt;="version_number"\s*:\s*")[^"\r\n]*(?=")</Pattern>
+      <UpdatedManifest>$([System.Text.RegularExpressions.Regex]::Replace($(ManifestText), $(Pattern), $(ManifestVersion)))</UpdatedManifest>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(ManifestPath)" Lines="$(UpdatedManifest)" Overwrite="true" Encoding="UTF-8" />
+    <Message Importance="High" Text="[TTSCompany] Extracted Version $(ManifestVersion) from ModInfo.cs and updated manifest.json!" />
   </Target>
 </Project>

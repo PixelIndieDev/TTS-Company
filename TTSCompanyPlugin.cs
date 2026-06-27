@@ -3,6 +3,8 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using LethalConfig;
 using LethalConfig.ConfigItems;
+using System.IO;
+using System.Threading.Tasks;
 using TTS_Company.Components;
 using TTS_Company.Components.Constants;
 using TTS_Company.Components.Enums;
@@ -27,7 +29,13 @@ namespace TTS_Company
         internal static TTSPlaybackManager _ttsPlaybackManagerObject { get; private set; }
 
         internal static TTSCompanyDebugInputs inputActionsInstance;
+
         internal static ConfigEntry<TTSGenPriority> configEntryPriority;
+        internal static ConfigEntry<TimeoutBufferScaling> configEntryTimeoutBuffer;
+        internal static ConfigEntry<bool> configEntryClearCacheOnExit;
+        internal static ConfigEntry<bool> configEntryClearCacheManually;
+
+        private bool _isDeletingCache = false;
 
         private bool _isShuttingDown = false;
         private bool _shutdownComplete = false;
@@ -48,7 +56,8 @@ namespace TTS_Company
 
             _tts = new TTSGenerator();
 
-            configEntryPriority = Config.Bind("General", "TTS generation priority", TTSGenPriority.Normal, "Adjusts the CPU priority for generating TTS. Higher priority may increase the TTS generation speed at the cost of performance.");
+            // create config entries
+            configEntryPriority = Config.Bind("TTS Generation", "TTS generation priority", TTSGenPriority.Normal, "Adjusts the CPU priority for generating TTS. Higher priority may increase the TTS generation speed at the cost of performance.");
             configEntryPriority.SettingChanged += (sender, args) =>
             {
                 _tts.SetMaxConcurrentRequests(configEntryPriority.Value);
@@ -56,7 +65,33 @@ namespace TTS_Company
             EnumDropDownConfigItem<TTSGenPriority> configEntryPriorityValue = new EnumDropDownConfigItem<TTSGenPriority>(configEntryPriority, requiresRestart: false);
             LethalConfigManager.AddConfigItem(configEntryPriorityValue);
 
+            configEntryTimeoutBuffer = Config.Bind("TTS Generation", "TTS timeout scaling", TimeoutBufferScaling.Normal, "Controls how long the mod waits for a voice line to generate. Increase this if your TTS audio keeps getting cut off, or decrease it if you want the mod to give up faster when experiencing delays. \n\nControlled by the host.");
+            configEntryTimeoutBuffer.SettingChanged += (sender, args) =>
+            {
+                TTSConstants.UpdateTimeoutBuffers();
+            };
+            EnumDropDownConfigItem<TimeoutBufferScaling> configEntryTimeoutBufferValue = new EnumDropDownConfigItem<TimeoutBufferScaling>(configEntryTimeoutBuffer, requiresRestart: false);
+            LethalConfigManager.AddConfigItem(configEntryTimeoutBufferValue);
+
+            configEntryClearCacheOnExit = Config.Bind("Cache", "Clear TTS cache on exit", false, "When enabled, automatically deletes saved TTS cache when you close Lethal Company. Disabling this saves disk space but requires files to be regenerate next session.");
+            BoolCheckBoxConfigItem configEntryClearOnExitValue = new BoolCheckBoxConfigItem(configEntryClearCacheOnExit, requiresRestart: false);
+            LethalConfigManager.AddConfigItem(configEntryClearOnExitValue);
+
+            configEntryClearCacheManually = Config.Bind("Cache", "Clear TTS cache now", false, "Check this checkbox to delete all saved local TTS cache. \n\nBest done in the main menu.");
+            configEntryClearCacheManually.SettingChanged += (sender, args) =>
+            {
+                if (!_isDeletingCache)
+                {
+                    ClearTTSCache();
+                }
+                configEntryClearCacheManually.Value = false;
+            };
+            BoolCheckBoxConfigItem configEntryClearmanuallyValue = new BoolCheckBoxConfigItem(configEntryClearCacheManually, requiresRestart: false);
+            LethalConfigManager.AddConfigItem(configEntryClearmanuallyValue);
+
+            // other stuff
             _tts.SetMaxConcurrentRequests(configEntryPriority.Value);
+            TTSConstants.UpdateTimeoutBuffers();
 
             GameObject go = new GameObject("TTSPlaybackManager");
             _ttsPlaybackManagerObject = go.AddComponent<TTSPlaybackManager>();
@@ -86,6 +121,25 @@ namespace TTS_Company
             TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_male-medium");
         }
 
+        private void ClearTTSCache()
+        {
+            _isDeletingCache = true;
+
+            if (Directory.Exists(TTSConstants.TTS_VOICE_CACHE_SOUNDCLIPS_PATH))
+            {
+                try
+                {
+                    Directory.Delete(TTSConstants.TTS_VOICE_CACHE_SOUNDCLIPS_PATH, true);
+                }
+                catch (IOException)
+                {
+                    // ignore
+                }
+            }
+
+            _isDeletingCache = false;
+        }
+
         private bool OnWantsToQuit()
         {
             if (_shutdownComplete)
@@ -107,6 +161,11 @@ namespace TTS_Company
         private async void ExecuteAsyncShutdown()
         {
             LogConstants.PLUGIN_ON_QUIT.Log(nameof(TTSCompanyPlugin), ModInfo.modName, ModInfo.modVersion);
+
+            if (configEntryClearCacheOnExit.Value)
+            {
+                ClearTTSCache();
+            }
 
             try
             {

@@ -45,7 +45,7 @@ namespace TTS_Company.Components.Helpers
             float estimatedSpeechDuration = (totalWordCount / baseWordsPerSecond) / effectiveSpeechRate;
 
             float totalSilenceDuration = sentenceCount * settings.SentenceSilence;
-            float totalBuffer = TTSConstants.TTS_TIMEOUT_BASE_BUFFER + (totalWordCount * TTSConstants.TTS_TIMEOUT_PER_WORD_BUFFER);
+            float totalBuffer = TTSConstants.TTS_TIMEOUT_BASE_BUFFER_SCALED + (totalWordCount * TTSConstants.TTS_TIMEOUT_PER_WORD_BUFFER_SCALED);
             float totalTimeoutInSeconds = estimatedSpeechDuration + totalSilenceDuration + totalBuffer;
 
             LogConstants.TTS_TIMEOUT_HELPER_TIMEOUT_INFO.Log(nameof(TTSTimeoutHelper), string.Join("|", textsToSpeak), totalTimeoutInSeconds);
