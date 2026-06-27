@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BepInEx;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,6 +21,7 @@ namespace TTS_Company.Components.Server.Components
 
         private readonly PiperTTSServer _piperServer;
 
+        private readonly ConcurrentDictionary<string, string> _modelLocations = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, long> _modelSizes = new ConcurrentDictionary<string, long>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, DateTime> _modelLastAccess = new ConcurrentDictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, HashSet<ulong>> _modelAssemblies = new ConcurrentDictionary<string, HashSet<ulong>>(StringComparer.OrdinalIgnoreCase);
@@ -34,13 +36,17 @@ namespace TTS_Company.Components.Server.Components
 
         internal void InitializeModelRegistry()
         {
-            DirectoryInfo dirInfo = new DirectoryInfo(TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION);
-            foreach (FileInfo file in dirInfo.EnumerateFiles("*.onnx", SearchOption.TopDirectoryOnly))
+            string pluginPath = Paths.PluginPath;
+            foreach (string voiceModelFolder in FindVoiceModelFolders())
             {
-                string modelName = Path.GetFileNameWithoutExtension(file.Name);
-                _modelSizes[modelName] = file.Length;
-
-                LogConstants.VOICE_MODEL_MEM_MANAGER_FOUND_VOICE_MODEL_WITH_SIZE.Log(nameof(VoiceModelMemoryManager), modelName, file.Length);
+                string folderPath = Path.Combine(pluginPath, voiceModelFolder);
+                foreach (FileInfo file in new DirectoryInfo(folderPath).EnumerateFiles("*.onnx", SearchOption.TopDirectoryOnly))
+                {
+                    string modelName = Path.GetFileNameWithoutExtension(file.Name);
+                    _modelSizes[modelName] = file.Length;
+                    _modelLocations.TryAdd(modelName, Path.Combine(folderPath, modelName + ".onnx"));
+                    LogConstants.VOICE_MODEL_MEM_MANAGER_FOUND_VOICE_MODEL_WITH_SIZE.Log(nameof(VoiceModelMemoryManager), modelName, file.Length);
+                }
             }
         }
 
@@ -104,11 +110,16 @@ namespace TTS_Company.Components.Server.Components
 
         internal async Task<(bool Success, string Error)> ReloadModelAsync(string modelName, CancellationToken cancellationToken)
         {
+            if (!_modelLocations.TryGetValue(modelName, out string voiceModelLocation))
+            {
+                return (false, TTSConstants.TTS_MEM_MANAGER_UNKNOWN_MODEL_LOCATION);
+            }
+
             UpdateLastUse(modelName);
 
             await EnforceDynamicMemoryLimitsAsync(modelName, cancellationToken).ConfigureAwait(false);
 
-            string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"use_cuda\":" + "false" + "}\n";
+            string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"model_path\":\"" + JSONHelper.Escape(voiceModelLocation.TrimEnd('\\', '/')).Replace("\\", "\\\\") + "\",\"use_cuda\":false}\n";
             Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
             (bool Success, string Error) result = _piperServer.ToResult(response);
             if (result.Success)
@@ -126,6 +137,11 @@ namespace TTS_Company.Components.Server.Components
             if (callingAssembly == null)
             {
                 return (false, TTSConstants.TTS_MEM_MANAGER_UNKNOWN_ASSEMBLY);
+            }
+
+            if (!_modelLocations.TryGetValue(modelName, out string voiceModelLocation))
+            {
+                return (false, TTSConstants.TTS_MEM_MANAGER_UNKNOWN_MODEL_LOCATION);
             }
 
             UpdateLastUse(modelName);
@@ -160,7 +176,7 @@ namespace TTS_Company.Components.Server.Components
 
             await EnforceDynamicMemoryLimitsAsync(modelName, cancellationToken);
 
-            string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"use_cuda\":" + "false" + "}\n"; // no CUDA support in the server exe
+            string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"model_path\":\"" + JSONHelper.Escape(voiceModelLocation.TrimEnd('\\', '/')).Replace("\\", "\\\\") + "\",\"use_cuda\":false}\n";
             Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
             (bool Success, string Error) result = _piperServer.ToResult(response);
 
@@ -293,6 +309,22 @@ namespace TTS_Company.Components.Server.Components
         private static long ConvertMBToLong(int valueInMb)
         {
             return valueInMb * 1024L * 1024L;
+        }
+
+        private static List<string> FindVoiceModelFolders()
+        {
+            string pluginPath = Paths.PluginPath;
+            List<string> results = new List<string>();
+
+            foreach (string subDir in Directory.EnumerateDirectories(pluginPath))
+            {
+                string candidate = Path.Combine(subDir, TTSConstants.TTS_VOICE_MODELS_FOLDER);
+                if (Directory.Exists(candidate))
+                {
+                    results.Add(candidate.Substring(pluginPath.Length).TrimStart(Path.DirectorySeparatorChar));
+                }
+            }
+            return results;
         }
 
         #region Windows Native Memory Detection

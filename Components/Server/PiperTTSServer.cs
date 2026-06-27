@@ -44,18 +44,16 @@ namespace TTS_Company.Components
                 return false;
             }
 
-            if (!Directory.Exists(TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION))
+            if (!Directory.Exists(TTSConstants.TTS_DEFAULT_VOICE_MODELS_FOLDER_LOCATION))
             {
-                LogConstants.PIPER_TTS_SERVER_VOICE_FOLDER_NOT_FOUND.Log(nameof(PiperTTSServer), TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION);
+                LogConstants.PIPER_TTS_SERVER_VOICE_FOLDER_NOT_FOUND.Log(nameof(PiperTTSServer), TTSConstants.TTS_DEFAULT_VOICE_MODELS_FOLDER_LOCATION);
                 return false;
             }
             _memoryManager.InitializeModelRegistry();
 
-            string normalizedModelDir = TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION.TrimEnd('\\', '/');
             ProcessStartInfo psi = new ProcessStartInfo
             {
                 FileName = TTSConstants.PIPER_EXECUTABLE_LOCATION,
-                Arguments = $"\"{normalizedModelDir}\"",
                 UseShellExecute = false,
                 RedirectStandardInput = false,
                 RedirectStandardOutput = true,

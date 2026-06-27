@@ -4,7 +4,6 @@ using HarmonyLib;
 using LethalConfig;
 using LethalConfig.ConfigItems;
 using System.IO;
-using System.Threading.Tasks;
 using TTS_Company.Components;
 using TTS_Company.Components.Constants;
 using TTS_Company.Components.Enums;

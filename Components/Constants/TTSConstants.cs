@@ -1,6 +1,4 @@
-﻿using BepInEx;
-using System;
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using TTS_Company.Components.Enums;
 
@@ -22,7 +20,7 @@ namespace TTS_Company.Components.Constants
 
         // TTS voices
         internal const string TTS_VOICE_MODELS_FOLDER = "TTS-Company-Voices";
-        internal static readonly string TTS_VOICE_MODELS_FOLDER_LOCATION = Path.Combine(Paths.PluginPath, TTS_VOICE_MODELS_FOLDER);
+        internal static readonly string TTS_DEFAULT_VOICE_MODELS_FOLDER_LOCATION = Path.Combine(TTS_COMPANY_EXECUTABLE_LOCATION, TTS_VOICE_MODELS_FOLDER);
 
         // TTS voice clips cache
         private const string TTS_VOICE_CACHE_SOUNDCLIPS_FOLDER = "TTS-Company-Voices-Cache";
@@ -55,6 +53,7 @@ namespace TTS_Company.Components.Constants
         internal const string TTS_VALI_SPEECH_RATE = "Speech rate must be > 0";
 
         internal const string TTS_MEM_MANAGER_UNKNOWN_ASSEMBLY = "Could not determine calling assembly";
+        internal const string TTS_MEM_MANAGER_UNKNOWN_MODEL_LOCATION = "Voice model file location value not found";
 
         // debug
         internal const string DEBUG_AUDIOSOURCE_NAME = "DEBUG_KEYBIND";

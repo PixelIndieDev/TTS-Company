@@ -38,20 +38,12 @@ namespace TTS_Company.Components.Constants
         // debug
         internal static readonly LogMessage TTS_TIMEOUT_HELPER_TIMEOUT_INFO = new LogMessage(LogLevel.Debug, "textToSpeak = {1}, totalTimeoutInSeconds = {2}");
 
-        // -------------------- zip helper --------------------
-        internal static readonly LogMessage ZIP_HELPER_MISSING_EXE = new LogMessage(LogLevel.Info, "{1} not found, now trying to unzip {2}.zip");
-        // errors
-        internal static readonly LogMessage ZIP_HELPER_RESOURCE_NULL = new LogMessage(LogLevel.Fatal, "The following resource was null: {1}");
-        // debug
-        internal static readonly LogMessage ZIP_HELPER_DELETED_FOLDER = new LogMessage(LogLevel.Debug, "{1} folder was found and was deleted");
-        internal static readonly LogMessage ZIP_HELPER_EXE_EXISTS = new LogMessage(LogLevel.Debug, "{1} exists");
-
         // -------------------- TTS Generator --------------------
         internal static readonly LogMessage TTS_GENERATOR_FOUND_CACHED_TTS = new LogMessage(LogLevel.Info, "Found {1} in cache");
         internal static readonly LogMessage TTS_GENERATOR_GENERATING_TTS = new LogMessage(LogLevel.Info, "Generating TTS for text: '{1}' with hash: '{2}'");
         internal static readonly LogMessage TTS_GENERATOR_TTS_CANCELLED = new LogMessage(LogLevel.Info, "TTS got cancelled for text: '{1}' with hash: '{2}'");
         // errors
-        internal static readonly LogMessage TTS_GENERATOR_UNZIP_FAILED = new LogMessage(LogLevel.Fatal, "{1}.exe not found and could not be unzipped");
+        internal static readonly LogMessage TTS_GENERATOR_UNZIP_FAILED = new LogMessage(LogLevel.Fatal, "{1} not found");
         internal static readonly LogMessage TTS_GENERATOR_PROCESS_FAILED_TO_STOP = new LogMessage(LogLevel.Error, "Process {1} failed to exit");
         internal static readonly LogMessage TTS_GENERATOR_FAILED_TO_DELETE_0KB_CACHE = new LogMessage(LogLevel.Error, "Failed to delete 0KB cache file with hash: '{1}' - {2}");
         internal static readonly LogMessage TTS_GENERATOR_FFMPEG_EXITED_PREMATURE = new LogMessage(LogLevel.Fatal, "FFmpeg exited prematurely");

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TTS_Company.Components.Constants;
 using TTS_Company.Components.Managers;
 using TTS_Company.Components.Networking.Components.Structs;
 using UnityEngine;
@@ -54,6 +55,8 @@ namespace TTS_Company.Components
 
         internal void CancelPlayback(CancelAudioTTS_NET data)
         {
+            LogConstants.logSource.LogFatal("CancelPlayback");
+
             if (TTSCompanyBackend.WantedAudioClips.TryRemove(data._taskId, out SpeakTTSAudioClipCache cache))
             {
                 while (cache._audioQueue.TryDequeue(out _)) { }

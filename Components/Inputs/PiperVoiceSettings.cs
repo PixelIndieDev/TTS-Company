@@ -1,5 +1,4 @@
-﻿using System.IO;
-using TTS_Company.Components.Constants;
+﻿using TTS_Company.Components.Constants;
 using TTS_Company.Components.Helpers;
 using UnityEngine;
 
@@ -7,13 +6,7 @@ namespace TTS_Company.Components
 {
     public sealed class PiperVoiceSettings // public as this needs to be able to be accessed by other mods
     {
-        [SerializeField] private string modelNameWithoutPathOrExtention = ExampleConstants.VOICE_MODEL_NAME; // lowercase as private
-        [SerializeField] private string modelPath; // lowercase as private
-
-        public PiperVoiceSettings()
-        {
-            UpdateModelPath();
-        }
+        [SerializeField] private string modelNameWithoutPathOrExtention = ExampleConstants.VOICE_MODEL_NAME;
 
         /// <summary>Name0 of the .onnx model file</summary>
         [SerializeField]
@@ -26,22 +19,8 @@ namespace TTS_Company.Components
                 if (modelNameWithoutPathOrExtention != cleanedValue)
                 {
                     modelNameWithoutPathOrExtention = cleanedValue;
-                    UpdateModelPath();
                 }
             }
-        }
-
-        /// <summary>Path to the .onnx model file</summary>
-        [SerializeField]
-        public string ModelPath
-        {
-            get => modelPath;
-            private set => modelPath = value;
-        }
-
-        private void UpdateModelPath()
-        {
-            ModelPath = Path.Combine(TTSConstants.TTS_VOICE_MODELS_FOLDER_LOCATION, (modelNameWithoutPathOrExtention + ".onnx"));
         }
 
         /// <summary>Speech speed multiplier. 1.0 = normal, 0.5 = half speed, 2.0 = double speed</summary>

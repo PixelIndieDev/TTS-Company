@@ -177,6 +177,7 @@ namespace TTS_Company.Components.Networking
         // server only, called by StartActiveTask() & UpdateActiveTask()
         private static void CancelAnyExistingSessionFor(NetworkObjectReference target, ulong callingAssemblyHash, string reason)
         {
+            LogConstants.logSource.LogFatal("cancel existing session");
             TTSTask_Speak existing = ActiveTasks_Speak.Values.FirstOrDefault(s => !s._cancelled && s._callingAssemblyHash == callingAssemblyHash && s._speakingObject.NetworkObjectId == target.NetworkObjectId);
 
             if (existing != null)
@@ -188,6 +189,7 @@ namespace TTS_Company.Components.Networking
         // server only, called by CancelAnyExistingSessionFor()
         private static void HostCancelSession(ulong sessionId, string reason)
         {
+            LogConstants.logSource.LogFatal("HostCancelSession");
             if (!ActiveTasks_Speak.TryGetValue(sessionId, out TTSTask_Speak session) || session._cancelled)
             {
                 return;

@@ -12,9 +12,6 @@ namespace TTS_Company.Components.Networking.Components.Classes.TTSTask
         internal bool _cancelled;
         internal CancellationTokenSource _cts;
 
-        internal TTSTask_Base()
-        {
-
-        }
+        internal TTSTask_Base() { }
     }
 }
