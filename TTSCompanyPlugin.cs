@@ -132,7 +132,7 @@ namespace TTS_Company
                 }
                 catch (IOException)
                 {
-                    // ignore
+                    LogConstants.CODE_GENERIC_CATCH.Log(nameof(TTSCompanyPlugin), nameof(ClearTTSCache));
                 }
             }
 
