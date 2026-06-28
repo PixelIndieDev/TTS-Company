@@ -208,7 +208,6 @@ namespace TTS_Company.Components
             }
 
             string fullCachePath = Path.Combine(TTSConstants.TTS_VOICE_CACHE_SOUNDCLIPS_PATH, hashCacheFileName);
-
             if (File.Exists(fullCachePath) && new FileInfo(fullCachePath).Length > 0)
             {
                 LogConstants.TTS_GENERATOR_FOUND_CACHED_TTS.Log(nameof(TTSGenerator), hashCacheFileName);

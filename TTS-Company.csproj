@@ -122,7 +122,6 @@
     <Compile Include="Components\Managers\Components\TTSAudioSourcesComponent.cs" />
     <Compile Include="Components\Managers\TTSAudioSourceManager.cs" />
     <Compile Include="Components\Networking\Components\Classes\ClientTaskState.cs" />
-    <Compile Include="Components\Networking\Components\Classes\TTSTask\TTSTask_Base.cs" />
     <Compile Include="Components\Networking\Components\Structs\CancelAudioTTS_NET.cs" />
     <Compile Include="Components\Networking\Components\Structs\PlayAudioTTS_NET.cs" />
     <Compile Include="Components\Networking\Components\Structs\SentenceProgressData_NET.cs" />
@@ -131,7 +130,7 @@
     <Compile Include="Components\Networking\Components\Structs\TTSPregenerateTTS_NET.cs" />
     <Compile Include="Components\Networking\Components\Structs\TTSSpeakTTS_PLUS_NET.cs" />
     <Compile Include="Components\Networking\Components\Structs\TTSSpeakTTS_NET.cs" />
-    <Compile Include="Components\Networking\Components\Classes\TTSTask\TTSTask_Speak.cs" />
+    <Compile Include="Components\Networking\Components\Classes\TTSTask.cs" />
     <Compile Include="Components\Networking\TTSCompanyNetworking.cs" />
     <Compile Include="Components\Server\Components\BusyGeneration.cs" />
     <Compile Include="Components\Helpers\JSONHelper.cs" />
@@ -158,6 +157,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets" Condition="Exists('packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ModInfoPath>$(ProjectDir)ModInfo.cs</ModInfoPath>

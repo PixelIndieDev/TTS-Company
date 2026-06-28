@@ -42,7 +42,7 @@ namespace TTS_Company.Components.Networking
         private static LNetworkMessage<CancelAudioTTS_NET> TTS_networkMessage_CancelSpeakTTS;
 
         // host/server bookkeeping
-        private static readonly ConcurrentDictionary<ulong, TTSTask_Speak> ActiveTasks_Speak = new ConcurrentDictionary<ulong, TTSTask_Speak>();
+        private static readonly ConcurrentDictionary<ulong, TTSTask> ActiveTasks_Server = new ConcurrentDictionary<ulong, TTSTask>();
         private static ulong _nextSessionId_Speak = 0;
 
         // client bookkeeping for cached audioclips
@@ -81,7 +81,8 @@ namespace TTS_Company.Components.Networking
                 return;
             }
 
-            if (ActiveTasks_Speak.TryGetValue(data._sessionId, out TTSTask_Speak session))
+            LogConstants.TTS_COMPANY_NETWORKING_UPDATE_TASK.Log(nameof(TTSCompanyNetworking), recievedFromPlayer, data._sessionId);
+            if (ActiveTasks_Server.TryGetValue(data._sessionId, out TTSTask session))
             {
                 if (!data._success)
                 {
@@ -98,7 +99,7 @@ namespace TTS_Company.Components.Networking
         }
 
         // server only, called by UpdateActiveTask()
-        private static void CheckForFinishedTask(TTSTask_Speak task)
+        private static void CheckForFinishedTask(TTSTask task)
         {
             foreach (KeyValuePair<ulong, bool> client in task._snapshotClientIds)
             {
@@ -130,8 +131,9 @@ namespace TTS_Company.Components.Networking
 
             if (task._textsWaited >= task._textsToSpeak.Length)
             {
-                if (ActiveTasks_Speak.TryRemove(task._taskId, out TTSTask_Speak completedTask))
+                if (ActiveTasks_Server.TryRemove(task._taskId, out TTSTask completedTask))
                 {
+                    completedTask._cts?.Cancel();
                     completedTask._cts?.Dispose();
                 }
             }
@@ -145,10 +147,13 @@ namespace TTS_Company.Components.Networking
                 return;
             }
 
+            // if a session already targets the same NetworkObject+callingAssembly, cancel it
+            CancelAnyExistingSessionFor(data._networkObjectRefOfSpeaker, data._callingAssemblyHash, "Superseded by new session");
+
             _nextSessionId_Speak += 1;
             ulong currentSessionId = _nextSessionId_Speak;
 
-            TTSTask_Speak session = new TTSTask_Speak(LNetworkUtils.AllConnectedClients, data._textsToSpeak.Length)
+            TTSTask session = new TTSTask(LNetworkUtils.AllConnectedClients, data._textsToSpeak.Length)
             {
                 _taskId = currentSessionId,
                 _speakingObject = data._networkObjectRefOfSpeaker,
@@ -160,16 +165,17 @@ namespace TTS_Company.Components.Networking
                 _cts = new CancellationTokenSource()
             };
 
-            // if a session already targets the same NetworkObject+callingAssembly, cancel it
-            CancelAnyExistingSessionFor(data._networkObjectRefOfSpeaker, data._callingAssemblyHash, "Superseded by new session");
-            ActiveTasks_Speak[currentSessionId] = session;
-
             TimeSpan timeout = TTSTimeoutHelper.GetTTSTimeout(data._textsToSpeak, data._voiceSettings);
             session._cts.Token.Register(() =>
             {
-                HostCancelSession(currentSessionId, "Timed out");
+                if (ActiveTasks_Server.ContainsKey(currentSessionId))
+                {
+                    HostCancelSession(currentSessionId, "Timed out");
+                }
             });
             session._cts.CancelAfter(timeout);
+
+            ActiveTasks_Server.TryAdd(currentSessionId, session);
 
             TTS_networkMessage_SpeakTTS_Clients.SendClients(new TTSSpeakTTS_PLUS_NET(data, currentSessionId));
         }
@@ -177,8 +183,7 @@ namespace TTS_Company.Components.Networking
         // server only, called by StartActiveTask() & UpdateActiveTask()
         private static void CancelAnyExistingSessionFor(NetworkObjectReference target, ulong callingAssemblyHash, string reason)
         {
-            LogConstants.logSource.LogFatal("cancel existing session");
-            TTSTask_Speak existing = ActiveTasks_Speak.Values.FirstOrDefault(s => !s._cancelled && s._callingAssemblyHash == callingAssemblyHash && s._speakingObject.NetworkObjectId == target.NetworkObjectId);
+            TTSTask existing = ActiveTasks_Server.Values.FirstOrDefault(s => !s._cancelled && s._callingAssemblyHash == callingAssemblyHash && s._speakingObject.NetworkObjectId == target.NetworkObjectId);
 
             if (existing != null)
             {
@@ -189,14 +194,14 @@ namespace TTS_Company.Components.Networking
         // server only, called by CancelAnyExistingSessionFor()
         private static void HostCancelSession(ulong sessionId, string reason)
         {
-            LogConstants.logSource.LogFatal("HostCancelSession");
-            if (!ActiveTasks_Speak.TryGetValue(sessionId, out TTSTask_Speak session) || session._cancelled)
+            if (!ActiveTasks_Server.TryGetValue(sessionId, out TTSTask session) || session._cancelled)
             {
                 return;
             }
 
             session._cancelled = true;
-            ActiveTasks_Speak.TryRemove(sessionId, out _);
+            ActiveTasks_Server.TryRemove(sessionId, out _);
+            session._cts?.Cancel();
             session._cts?.Dispose();
 
             LogConstants.TTS_COMPANY_NETWORKING_TASK_CANCELLED.Log(nameof(TTSCompanyNetworking), sessionId, reason);

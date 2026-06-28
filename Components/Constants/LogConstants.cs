@@ -39,8 +39,6 @@ namespace TTS_Company.Components.Constants
         internal static readonly LogMessage TTS_TIMEOUT_HELPER_TIMEOUT_INFO = new LogMessage(LogLevel.Debug, "textToSpeak = {1}, totalTimeoutInSeconds = {2}");
 
         // -------------------- TTS Generator --------------------
-        internal static readonly LogMessage TTS_GENERATOR_FOUND_CACHED_TTS = new LogMessage(LogLevel.Info, "Found {1} in cache");
-        internal static readonly LogMessage TTS_GENERATOR_GENERATING_TTS = new LogMessage(LogLevel.Info, "Generating TTS for text: '{1}' with hash: '{2}'");
         internal static readonly LogMessage TTS_GENERATOR_TTS_CANCELLED = new LogMessage(LogLevel.Info, "TTS got cancelled for text: '{1}' with hash: '{2}'");
         // errors
         internal static readonly LogMessage TTS_GENERATOR_UNZIP_FAILED = new LogMessage(LogLevel.Fatal, "{1} not found");
@@ -50,6 +48,8 @@ namespace TTS_Company.Components.Constants
         internal static readonly LogMessage TTS_GENERATOR_NO_CACHED_AUDIO_FOUND = new LogMessage(LogLevel.Error, "Cached audio file with hash: '{1}' not found at: {2}");
         internal static readonly LogMessage TTS_GENERATOR_ARGUMENT_OUT_OF_RANGE_EX = new LogMessage(LogLevel.Fatal, "MaxConcurrentRequests value must be at least 1");
         // debug
+        internal static readonly LogMessage TTS_GENERATOR_FOUND_CACHED_TTS = new LogMessage(LogLevel.Debug, "Found {1} in cache");
+        internal static readonly LogMessage TTS_GENERATOR_GENERATING_TTS = new LogMessage(LogLevel.Debug, "Generating TTS for text: '{1}' with hash: '{2}'");
         internal static readonly LogMessage TTS_GENERATOR_RUN_PIPER_ARGUMENTS = new LogMessage(LogLevel.Debug, "Arguments for {1} are: {2}");
         internal static readonly LogMessage TTS_GENERATOR_DELETE_0KB_CACHE = new LogMessage(LogLevel.Debug, "Deleting 0KB cache file with hash: '{1}'");
 
@@ -60,10 +60,11 @@ namespace TTS_Company.Components.Constants
         internal static readonly LogMessage PLUGIN_TTS_COULD_NOT_BE_INITIALIZED = new LogMessage(LogLevel.Fatal, "{1} could not be initialized");
 
         // -------------------- TTS Company API --------------------
-        internal static readonly LogMessage API_TRIGGER_PRELOAD_VOICE_MODEL = new LogMessage(LogLevel.Info, "Started preloading voice model: {1}");
-        internal static readonly LogMessage API_TRIGGER_UNLOAD_VOICE_MODEL = new LogMessage(LogLevel.Info, "Started unloading voice model: {1}");
         // errors
         internal static readonly LogMessage API_NETWORK_OBJECT_NOT_FOUND = new LogMessage(LogLevel.Warning, "NetworkObject {1} not found");
+        // debug
+        internal static readonly LogMessage API_TRIGGER_PRELOAD_VOICE_MODEL = new LogMessage(LogLevel.Debug, "Started preloading voice model: {1}");
+        internal static readonly LogMessage API_TRIGGER_UNLOAD_VOICE_MODEL = new LogMessage(LogLevel.Debug, "Started unloading voice model: {1}");
 
         // -------------------- Piper TTS Server --------------------
         internal static readonly LogMessage PIPER_TTS_SERVER_SUCCESS_STARTUP = new LogMessage(LogLevel.Info, "Started piper tts server on port {1} (pid {2})");
@@ -90,8 +91,10 @@ namespace TTS_Company.Components.Constants
         // -------------------- TTS audio source manager --------------------
         internal static readonly LogMessage TTS_AUDIO_SOURCE_MANAGER_FAIL_PLAYING_NO_AUDIO_SOURCE = new LogMessage(LogLevel.Warning, "{1} failed as no audio source was found on {2}");
 
-        // -------------------- TTS company networking --------------------
+        // -------------------- TTS company networking --------------------  
         // errors
         internal static readonly LogMessage TTS_COMPANY_NETWORKING_TASK_CANCELLED = new LogMessage(LogLevel.Warning, "Host cancelled session {1} with reason: {2}");
+        // debug
+        internal static readonly LogMessage TTS_COMPANY_NETWORKING_UPDATE_TASK = new LogMessage(LogLevel.Debug, "Player {1} send a task update for task {2}");
     }
 }

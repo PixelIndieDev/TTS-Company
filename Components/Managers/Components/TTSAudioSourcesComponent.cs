@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using TTS_Company.Components.Constants;
 using UnityEngine;
 
 namespace TTS_Company.Components.Managers.Components
@@ -43,7 +44,7 @@ namespace TTS_Company.Components.Managers.Components
 
         internal bool UpdateAudioSourceSettings(ulong callingAssemblyHash, TTSAudioSourceSettings audioSourceSettings)
         {
-            if (GetAudioSource(callingAssemblyHash, out AudioSource audioSource))
+            if (!GetAudioSource(callingAssemblyHash, out AudioSource audioSource))
             {
                 return false;
             }
@@ -69,6 +70,15 @@ namespace TTS_Company.Components.Managers.Components
             audioSource.maxDistance = audioSourceSettings._maxDistance;
             audioSource.rolloffMode = audioSourceSettings._rolloffMode;
 
+            audioSource.outputAudioMixerGroup = audioSourceSettings._outputAudioMixerGroup;
+            audioSource.mute = audioSourceSettings._mute;
+
+            if (audioSourceSettings._customCurve != null)
+            {
+                var curveValue = audioSourceSettings._customCurve.Value;
+                audioSource.SetCustomCurve(curveValue.type, curveValue.curve);
+            }
+
             return true;
         }
 
@@ -84,6 +94,13 @@ namespace TTS_Company.Components.Managers.Components
 
         private void OnDestroy()
         {
+            foreach (AudioSource source in audioSources.Values)
+            {
+                if (source != null)
+                {
+                    Destroy(source);
+                }
+            }
             audioSources.Clear();
         }
     }

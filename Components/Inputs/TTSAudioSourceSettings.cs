@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Audio;
 
 namespace TTS_Company.Components
 {
@@ -10,14 +11,18 @@ namespace TTS_Company.Components
 
         [SerializeField] public int _priority { get; set; } = 128;
         [SerializeField] public float _volume { get; set; } = 1.0f;
+        [SerializeField] public bool _mute { get; set; } = false;
 
         [SerializeField] public float _spatialBlend { get; set; } = 1.0f;
         [SerializeField] public float _reverbZoneMix { get; set; } = 1.0f;
 
-        [SerializeField] public float _dopplerLevel { get; set; } = 1.0f;
+        [SerializeField] public float _dopplerLevel { get; set; } = 0.0f;
         [SerializeField] public float _minDistance { get; set; } = 1.0f;
         [SerializeField] public float _maxDistance { get; set; } = 40.0f;
 
         [SerializeField] public AudioRolloffMode _rolloffMode { get; set; } = AudioRolloffMode.Linear;
+
+        [SerializeField] public AudioMixerGroup _outputAudioMixerGroup { get; set; } = null;
+        [SerializeField] public (AudioSourceCurveType type, AnimationCurve curve)? _customCurve { get; set; } = null;
     }
 }

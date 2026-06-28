@@ -108,6 +108,11 @@ namespace TTS_Company.Components.Server.Components
             return string.Empty;
         }
 
+        private string GetLoadModelString(string modelName, string voiceModelLocation)
+        {
+            return "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"model_path\":\"" + JSONHelper.Escape(voiceModelLocation.TrimEnd('\\', '/')).Replace("\\", "\\\\") + "\",\"use_cuda\":false}\n";
+        }
+
         internal async Task<(bool Success, string Error)> ReloadModelAsync(string modelName, CancellationToken cancellationToken)
         {
             if (!_modelLocations.TryGetValue(modelName, out string voiceModelLocation))
@@ -119,13 +124,12 @@ namespace TTS_Company.Components.Server.Components
 
             await EnforceDynamicMemoryLimitsAsync(modelName, cancellationToken).ConfigureAwait(false);
 
-            string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"model_path\":\"" + JSONHelper.Escape(voiceModelLocation.TrimEnd('\\', '/')).Replace("\\", "\\\\") + "\",\"use_cuda\":false}\n";
-            Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(GetLoadModelString(modelName, voiceModelLocation), cancellationToken).ConfigureAwait(false);
             (bool Success, string Error) result = _piperServer.ToResult(response);
             if (result.Success)
             {
                 _evictedModels.TryRemove(modelName, out _);
-                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName, "CPU2");
+                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName, "CPU2");
             }
 
             return result;
@@ -176,8 +180,7 @@ namespace TTS_Company.Components.Server.Components
 
             await EnforceDynamicMemoryLimitsAsync(modelName, cancellationToken);
 
-            string json = "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"model_path\":\"" + JSONHelper.Escape(voiceModelLocation.TrimEnd('\\', '/')).Replace("\\", "\\\\") + "\",\"use_cuda\":false}\n";
-            Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(GetLoadModelString(modelName, voiceModelLocation), cancellationToken).ConfigureAwait(false);
             (bool Success, string Error) result = _piperServer.ToResult(response);
 
             if (result.Success)
@@ -188,7 +191,7 @@ namespace TTS_Company.Components.Server.Components
                     assemblies.Add(callingAHash);
                 }
 
-                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName, "CPU");
+                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName, "CPU");
             }
             else
             {
@@ -200,7 +203,7 @@ namespace TTS_Company.Components.Server.Components
                     }
                 }
 
-                LogConstants.PIPER_TTS_FAILED_LOADING_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName);
+                LogConstants.PIPER_TTS_FAILED_LOADING_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
             }
 
             return result;
@@ -263,10 +266,10 @@ namespace TTS_Company.Components.Server.Components
                         _modelLastAccess.TryRemove(modelName, out _);
                     }
                 }
-                LogConstants.PIPER_TTS_UNLOADED_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName);
+                LogConstants.PIPER_TTS_UNLOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
             } else
             {
-                LogConstants.PIPER_TTS_FAILED_UNLOADING_VOICE_MODEL.Log(nameof(PiperTTSServer), modelName);
+                LogConstants.PIPER_TTS_FAILED_UNLOADING_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
             }
 
             return result;
