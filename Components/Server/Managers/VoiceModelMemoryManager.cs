@@ -84,7 +84,30 @@ namespace TTS_Company.Components.Server.Components
             _modelLastAccess[modelName] = DateTime.UtcNow;
         }
 
-        internal string GetRandomTTSVoiceName()
+        internal string GetRandomFoundTTSVoiceName()
+        {
+            int totalCount = _modelLocations.Count;
+            if (totalCount == 0)
+            {
+                return null;
+            }
+
+            // Pick a target index
+            int targetIndex = UnityEngine.Random.Range(0, totalCount);
+            int currentIndex = 0;
+
+            foreach (var kvp in _modelLocations)
+            {
+                if (currentIndex == targetIndex)
+                {
+                    return kvp.Key;
+                }
+                currentIndex++;
+            }
+            return string.Empty;
+        }
+
+        internal string GetRandomLoadedTTSVoiceName()
         {
             int totalCount = _modelAssemblies.Count;
             if (totalCount == 0)

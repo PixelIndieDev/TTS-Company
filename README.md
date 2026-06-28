@@ -15,11 +15,7 @@ A text-to-speech library mod for Lethal Company that integrates the lightweight,
 - **Does not send any data to external servers**: all audio synthesis is completely offline.
 
 ## License & Credits
-This mod includes and utilizes the **Piper TTS** source code, modified and compiled into a frozen server executable via PyInstaller. 
-- **Piper TTS** is licensed under the **GPL-3.0 License**
-
-## License & Credits
-This project is licensed under the **GPL-3.0 License** due to its dependencies and bundled components.
+This mod is licensed under the **GPL-3.0 License** due to its dependencies and bundled components.
 
 ### Third-Party Software & Libraries
 This mod makes use of the following third-party software:

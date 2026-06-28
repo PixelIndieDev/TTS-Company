@@ -115,9 +115,9 @@ namespace TTS_Company
             }
 
             TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_female-medium");
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-norman-medium");
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_GB-alba-medium");
             TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_male-medium");
+            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-ryan-medium");
+            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-sam-medium");
         }
 
         private void ClearTTSCache()
