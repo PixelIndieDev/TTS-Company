@@ -96,7 +96,7 @@ namespace TTS_Company.Components.Server.Components
             int targetIndex = UnityEngine.Random.Range(0, totalCount);
             int currentIndex = 0;
 
-            foreach (var kvp in _modelLocations)
+            foreach (KeyValuePair<string, string> kvp in _modelLocations)
             {
                 if (currentIndex == targetIndex)
                 {

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using TTS_Company.Components.Constants;
 using UnityEngine;
 
 namespace TTS_Company.Components.Managers.Components
@@ -75,7 +74,7 @@ namespace TTS_Company.Components.Managers.Components
 
             if (audioSourceSettings._customCurve != null)
             {
-                var curveValue = audioSourceSettings._customCurve.Value;
+                (AudioSourceCurveType type, AnimationCurve curve) curveValue = audioSourceSettings._customCurve.Value;
                 audioSource.SetCustomCurve(curveValue.type, curveValue.curve);
             }
 
