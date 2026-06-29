@@ -96,5 +96,6 @@ namespace TTS_Company.Components.Constants
         internal static readonly LogMessage TTS_COMPANY_NETWORKING_TASK_CANCELLED = new LogMessage(LogLevel.Warning, "Host cancelled session {1} with reason: {2}");
         // debug
         internal static readonly LogMessage TTS_COMPANY_NETWORKING_UPDATE_TASK = new LogMessage(LogLevel.Debug, "Player {1} send a task update for task {2}");
+        internal static readonly LogMessage TTS_COMPANY_NETWORKING_PLAYBACK_CLEANUP = new LogMessage(LogLevel.Debug, "Playback timeout cleaned up task {1}");
     }
 }

@@ -123,10 +123,11 @@ namespace TTS_Company.Components.Networking
 
             // no one was generating
             // now check if it should start playing
+            task._textsWaited += 1; // do first, otherwise if will fail with only 1 text
             if (task._textsWaited >= task._startSpeakingAtAmountOfFinishedTasks)
             {
-                bool isLastBatch = task._textsWaited + 1 > task._amountOfTexts;
-                TTS_networkMessage_PlaySpeakTTS.SendClients(new PlayAudioTTS_NET(task._taskId, task._lastStartSpeakingIndex, task._textsWaited));
+                bool isLastBatch = task._textsWaited > task._amountOfTexts;
+                TTS_networkMessage_PlaySpeakTTS.SendClients(new PlayAudioTTS_NET(task._taskId, task._lastStartSpeakingIndex, (task._textsWaited - 1)));
                 task._lastStartSpeakingIndex += task._textsWaited - task._lastStartSpeakingIndex;
 
                 if (isLastBatch)
@@ -137,7 +138,6 @@ namespace TTS_Company.Components.Networking
                     StartServerPlaybackCleanupTimeout(task);
                 }
             }
-            task._textsWaited += 1;
         }
 
         private static void StartServerPlaybackCleanupTimeout(TTSTask task)
@@ -152,7 +152,7 @@ namespace TTS_Company.Components.Networking
             {
                 if (ActiveTasks_Server.TryRemove(task._taskId, out TTSTask _))
                 {
-                    LogConstants.logSource.LogWarning($"Playback timeout cleaned up task {task._taskId}");
+                    LogConstants.TTS_COMPANY_NETWORKING_PLAYBACK_CLEANUP.Log(nameof(TTSCompanyNetworking), task._taskId);
                 }
             });
         }
@@ -184,7 +184,6 @@ namespace TTS_Company.Components.Networking
             };
 
             TimeSpan timeout = TTSTimeoutHelper.GetGenerationTimeout(data._textsToSpeak, data._voiceSettings);
-            LogConstants.logSource.LogWarning($"GetGenerationTimeout | {timeout.TotalSeconds}");
             session._cts.Token.Register(() =>
             {
                 HostCancelSession(currentSessionId, "Timed out");
@@ -201,8 +200,6 @@ namespace TTS_Company.Components.Networking
         {
             TTSTask existing = ActiveTasks_Server.Values.FirstOrDefault(s => !s._cancelled && s._callingAssemblyHash == callingAssemblyHash && s._speakingObject.NetworkObjectId == target.NetworkObjectId);
 
-            LogConstants.logSource.LogWarning($"ActiveTasks_Server | {ActiveTasks_Server.Count}");
-            LogConstants.logSource.LogWarning($"existing != null | {existing != null}");
             if (existing != null)
             {
                 HostCancelSession(existing._taskId, reason);
@@ -212,7 +209,6 @@ namespace TTS_Company.Components.Networking
         // server only, called by CancelAnyExistingSessionFor()
         private static void HostCancelSession(ulong sessionId, string reason)
         {
-            LogConstants.logSource.LogWarning($"HostCancelSession {sessionId}");
             if (!ActiveTasks_Server.TryGetValue(sessionId, out TTSTask session) || session._cancelled)
             {
                 return;

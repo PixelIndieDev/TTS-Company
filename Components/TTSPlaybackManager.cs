@@ -56,8 +56,6 @@ namespace TTS_Company.Components
 
         internal void CancelPlayback(CancelAudioTTS_NET data)
         {
-            LogConstants.logSource.LogWarning($"CancelPlayback for {data._taskId}");
-
             TTSCompanyNetworking.CancelClientTask(data._taskId);
 
             if (TTSCompanyBackend.WantedAudioClips.TryRemove(data._taskId, out SpeakTTSAudioClipCache cache))

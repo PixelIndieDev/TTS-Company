@@ -59,6 +59,17 @@ namespace TTS_Company.Components.Helpers
             }
         }
 
+        internal static ulong GetCallingGlobalAssemblyHash()
+        {
+            unchecked
+            {
+                ulong hash = OffsetBasis;
+
+                CombineString(ref hash, "TTSCompanyGlobalAudioSourceCaller");
+                return hash;
+            }
+        }
+
         internal static string GetHashTTSFileNameWithFileType(string textToSpeak, PiperVoiceSettings settings)
         {
             unchecked

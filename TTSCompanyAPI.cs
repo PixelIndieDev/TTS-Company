@@ -57,7 +57,7 @@ namespace TTS_Company
 
         // -------------------- speak tts --------------------
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = false, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(SpeakTTSAtNetworkObject));
 
@@ -70,16 +70,16 @@ namespace TTS_Company
             voiceSettings = voiceSettings ?? DefaultVoiceSettings;
 
             Assembly callingA = Assembly.GetCallingAssembly();
-            ulong callingAHash = HashHelper.GetCallingAssemblyHash(callingA);
+            ulong callingAHash = useGlobalAudioSource ? HashHelper.GetCallingGlobalAssemblyHash() : HashHelper.GetCallingAssemblyHash(callingA);
             ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId, callingA);
 
             TTSCompanyNetworking.Request_Server_SpeakTTS(new TTSSpeakTTS_NET(networkObjectRefOfSpeaker, callingAHash, textsToSpeak, voiceSettings, audioSourceSettings, trackingKeyHash));
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = false, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
         {
-            SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), voiceSettings, audioSourceSettings);
+            SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings, audioSourceSettings);
         }
 
         // -------------------- generate TTS --------------------
