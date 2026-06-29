@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using TTS_Company.Components.Constants;
 using TTS_Company.Components.Managers;
+using TTS_Company.Components.Networking;
 using TTS_Company.Components.Networking.Components.Structs;
 using UnityEngine;
 

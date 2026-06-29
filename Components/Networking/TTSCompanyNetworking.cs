@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using TTS_Company.Components.Constants;
 using TTS_Company.Components.Helpers;
 using TTS_Company.Components.Managers;
@@ -128,15 +129,6 @@ namespace TTS_Company.Components.Networking
                 task._lastStartSpeakingIndex += task._textsWaited - task._lastStartSpeakingIndex;
             }
             task._textsWaited += 1;
-
-            if (task._textsWaited >= task._textsToSpeak.Length)
-            {
-                if (ActiveTasks_Server.TryRemove(task._taskId, out TTSTask completedTask))
-                {
-                    completedTask._cts?.Cancel();
-                    completedTask._cts?.Dispose();
-                }
-            }
         }
 
         // server only
@@ -168,10 +160,7 @@ namespace TTS_Company.Components.Networking
             TimeSpan timeout = TTSTimeoutHelper.GetTTSTimeout(data._textsToSpeak, data._voiceSettings);
             session._cts.Token.Register(() =>
             {
-                if (ActiveTasks_Server.ContainsKey(currentSessionId))
-                {
-                    HostCancelSession(currentSessionId, "Timed out");
-                }
+                HostCancelSession(currentSessionId, "Timed out");
             });
             session._cts.CancelAfter(timeout);
 
@@ -185,6 +174,8 @@ namespace TTS_Company.Components.Networking
         {
             TTSTask existing = ActiveTasks_Server.Values.FirstOrDefault(s => !s._cancelled && s._callingAssemblyHash == callingAssemblyHash && s._speakingObject.NetworkObjectId == target.NetworkObjectId);
 
+            LogConstants.logSource.LogWarning($"ActiveTasks_Server | {ActiveTasks_Server.Count}");
+            LogConstants.logSource.LogWarning($"existing != null | {existing != null}");
             if (existing != null)
             {
                 HostCancelSession(existing._taskId, reason);
@@ -194,6 +185,7 @@ namespace TTS_Company.Components.Networking
         // server only, called by CancelAnyExistingSessionFor()
         private static void HostCancelSession(ulong sessionId, string reason)
         {
+            LogConstants.logSource.LogWarning($"HostCancelSession {sessionId}");
             if (!ActiveTasks_Server.TryGetValue(sessionId, out TTSTask session) || session._cancelled)
             {
                 return;
@@ -211,14 +203,23 @@ namespace TTS_Company.Components.Networking
         // all clients
         private static void PlayTTS(PlayAudioTTS_NET playData)
         {
-            if (ClientTasks.TryGetValue(playData._taskId, out ClientTaskState taskValue))
+            if (!ClientTasks.TryGetValue(playData._taskId, out ClientTaskState taskValue))
             {
-                AudioClip[] clips = new AudioClip[(playData._endIndex - playData._startIndex) + 1];
-                for (int i = playData._startIndex; i <= playData._endIndex; i++)
-                {
-                    clips[i] = taskValue._generatedClips[i];
-                }
-                TTSCompanyBackend.PlaySpeakTTSAtNetworkObject_OnClient(playData._taskId, taskValue._networkObjectReference, taskValue._callingAssemblyHash, clips);
+                return;
+            }
+
+            AudioClip[] clips = new AudioClip[(playData._endIndex - playData._startIndex) + 1];
+            for (int i = playData._startIndex; i <= playData._endIndex; i++)
+            {
+                clips[i - playData._startIndex] = taskValue._generatedClips[i];
+                taskValue._generatedClips[i] = null;
+            }
+
+            TTSCompanyBackend.PlaySpeakTTSAtNetworkObject_OnClient(playData._taskId, taskValue._networkObjectReference, taskValue._callingAssemblyHash, clips);
+
+            if (playData._endIndex >= taskValue._generatedClips.Length - 1)
+            {
+                ClientTasks.TryRemove(playData._taskId, out _);
             }
         }
 
