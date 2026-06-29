@@ -5,10 +5,11 @@ namespace TTS_Company.Components.Helpers
 {
     internal static class TTSTimeoutHelper
     {
-        internal static TimeSpan GetTTSTimeout(string[] textsToSpeak, PiperVoiceSettings settings)
-        {
-            LogConstants.CODE_TRIGGERED.Log(nameof(TTSTimeoutHelper), nameof(GetTTSTimeout));
+        private const float baseWordsPerSecond = 2.5f;
+        private static readonly char[] wordSplitChars = new[] { ' ', '\r', '\n' };
 
+        internal static TimeSpan GetPlaybackTimeout(string[] textsToSpeak, PiperVoiceSettings settings)
+        {
             TimeSpan minimumTimeout = TimeSpan.FromSeconds(TTSConstants.TTS_TIMEOUT_MINIMUM_TIME);
 
             if (textsToSpeak == null || textsToSpeak.Length == 0)
@@ -18,7 +19,6 @@ namespace TTS_Company.Components.Helpers
 
             int totalWordCount = 0;
             int sentenceCount = 0;
-            char[] wordSplitChars = new[] { ' ', '\r', '\n' };
 
             foreach (string segment in textsToSpeak)
             {
@@ -27,9 +27,7 @@ namespace TTS_Company.Components.Helpers
                     continue;
                 }
 
-                string[] words = segment.Split(wordSplitChars, StringSplitOptions.RemoveEmptyEntries);
-                totalWordCount += words.Length;
-
+                totalWordCount += segment.Split(wordSplitChars, StringSplitOptions.RemoveEmptyEntries).Length;
                 sentenceCount++;
             }
 
@@ -38,20 +36,50 @@ namespace TTS_Company.Components.Helpers
                 return minimumTimeout;
             }
 
-            // estimate speaking duration
-            float baseWordsPerSecond = 2.5f;
-            // adjust speed
             float effectiveSpeechRate = settings.SpeechRate > 0.05f ? settings.SpeechRate : 1.0f;
-            float estimatedSpeechDuration = (totalWordCount / baseWordsPerSecond) / effectiveSpeechRate;
 
-            float totalSilenceDuration = sentenceCount * settings.SentenceSilence;
-            float totalBuffer = TTSConstants.TTS_TIMEOUT_BASE_BUFFER_SCALED + (totalWordCount * TTSConstants.TTS_TIMEOUT_PER_WORD_BUFFER_SCALED);
-            float totalTimeoutInSeconds = estimatedSpeechDuration + totalSilenceDuration + totalBuffer;
+            float estimatedPlaybackDuration = (totalWordCount / baseWordsPerSecond) / effectiveSpeechRate;
+            float totalSilence = sentenceCount * settings.SentenceSilence;
 
-            LogConstants.TTS_TIMEOUT_HELPER_TIMEOUT_INFO.Log(nameof(TTSTimeoutHelper), string.Join("|", textsToSpeak), totalTimeoutInSeconds);
+            float total = estimatedPlaybackDuration + totalSilence + TTSConstants.TTS_PLAYBACK_TIMEOUT_BUFFER_SECONDS_SCALED;
 
-            TimeSpan calculatedTimeout = TimeSpan.FromSeconds(totalTimeoutInSeconds);
-            return calculatedTimeout > minimumTimeout ? calculatedTimeout : minimumTimeout;
+            TimeSpan calculated = TimeSpan.FromSeconds(total);
+            return calculated > minimumTimeout ? calculated : minimumTimeout;
+        }
+
+        internal static TimeSpan GetGenerationTimeout(string[] textsToSpeak, PiperVoiceSettings settings)
+        {
+            TimeSpan minimumTimeout = TimeSpan.FromSeconds(TTSConstants.TTS_TIMEOUT_MINIMUM_TIME);
+
+            if (textsToSpeak == null || textsToSpeak.Length == 0)
+            {
+                return minimumTimeout;
+            }
+
+            int totalWordCount = 0;
+
+            foreach (string segment in textsToSpeak)
+            {
+                if (string.IsNullOrWhiteSpace(segment))
+                {
+                    continue;
+                }
+                totalWordCount += segment.Split(wordSplitChars, StringSplitOptions.RemoveEmptyEntries).Length;
+            }
+
+            if (totalWordCount == 0)
+            {
+                return minimumTimeout;
+            }
+
+            float effectiveSpeechRate = settings.SpeechRate > 0.05f ? settings.SpeechRate : 1.0f;
+            float estimatedSpeakingDuration = (totalWordCount / baseWordsPerSecond) / effectiveSpeechRate;
+            float estimatedGenerationDuration = estimatedSpeakingDuration * TTSConstants.GetGenerationDurationScaling();
+            float perWordBuffer = totalWordCount * TTSConstants.TTS_TIMEOUT_PER_WORD_BUFFER_SCALED;
+            float total = estimatedGenerationDuration + perWordBuffer + TTSConstants.TTS_TIMEOUT_BASE_BUFFER_SCALED;
+
+            TimeSpan calculated = TimeSpan.FromSeconds(total);
+            return calculated > minimumTimeout ? calculated : minimumTimeout;
         }
     }
 }

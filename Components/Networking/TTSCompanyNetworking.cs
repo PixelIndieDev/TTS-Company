@@ -125,10 +125,36 @@ namespace TTS_Company.Components.Networking
             // now check if it should start playing
             if (task._textsWaited >= task._startSpeakingAtAmountOfFinishedTasks)
             {
+                bool isLastBatch = task._textsWaited + 1 > task._amountOfTexts;
                 TTS_networkMessage_PlaySpeakTTS.SendClients(new PlayAudioTTS_NET(task._taskId, task._lastStartSpeakingIndex, task._textsWaited));
                 task._lastStartSpeakingIndex += task._textsWaited - task._lastStartSpeakingIndex;
+
+                if (isLastBatch)
+                {
+                    task._cts?.Dispose();
+                    task._cts = null;
+
+                    StartServerPlaybackCleanupTimeout(task);
+                }
             }
             task._textsWaited += 1;
+        }
+
+        private static void StartServerPlaybackCleanupTimeout(TTSTask task)
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+            {
+                return;
+            }
+
+            TimeSpan playbackTimeout = TTSTimeoutHelper.GetPlaybackTimeout(task._textsToSpeak, task._voiceSettings);
+            Task.Delay(playbackTimeout).ContinueWith(_ =>
+            {
+                if (ActiveTasks_Server.TryRemove(task._taskId, out TTSTask _))
+                {
+                    LogConstants.logSource.LogWarning($"Playback timeout cleaned up task {task._taskId}");
+                }
+            });
         }
 
         // server only
@@ -157,7 +183,8 @@ namespace TTS_Company.Components.Networking
                 _cts = new CancellationTokenSource()
             };
 
-            TimeSpan timeout = TTSTimeoutHelper.GetTTSTimeout(data._textsToSpeak, data._voiceSettings);
+            TimeSpan timeout = TTSTimeoutHelper.GetGenerationTimeout(data._textsToSpeak, data._voiceSettings);
+            LogConstants.logSource.LogWarning($"GetGenerationTimeout | {timeout.TotalSeconds}");
             session._cts.Token.Register(() =>
             {
                 HostCancelSession(currentSessionId, "Timed out");
@@ -193,7 +220,6 @@ namespace TTS_Company.Components.Networking
 
             session._cancelled = true;
             ActiveTasks_Server.TryRemove(sessionId, out _);
-            session._cts?.Cancel();
             session._cts?.Dispose();
 
             LogConstants.TTS_COMPANY_NETWORKING_TASK_CANCELLED.Log(nameof(TTSCompanyNetworking), sessionId, reason);
@@ -209,9 +235,16 @@ namespace TTS_Company.Components.Networking
             }
 
             AudioClip[] clips = new AudioClip[(playData._endIndex - playData._startIndex) + 1];
+            float totalPlaybackDuration = 0f;
+
             for (int i = playData._startIndex; i <= playData._endIndex; i++)
             {
-                clips[i - playData._startIndex] = taskValue._generatedClips[i];
+                AudioClip clip = taskValue._generatedClips[i];
+                clips[i - playData._startIndex] = clip;
+                if (clip != null)
+                {
+                    totalPlaybackDuration += clip.length;
+                }
                 taskValue._generatedClips[i] = null;
             }
 
@@ -267,6 +300,20 @@ namespace TTS_Company.Components.Networking
                 if (taskValue._generatedClips[textIndex] == null)
                 {
                     taskValue._generatedClips[textIndex] = audioClip;
+                }
+            }
+        }
+
+        internal static void CancelClientTask(ulong taskId)
+        {
+            if (ClientTasks.TryRemove(taskId, out ClientTaskState oldState))
+            {
+                oldState._cts?.Cancel();
+                oldState._cts?.Dispose();
+
+                if (oldState._generatedClips != null)
+                {
+                    Array.Clear(oldState._generatedClips, 0, oldState._generatedClips.Length);
                 }
             }
         }

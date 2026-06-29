@@ -108,7 +108,7 @@ namespace TTS_Company
             ulong callingAHash = HashHelper.GetCallingAssemblyHash(callingA);
             ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(string.Join("|", textsToSpeak), voiceSettings);
 
-            CancellationTokenSource ttsCts = new CancellationTokenSource(TTSTimeoutHelper.GetTTSTimeout(textsToSpeak, voiceSettings));
+            CancellationTokenSource ttsCts = new CancellationTokenSource(TTSTimeoutHelper.GetGenerationTimeout(textsToSpeak, voiceSettings));
             TTSCompanyPlugin.instance.StartCoroutine(TTSCompanyBackend.PreGenerateTTS(trackingKeyHash, textsToSpeak, voiceSettings, ttsCts));
         }
     }

@@ -35,11 +35,13 @@ namespace TTS_Company.Components.Constants
         // in seconds
         internal const float TTS_TIMEOUT_MINIMUM_TIME = 4.0f;
 
-        internal const float TTS_TIMEOUT_BASE_BUFFER = 4.0f;
-        internal const float TTS_TIMEOUT_PER_WORD_BUFFER = 0.05f;
+        private const float TTS_TIMEOUT_BASE_BUFFER = 4.0f;
+        private const float TTS_TIMEOUT_PER_WORD_BUFFER = 0.05f;
+        private const float TTS_PLAYBACK_TIMEOUT_BUFFER = 1.0f;
 
         internal static float TTS_TIMEOUT_BASE_BUFFER_SCALED = 0.0f;
         internal static float TTS_TIMEOUT_PER_WORD_BUFFER_SCALED = 0.0f;
+        internal static float TTS_PLAYBACK_TIMEOUT_BUFFER_SECONDS_SCALED = 0.0f;
 
         // errors
         // errors for in the TTSResult
@@ -62,6 +64,7 @@ namespace TTS_Company.Components.Constants
         {
             TTS_TIMEOUT_BASE_BUFFER_SCALED = TTS_TIMEOUT_BASE_BUFFER * GetTimeoutBufferScaling(true);
             TTS_TIMEOUT_PER_WORD_BUFFER_SCALED = TTS_TIMEOUT_PER_WORD_BUFFER * GetTimeoutBufferScaling(false);
+            TTS_PLAYBACK_TIMEOUT_BUFFER_SECONDS_SCALED = TTS_PLAYBACK_TIMEOUT_BUFFER * GetTimeoutBufferScaling(true);
         }
 
         private static float GetTimeoutBufferScaling(bool isBase)
@@ -76,6 +79,21 @@ namespace TTS_Company.Components.Constants
                     return isBase ? 1.4f : 1.1f;
                 case TimeoutBufferScaling.Max:
                     return isBase ? 1.8f : 1.2f;
+            }
+        }
+
+        internal static float GetGenerationDurationScaling()
+        {
+            switch (TTSCompanyPlugin.configEntryTimeoutBuffer.Value)
+            {
+                case TimeoutBufferScaling.Low:
+                    return 0.95f;
+                default: // normal priority
+                    return 1.0f;
+                case TimeoutBufferScaling.High:
+                    return 1.4f;
+                case TimeoutBufferScaling.Max:
+                    return 2.0f;
             }
         }
     }
