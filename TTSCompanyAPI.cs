@@ -45,7 +45,7 @@ namespace TTS_Company
         public static void AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
             audioSourceSettings = audioSourceSettings ?? DefaultTTSAudioSourceSettings;
-            var callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
+            ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
 
             if (LNetworkUtils.IsConnected) // is in-game, do normal server stuff
             {
@@ -66,7 +66,7 @@ namespace TTS_Company
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RemoveTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker)
         {
-            var callerHash = HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
+            ulong callerHash = HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
 
             if (LNetworkUtils.IsConnected) // is in-game, do normal server stuff
             {

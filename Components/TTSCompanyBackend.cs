@@ -98,7 +98,7 @@ namespace TTS_Company.Components
             }
         }
 
-        internal static void PlaySpeakTTSAtNetworkObject_OnClient(ulong speakerHash, NetworkObjectReference networkObjectReference, ulong callingAssemblyHash, AudioClip[] audioClip)
+        internal static void PlaySpeakTTSAtNetworkObject_OnClient(ulong taskid, NetworkObjectReference networkObjectReference, ulong callingAssemblyHash, AudioClip[] audioClip)
         {
             if (audioClip == null || !networkObjectReference.TryGet(out NetworkObject networkObject))
             {
@@ -111,13 +111,13 @@ namespace TTS_Company.Components
                 return;
             }
 
-            if (WantedAudioClips.TryGetValue(speakerHash, out SpeakTTSAudioClipCache cache))
+            if (WantedAudioClips.TryGetValue(taskid, out SpeakTTSAudioClipCache cache))
             {
                 cache.AddAudioClips(audioClip);
             }
             else
             {
-                WantedAudioClips.TryAdd(speakerHash, new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip));
+                WantedAudioClips.TryAdd(taskid, new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip));
             }
         }
 
