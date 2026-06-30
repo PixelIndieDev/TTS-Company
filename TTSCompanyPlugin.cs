@@ -114,10 +114,11 @@ namespace TTS_Company
                 LogConstants.PLUGIN_TTS_COULD_NOT_BE_INITIALIZED.Log(nameof(TTSCompanyPlugin), "new TTSGenerator()");
             }
 
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_female-medium");
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_male-medium");
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-ryan-medium");
-            TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-sam-medium");
+            // load default voices
+            await TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_female-medium");
+            await TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-hfc_male-medium");
+            await TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-ryan-medium");
+            await TTSCompanyAPI.PreloadTTSVoiceModelInMemory("en_US-sam-medium");
         }
 
         private void ClearTTSCache()

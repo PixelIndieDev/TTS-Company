@@ -147,7 +147,7 @@ namespace TTS_Company.Components
         }
 
         // voice loading must be called before calling GenerateTTSAsync()
-        internal Task<(bool Success, string Error)> PreloadVoiceAsync(string voiceName, CancellationToken cancellationToken = default)
+        internal Task<(bool Success, string Error)> PreloadVoiceAsync(string voiceName, ulong callingAssemblyHash, CancellationToken cancellationToken = default)
         {
             if (!_isAvailable || _disposed)
             {
@@ -159,10 +159,10 @@ namespace TTS_Company.Components
                 return Task.FromResult((false, TTSConstants.TTS_VOICE_MODEL_NAME_EMPTY));
             }
 
-            return _server.LoadModelAsync(voiceName, cancellationToken);
+            return _server.LoadModelAsync(voiceName, callingAssemblyHash, cancellationToken);
         }
 
-        internal Task<(bool Success, string Error)> UnloadVoiceAsync(string voiceName, CancellationToken cancellationToken = default)
+        internal Task<(bool Success, string Error)> UnloadVoiceAsync(string voiceName, ulong callingAssemblyHash, CancellationToken cancellationToken = default)
         {
             if (!_isAvailable || _disposed)
             {
@@ -174,7 +174,7 @@ namespace TTS_Company.Components
                 return Task.FromResult((false, TTSConstants.TTS_VOICE_MODEL_NAME_EMPTY));
             }
 
-            return _server.UnloadModelAsync(voiceName, cancellationToken);
+            return _server.UnloadModelAsync(voiceName, callingAssemblyHash, cancellationToken);
         }
 
         internal bool isVoiceModelLoaded(string voiceModelName)

@@ -1,4 +1,6 @@
 ﻿using System.Collections.Concurrent;
+using TTS_Company.Components.Constants;
+using TTS_Company.Components.Helpers;
 using UnityEngine;
 
 namespace TTS_Company.Components.Managers.Components
@@ -26,6 +28,8 @@ namespace TTS_Company.Components.Managers.Components
 
         internal bool PlayAudioClip(ulong callingAssemblyHash, AudioClip newAudioClip)
         {
+            LogConstants.CODE_TRIGGERED.Log(nameof(TTSAudioSourcesComponent), nameof(PlayAudioClip));
+
             if (newAudioClip == null)
             {
                 return false;

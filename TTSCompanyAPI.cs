@@ -20,29 +20,36 @@ namespace TTS_Company
 
         // -------------------- preload voice models --------------------
         // client side
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static async Task<(bool Success, string Error)> PreloadTTSVoiceModelInMemory(string voiceModelName)
         {
             voiceModelName = VoiceHelper.CleanupVoiceModelname(voiceModelName);
             LogConstants.API_TRIGGER_PRELOAD_VOICE_MODEL.Log(nameof(TTSCompanyAPI), voiceModelName);
-            return await TTSCompanyPlugin._tts.PreloadVoiceAsync(voiceModelName);
+
+            ulong callingAssemblyHash = HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
+            return await TTSCompanyPlugin._tts.PreloadVoiceAsync(voiceModelName, callingAssemblyHash);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static async Task<(bool Success, string Error)> UnloadTTSVoiceModelInMemory(string voiceModelName)
         {
             voiceModelName = VoiceHelper.CleanupVoiceModelname(voiceModelName);
             LogConstants.API_TRIGGER_UNLOAD_VOICE_MODEL.Log(nameof(TTSCompanyAPI), voiceModelName);
-            return await TTSCompanyPlugin._tts.UnloadVoiceAsync(VoiceHelper.CleanupVoiceModelname(voiceModelName));
+
+            ulong callingAssemblyHash = HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
+            return await TTSCompanyPlugin._tts.UnloadVoiceAsync(voiceModelName, callingAssemblyHash);
         }
 
         // -------------------- add audio sources --------------------
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, TTSAudioSourceSettings audioSourceSettings = null)
+        public static void AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
             audioSourceSettings = audioSourceSettings ?? DefaultTTSAudioSourceSettings;
+            var callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
 
             if (LNetworkUtils.IsConnected) // is in-game, do normal server stuff
             {
-                TTSCompanyNetworking.Request_Server_SpawnTTSSource(new SpawnTTSAudioSource_NET(networkObjectRefOfSpeaker, HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly()), audioSourceSettings));
+                TTSCompanyNetworking.Request_Server_SpawnTTSSource(new SpawnTTSAudioSource_NET(networkObjectRefOfSpeaker, callerHash, audioSourceSettings));
             }
             else // is NOT in-game, so do it without networking
             {
@@ -51,13 +58,35 @@ namespace TTS_Company
                     LogConstants.API_NETWORK_OBJECT_NOT_FOUND.Log(nameof(TTSCompanyAPI), networkObjectRefOfSpeaker);
                     return;
                 }
-                TTSAudioSourceManager.AddPermanentTTSAudioSource(networkObject.gameObject, HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly()), audioSourceSettings);
+
+                TTSAudioSourceManager.AddPermanentTTSAudioSource(networkObject.gameObject, callerHash, audioSourceSettings);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RemoveTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker)
+        {
+            var callerHash = HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
+
+            if (LNetworkUtils.IsConnected) // is in-game, do normal server stuff
+            {
+                TTSCompanyNetworking.Request_Server_DespawnTTSSource(new DespawnTTSAudioSource_NET(networkObjectRefOfSpeaker, callerHash));
+            }
+            else // is NOT in-game, so do it without networking
+            {
+                if (!networkObjectRefOfSpeaker.TryGet(out NetworkObject networkObject))
+                {
+                    LogConstants.API_NETWORK_OBJECT_NOT_FOUND.Log(nameof(TTSCompanyAPI), networkObjectRefOfSpeaker);
+                    return;
+                }
+
+                TTSAudioSourceManager.RemovePermanentTTSAudioSource(networkObject.gameObject, callerHash);
             }
         }
 
         // -------------------- speak tts --------------------
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = false, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(SpeakTTSAtNetworkObject));
 
@@ -69,15 +98,25 @@ namespace TTS_Company
             // if null, use the default
             voiceSettings = voiceSettings ?? DefaultVoiceSettings;
 
-            Assembly callingA = Assembly.GetCallingAssembly();
-            ulong callingAHash = useGlobalAudioSource ? HashHelper.GetCallingGlobalAssemblyHash() : HashHelper.GetCallingAssemblyHash(callingA);
-            ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId, callingA);
+            ulong callingAHash;
+            ulong trackingKeyHash;
+            if (useGlobalAudioSource)
+            {
+                callingAHash = HashHelper.GlobalCallerHash;
+                trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId);
+            } 
+            else
+            {
+                Assembly callingA = Assembly.GetCallingAssembly();
+                callingAHash = HashHelper.GetCallingAssemblyHash(callingA);
+                trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId, callingA);
+            }
 
             TTSCompanyNetworking.Request_Server_SpeakTTS(new TTSSpeakTTS_NET(networkObjectRefOfSpeaker, callingAHash, textsToSpeak, voiceSettings, audioSourceSettings, trackingKeyHash));
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = false, PiperVoiceSettings voiceSettings = null, TTSAudioSourceSettings audioSourceSettings = null)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
             SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings, audioSourceSettings);
         }
@@ -104,8 +143,6 @@ namespace TTS_Company
             // if null, use the default
             voiceSettings = voiceSettings ?? DefaultVoiceSettings;
 
-            Assembly callingA = Assembly.GetCallingAssembly();
-            ulong callingAHash = HashHelper.GetCallingAssemblyHash(callingA);
             ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(string.Join("|", textsToSpeak), voiceSettings);
 
             CancellationTokenSource ttsCts = new CancellationTokenSource(TTSTimeoutHelper.GetGenerationTimeout(textsToSpeak, voiceSettings));

@@ -40,7 +40,7 @@ namespace TTS_Company.Components.Managers
 
             if (networkObject == null)
             {
-                LogConstants.CODE_INPUT_VARIABLES_INVALID.Log(nameof(TTSAudioSourceManager), 1);
+                LogConstants.CODE_INPUT_VARIABLES_INVALID.Log(nameof(TTSAudioSourceManager), nameof(AddPermanentTTSAudioSource), 1);
                 return false;
             }
 
@@ -63,6 +63,34 @@ namespace TTS_Company.Components.Managers
                     AddAudioSource(audioGO, callingAssemblyHash, audioSourceSettings);
                     return true;
                 }
+            }
+            return false;
+        }
+
+        internal static void RemovePermanentTTSAudioSource(DespawnTTSAudioSource_NET data)
+        {
+            if (!data._networkObjectRefOfSpeaker.TryGet(out NetworkObject networkObject))
+            {
+                LogConstants.API_NETWORK_OBJECT_NOT_FOUND.Log(nameof(TTSCompanyAPI), data._networkObjectRefOfSpeaker);
+                return;
+            }
+
+            TTSAudioSourceManager.RemovePermanentTTSAudioSource(networkObject.gameObject, data._callingAssemblyHash);
+        }
+
+        internal static bool RemovePermanentTTSAudioSource(GameObject networkObject, ulong callingAssemblyHash)
+        {
+            LogConstants.CODE_TRIGGERED.Log(nameof(TTSAudioSourceManager), nameof(RemovePermanentTTSAudioSource));
+
+            if (networkObject == null)
+            {
+                LogConstants.CODE_INPUT_VARIABLES_INVALID.Log(nameof(TTSAudioSourceManager), nameof(RemovePermanentTTSAudioSource), 1);
+                return false;
+            }
+
+            if (DoesGameObjectHaveTTSAudioSourcesComponent(networkObject, out TTSAudioSourcesComponent audioGO))
+            {
+                return audioGO.RemoveAudioSource(callingAssemblyHash);
             }
             return false;
         }
@@ -91,6 +119,7 @@ namespace TTS_Company.Components.Managers
         {
             if (audioSourceContainingGameObject.AddAudioSource(callingAssemblyHash))
             {
+                LogConstants.TTS_AUDIO_SOURCE_MANAGER_AUDIO_SOURCE_ADDED.Log(nameof(TTSAudioSourceManager), callingAssemblyHash);
                 audioSourceContainingGameObject.UpdateAudioSourceSettings(callingAssemblyHash, audioSourceSettings);
             }
         }

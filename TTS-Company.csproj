@@ -109,6 +109,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Components\Constants\APIDefaultsConstants.cs" />
     <Compile Include="Components\Constants\ExampleConstants.cs" />
     <Compile Include="Components\Constants\OggConstants.cs" />
     <Compile Include="Components\Constants\LogConstants.cs" />
@@ -123,6 +124,7 @@
     <Compile Include="Components\Managers\TTSAudioSourceManager.cs" />
     <Compile Include="Components\Networking\Components\Classes\ClientTaskState.cs" />
     <Compile Include="Components\Networking\Components\Structs\CancelAudioTTS_NET.cs" />
+    <Compile Include="Components\Networking\Components\Structs\DespawnTTSAudioSource_NET.cs" />
     <Compile Include="Components\Networking\Components\Structs\PlayAudioTTS_NET.cs" />
     <Compile Include="Components\Networking\Components\Structs\SentenceProgressData_NET.cs" />
     <Compile Include="Components\Networking\Components\Classes\SpeakTTSAudioClipCache.cs" />

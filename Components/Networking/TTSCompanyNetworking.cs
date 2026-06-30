@@ -24,6 +24,9 @@ namespace TTS_Company.Components.Networking
         private const string messageId_SpawnTTSAudioSource_Server = ModInfo.modGUID + message_PREFIX + "SpawnTTSAudioSource_Server";
         private const string messageId_SpawnTTSAudioSource_Clients = ModInfo.modGUID + message_PREFIX + "SpawnTTSAudioSource_Clients";
 
+        private const string messageId_DespawnTTSAudioSource_Server = ModInfo.modGUID + message_PREFIX + "DespawnTTSAudioSource_Server";
+        private const string messageId_DespawnTTSAudioSource_Clients = ModInfo.modGUID + message_PREFIX + "DespawnTTSAudioSource_Clients";
+
         private const string messageId_SpeakTTS_Clients = ModInfo.modGUID + message_PREFIX + "SpeakTTS_Clients";
         private const string messageId_SpeakTTS_Server = ModInfo.modGUID + message_PREFIX + "SpeakTTS_Server";
         private const string messageId_SentenceProgress = ModInfo.modGUID + message_PREFIX + "SentenceProgress";
@@ -34,6 +37,9 @@ namespace TTS_Company.Components.Networking
         // networking messages
         private static LNetworkMessage<SpawnTTSAudioSource_NET> TTS_networkMessage_SpawnTTSAudioSource_Server;
         private static LNetworkMessage<SpawnTTSAudioSource_NET> TTS_networkMessage_SpawnTTSAudioSource_Clients;
+
+        private static LNetworkMessage<DespawnTTSAudioSource_NET> TTS_networkMessage_DespawnTTSAudioSource_Server;
+        private static LNetworkMessage<DespawnTTSAudioSource_NET> TTS_networkMessage_DespawnTTSAudioSource_Clients;
 
         private static LNetworkMessage<TTSSpeakTTS_PLUS_NET> TTS_networkMessage_SpeakTTS_Clients;
         private static LNetworkMessage<TTSSpeakTTS_NET> TTS_networkMessage_SpeakTTS_Server;
@@ -55,6 +61,9 @@ namespace TTS_Company.Components.Networking
             TTS_networkMessage_SpawnTTSAudioSource_Server = LNetworkMessage<SpawnTTSAudioSource_NET>.Connect(messageId_SpawnTTSAudioSource_Server, onServerReceived: SpawnTTSAudioSource);
             TTS_networkMessage_SpawnTTSAudioSource_Clients = LNetworkMessage<SpawnTTSAudioSource_NET>.Connect(messageId_SpawnTTSAudioSource_Clients, onClientReceived: TTSAudioSourceManager.AddPermanentTTSAudioSource);
 
+            TTS_networkMessage_DespawnTTSAudioSource_Server = LNetworkMessage<DespawnTTSAudioSource_NET>.Connect(messageId_DespawnTTSAudioSource_Server, onServerReceived: DespawnTTSAudioSource);
+            TTS_networkMessage_DespawnTTSAudioSource_Clients = LNetworkMessage<DespawnTTSAudioSource_NET>.Connect(messageId_DespawnTTSAudioSource_Clients, onClientReceived: TTSAudioSourceManager.RemovePermanentTTSAudioSource);
+
             TTS_networkMessage_SpeakTTS_Clients = LNetworkMessage<TTSSpeakTTS_PLUS_NET>.Connect(messageId_SpeakTTS_Clients, onClientReceived: TTSCompanyBackend.SpeakTTSAtNetworkObject_OnClient);
             TTS_networkMessage_SpeakTTS_Server = LNetworkMessage<TTSSpeakTTS_NET>.Connect(messageId_SpeakTTS_Server, onServerReceived: StartActiveTask);
             TTS_networkMessage_SentenceProgress = LNetworkMessage<SentenceProgressData_NET>.Connect(messageId_SentenceProgress, onServerReceived: UpdateActiveTask);
@@ -72,6 +81,16 @@ namespace TTS_Company.Components.Networking
             }
 
             TTS_networkMessage_SpawnTTSAudioSource_Clients.SendClients(data);
+        }
+
+        private static void DespawnTTSAudioSource(DespawnTTSAudioSource_NET data, ulong recievedFromPlayer)
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+            {
+                return;
+            }
+
+            TTS_networkMessage_DespawnTTSAudioSource_Clients.SendClients(data);
         }
 
         // server only
@@ -152,6 +171,7 @@ namespace TTS_Company.Components.Networking
             {
                 if (ActiveTasks_Server.TryRemove(task._taskId, out TTSTask _))
                 {
+
                     LogConstants.TTS_COMPANY_NETWORKING_PLAYBACK_CLEANUP.Log(nameof(TTSCompanyNetworking), task._taskId);
                 }
             });
@@ -256,6 +276,11 @@ namespace TTS_Company.Components.Networking
         internal static void Request_Server_SpawnTTSSource(SpawnTTSAudioSource_NET data)
         {
             TTS_networkMessage_SpawnTTSAudioSource_Server.SendServer(data);
+        }
+
+        internal static void Request_Server_DespawnTTSSource(DespawnTTSAudioSource_NET data)
+        {
+            TTS_networkMessage_DespawnTTSAudioSource_Server.SendServer(data);
         }
 
         internal static void Request_Server_SpeakTTS(TTSSpeakTTS_NET data)

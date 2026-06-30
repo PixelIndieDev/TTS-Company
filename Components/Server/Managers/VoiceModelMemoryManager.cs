@@ -152,27 +152,20 @@ namespace TTS_Company.Components.Server.Components
             if (result.Success)
             {
                 _evictedModels.TryRemove(modelName, out _);
-                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName, "CPU2");
+                LogConstants.PIPER_TTS_RELOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
             }
 
             return result;
         }
 
-        internal async Task<(bool Success, string Error)> LoadModelAsync(string modelName, CancellationToken cancellationToken)
+        internal async Task<(bool Success, string Error)> LoadModelAsync(string modelName, ulong callingAssemblyHash, CancellationToken cancellationToken)
         {
-            Assembly callingAssembly = new StackFrame(1, false).GetMethod()?.DeclaringType?.Assembly;
-            if (callingAssembly == null)
-            {
-                return (false, TTSConstants.TTS_MEM_MANAGER_UNKNOWN_ASSEMBLY);
-            }
-
             if (!_modelLocations.TryGetValue(modelName, out string voiceModelLocation))
             {
                 return (false, TTSConstants.TTS_MEM_MANAGER_UNKNOWN_MODEL_LOCATION);
             }
 
             UpdateLastUse(modelName);
-            ulong callingAHash = HashHelper.GetCallingAssemblyHash(callingAssembly);
             HashSet<ulong> assemblies = _modelAssemblies.GetOrAdd(modelName, _ => new HashSet<ulong>());
 
             bool needsServerLoad;
@@ -184,7 +177,7 @@ namespace TTS_Company.Components.Server.Components
                 }
                 else
                 {
-                    if (assemblies.Contains(callingAHash))
+                    if (assemblies.Contains(callingAssemblyHash))
                     {
                         return (true, string.Empty);
                     }
@@ -196,7 +189,7 @@ namespace TTS_Company.Components.Server.Components
             {
                 lock (assemblies)
                 {
-                    assemblies.Add(callingAHash);
+                    assemblies.Add(callingAssemblyHash);
                 }
                 return (true, string.Empty);
             }
@@ -211,10 +204,10 @@ namespace TTS_Company.Components.Server.Components
                 _evictedModels.TryRemove(modelName, out _);
                 lock (assemblies)
                 {
-                    assemblies.Add(callingAHash);
+                    assemblies.Add(callingAssemblyHash);
                 }
 
-                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName, "CPU");
+                LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
             }
             else
             {
@@ -232,15 +225,8 @@ namespace TTS_Company.Components.Server.Components
             return result;
         }
 
-        internal async Task<(bool Success, string Error)> UnloadModelAsync(string modelName, CancellationToken cancellationToken)
+        internal async Task<(bool Success, string Error)> UnloadModelAsync(string modelName, ulong callingAssemblyHash, CancellationToken cancellationToken)
         {
-            Assembly callingAssembly = new StackFrame(1, false).GetMethod()?.DeclaringType?.Assembly;
-            if (callingAssembly == null)
-            {
-                return (false, TTSConstants.TTS_MEM_MANAGER_UNKNOWN_ASSEMBLY);
-            }
-
-            ulong callingAHash = HashHelper.GetCallingAssemblyHash(callingAssembly);
             if (!_modelAssemblies.TryGetValue(modelName, out HashSet<ulong> assemblies))
             {
                 return (true, string.Empty);
@@ -248,14 +234,14 @@ namespace TTS_Company.Components.Server.Components
 
             lock (assemblies)
             {
-                if (!assemblies.Contains(callingAHash))
+                if (!assemblies.Contains(callingAssemblyHash))
                 {
                     return (true, string.Empty);
                 }
 
                 if (assemblies.Count != 1)
                 {
-                    assemblies.Remove(callingAHash);
+                    assemblies.Remove(callingAssemblyHash);
                     return (true, string.Empty);
                 }
             }
@@ -264,7 +250,7 @@ namespace TTS_Company.Components.Server.Components
             {
                 lock (assemblies)
                 {
-                    assemblies.Remove(callingAHash);
+                    assemblies.Remove(callingAssemblyHash);
                     if (assemblies.Count == 0)
                     {
                         _modelAssemblies.TryRemove(modelName, out _);
@@ -282,7 +268,7 @@ namespace TTS_Company.Components.Server.Components
             {
                 lock (assemblies)
                 {
-                    assemblies.Remove(callingAHash);
+                    assemblies.Remove(callingAssemblyHash);
                     if (assemblies.Count == 0)
                     {
                         _modelAssemblies.TryRemove(modelName, out _);

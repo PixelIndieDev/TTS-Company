@@ -180,14 +180,14 @@ namespace TTS_Company.Components
             return _memoryManager.IsVoiceModelValid(modelName);
         }
 
-        internal async Task<(bool Success, string Error)> LoadModelAsync(string modelName, CancellationToken cancellationToken)
+        internal async Task<(bool Success, string Error)> LoadModelAsync(string modelName, ulong callingAssemblyHash, CancellationToken cancellationToken)
         {
-            return await _memoryManager.LoadModelAsync(modelName, cancellationToken);
+            return await _memoryManager.LoadModelAsync(modelName, callingAssemblyHash, cancellationToken);
         }
 
-        internal async Task<(bool Success, string Error)> UnloadModelAsync(string modelName, CancellationToken cancellationToken)
+        internal async Task<(bool Success, string Error)> UnloadModelAsync(string modelName, ulong callingAssemblyHash, CancellationToken cancellationToken)
         {
-            return await _memoryManager.UnloadModelAsync(modelName, cancellationToken);
+            return await _memoryManager.UnloadModelAsync(modelName, callingAssemblyHash, cancellationToken);
         }
 
         internal async Task<Dictionary<string, object>> SendSimpleCommandAsync(string requestJsonLine, CancellationToken cancellationToken, int timeoutMs = 30000)

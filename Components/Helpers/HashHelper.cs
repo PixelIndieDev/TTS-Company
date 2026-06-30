@@ -6,20 +6,38 @@ namespace TTS_Company.Components.Helpers
 {
     internal static class HashHelper
     {
+        private const string GlobalCallerName = "TTSCompanyGlobalAudioSourceCaller";
+        internal static readonly ulong GlobalCallerHash = CalculateGlobalCallerHash();
+
         private const ulong Prime = 0x100000001b3;
         private const ulong OffsetBasis = 0xcbf29ce484222325;
 
-        private static readonly ConcurrentDictionary<Assembly, ulong> _assemblyHashCache = new ConcurrentDictionary<Assembly, ulong>();
+        private static readonly ConcurrentDictionary<ulong, ulong> _assemblyHashCache = new ConcurrentDictionary<ulong, ulong>();
 
         internal static ulong GetTrackingKeyHash(ulong networkObjectId, Assembly callingAssembly)
         {
             unchecked
             {
-                if (!_assemblyHashCache.TryGetValue(callingAssembly, out ulong hash))
+                ulong assemblyHashUlong = GetCallingAssemblyHash(callingAssembly);
+                if (!_assemblyHashCache.TryGetValue(assemblyHashUlong, out ulong hash))
                 {
-                    hash = OffsetBasis;
-                    CombineString(ref hash, callingAssembly.FullName);
-                    _assemblyHashCache.TryAdd(callingAssembly, hash);
+                    hash = assemblyHashUlong;
+                    _assemblyHashCache.TryAdd(assemblyHashUlong, hash);
+                }
+
+                CombineULong(ref hash, networkObjectId);
+                return hash;
+            }
+        }
+
+        internal static ulong GetTrackingKeyHash(ulong networkObjectId)
+        {
+            unchecked
+            {
+                if (!_assemblyHashCache.TryGetValue(GlobalCallerHash, out ulong hash))
+                {
+                    hash = GlobalCallerHash;
+                    _assemblyHashCache.TryAdd(GlobalCallerHash, hash);
                 }
 
                 CombineULong(ref hash, networkObjectId);
@@ -54,18 +72,7 @@ namespace TTS_Company.Components.Helpers
             {
                 ulong hash = OffsetBasis;
 
-                CombineString(ref hash, callingAssembly.FullName);
-                return hash;
-            }
-        }
-
-        internal static ulong GetCallingGlobalAssemblyHash()
-        {
-            unchecked
-            {
-                ulong hash = OffsetBasis;
-
-                CombineString(ref hash, "TTSCompanyGlobalAudioSourceCaller");
+                CombineString(ref hash, callingAssembly.GetName().Name);
                 return hash;
             }
         }
@@ -128,6 +135,17 @@ namespace TTS_Company.Components.Helpers
             hash = (hash ^ ((value >> 40) & 0xFF)) * Prime;
             hash = (hash ^ ((value >> 48) & 0xFF)) * Prime;
             hash = (hash ^ (value >> 56)) * Prime;
+        }
+
+        private static ulong CalculateGlobalCallerHash()
+        {
+            unchecked
+            {
+                ulong hash = OffsetBasis;
+
+                CombineString(ref hash, GlobalCallerName);
+                return hash;
+            }
         }
     }
 }
