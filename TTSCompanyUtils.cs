@@ -15,12 +15,12 @@ namespace TTS_Company
             return TTSCompanyPlugin._tts.isVoiceModelLoaded(voiceModelName);
         }
 
-        public static string GetRandomFoundTTSVoice()
+        public static string GetRandomFoundTTSVoiceName()
         {
             return TTSCompanyPlugin._tts._server._memoryManager.GetRandomFoundTTSVoiceName();
         }
 
-        public static string GetRandomLoadedTTSVoice()
+        public static string GetRandomLoadedTTSVoicename()
         {
             return TTSCompanyPlugin._tts._server._memoryManager.GetRandomLoadedTTSVoiceName();
         }
