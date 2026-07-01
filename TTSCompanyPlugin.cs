@@ -19,7 +19,7 @@ namespace TTS_Company
     [BepInDependency("com.rune580.LethalCompanyInputUtils")]
     [BepInDependency("ainavt.lc.lethalconfig")]
     [BepInDependency("LethalNetworkAPI")]
-    public sealed class TTSCompanyPlugin : BaseUnityPlugin
+    internal sealed class TTSCompanyPlugin : BaseUnityPlugin
     {
         private readonly Harmony harmony = new Harmony(ModInfo.modGUID);
         internal static TTSCompanyPlugin instance { get; private set; }

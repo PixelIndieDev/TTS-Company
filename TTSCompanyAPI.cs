@@ -13,7 +13,7 @@ using Unity.Netcode;
 
 namespace TTS_Company
 {
-    internal static class TTSCompanyAPI
+    public static class TTSCompanyAPI
     {
         private static readonly PiperVoiceSettings DefaultVoiceSettings = new PiperVoiceSettings();
         private static readonly TTSAudioSourceSettings DefaultTTSAudioSourceSettings = new TTSAudioSourceSettings();
