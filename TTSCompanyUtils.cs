@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace TTS_Company
 {
-    internal static class TTSCompanyUtils
+    public static class TTSCompanyUtils
     {
         // matches sentence endings in ., !, or ?, or catches the trailing text
         private static readonly Regex SentenceRegex = new Regex(@"[^.!?]+[.!?]?", RegexOptions.Compiled);
