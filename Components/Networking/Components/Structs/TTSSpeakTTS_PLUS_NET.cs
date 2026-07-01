@@ -3,15 +3,15 @@ using UnityEngine;
 
 namespace TTS_Company.Components.Networking.Components.Structs
 {
-    internal struct TTSSpeakTTS_PLUS_NET
+    internal readonly struct TTSSpeakTTS_PLUS_NET
     {
-        [SerializeField] internal NetworkObjectReference _networkObjectRefOfSpeaker;
-        [SerializeField] internal ulong _callingAssemblyHash;
-        [SerializeField] internal string[] _textsToSpeak;
-        [SerializeField] internal PiperVoiceSettings _voiceSettings;
-        [SerializeField] internal TTSAudioSourceSettings _audioSourceSettings;
-        [SerializeField] internal ulong _trackingKeyHash;
-        [SerializeField] internal ulong _sessionId;
+        [SerializeField] internal readonly NetworkObjectReference _networkObjectRefOfSpeaker;
+        [SerializeField] internal readonly ulong _callingAssemblyHash;
+        [SerializeField] internal readonly string[] _textsToSpeak;
+        [SerializeField] internal readonly PiperVoiceSettings _voiceSettings;
+        [SerializeField] internal readonly TTSAudioSourceSettings _audioSourceSettings;
+        [SerializeField] internal readonly ulong _trackingKeyHash;
+        [SerializeField] internal readonly ulong _sessionId;
 
         internal TTSSpeakTTS_PLUS_NET(TTSSpeakTTS_NET nonLiteVersion, ulong sessionId)
         {

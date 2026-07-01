@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace TTS_Company.Components.Networking.Components.Structs
 {
-    internal struct DespawnTTSAudioSource_NET
+    internal readonly struct DespawnTTSAudioSource_NET
     {
-        [SerializeField] internal NetworkObjectReference _networkObjectRefOfSpeaker;
-        [SerializeField] internal ulong _callingAssemblyHash;
+        [SerializeField] internal readonly NetworkObjectReference _networkObjectRefOfSpeaker;
+        [SerializeField] internal readonly ulong _callingAssemblyHash;
 
         internal DespawnTTSAudioSource_NET(NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash)
         {

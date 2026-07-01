@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace TTS_Company.Components.Networking.Components.Structs
 {
-    internal struct SpawnTTSAudioSource_NET
+    internal readonly struct SpawnTTSAudioSource_NET
     {
-        [SerializeField] internal NetworkObjectReference _networkObjectRefOfSpeaker;
-        [SerializeField] internal ulong _callingAssemblyHash;
-        [SerializeField] internal TTSAudioSourceSettings _audioSourceSettings;
+        [SerializeField] internal readonly NetworkObjectReference _networkObjectRefOfSpeaker;
+        [SerializeField] internal readonly ulong _callingAssemblyHash;
+        [SerializeField] internal readonly TTSAudioSourceSettings _audioSourceSettings;
 
         internal SpawnTTSAudioSource_NET(NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, TTSAudioSourceSettings audioSourceSettings)
         {

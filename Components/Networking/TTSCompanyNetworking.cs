@@ -146,7 +146,7 @@ namespace TTS_Company.Components.Networking
             if (task._textsWaited >= task._startSpeakingAtAmountOfFinishedTasks)
             {
                 bool isLastBatch = task._textsWaited > task._amountOfTexts;
-                TTS_networkMessage_PlaySpeakTTS.SendClients(new PlayAudioTTS_NET(task._taskId, task._lastStartSpeakingIndex, (task._textsWaited - 1)));
+                TTS_networkMessage_PlaySpeakTTS.SendClients(new PlayAudioTTS_NET(task._taskId, task._lastStartSpeakingIndex, (task._textsWaited - 1), isLastBatch));
                 task._lastStartSpeakingIndex += task._textsWaited - task._lastStartSpeakingIndex;
 
                 if (isLastBatch)
@@ -264,7 +264,7 @@ namespace TTS_Company.Components.Networking
                 taskValue._generatedClips[i] = null;
             }
 
-            TTSCompanyBackend.PlaySpeakTTSAtNetworkObject_OnClient(playData._taskId, taskValue._networkObjectReference, taskValue._callingAssemblyHash, clips);
+            TTSCompanyBackend.PlaySpeakTTSAtNetworkObject_OnClient(playData._taskId, taskValue._networkObjectReference, taskValue._callingAssemblyHash, clips, playData._isLastBatch);
 
             if (playData._endIndex >= taskValue._generatedClips.Length - 1)
             {

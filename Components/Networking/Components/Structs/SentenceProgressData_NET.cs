@@ -2,11 +2,11 @@
 
 namespace TTS_Company.Components.Networking.Components.Structs
 {
-    internal struct SentenceProgressData_NET
+    internal readonly struct SentenceProgressData_NET
     {
-        [SerializeField] internal ulong _sessionId;
-        [SerializeField] internal int _textIndex;
-        [SerializeField] internal bool _success; // false = generation failed/cancelled for this client
+        [SerializeField] internal readonly ulong _sessionId;
+        [SerializeField] internal readonly int _textIndex;
+        [SerializeField] internal readonly bool _success; // false = generation failed/cancelled for this client
 
         internal SentenceProgressData_NET(ulong sessionId, int textIndex, bool success)
         {

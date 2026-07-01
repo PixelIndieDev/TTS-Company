@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TTS_Company.Components.Managers;
 using TTS_Company.Components.Networking;
 using TTS_Company.Components.Networking.Components.Structs;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace TTS_Company.Components
@@ -43,13 +44,17 @@ namespace TTS_Company.Components
                         yield return null;
                     }
                 }
+                else if (cache._isLastBatch)
+                {
+                    break;
+                }
                 else
                 {
                     yield return null;
                 }
             }
 
-            TTSCompanyBackend.WantedAudioClips.TryRemove(speakerHash, out _);
+            TTSCompanyBackend.WantedAudioClips.TryRemove(speakerHash, out SpeakTTSAudioClipCache removedCache);
             _activeCoroutines.Remove(speakerHash);
         }
 
@@ -60,6 +65,11 @@ namespace TTS_Company.Components
             if (TTSCompanyBackend.WantedAudioClips.TryRemove(data._taskId, out SpeakTTSAudioClipCache cache))
             {
                 while (cache._audioQueue.TryDequeue(out _)) { }
+
+                if (cache._foundNetworkObject != null && cache._foundNetworkObject.TryGetComponent(out NetworkObject netObj))
+                {
+                    TTSCompanyBackend.SpeakingNetworkObjectIds.TryRemove(netObj.NetworkObjectId, out _);
+                }
             }
 
             if (_activeCoroutines.TryGetValue(data._taskId, out Coroutine runningCoroutine))

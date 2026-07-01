@@ -50,7 +50,7 @@ namespace TTS_Company
 
             if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
             {
-                var reference = new NetworkObjectReference(networkObject);
+                NetworkObjectReference reference = new NetworkObjectReference(networkObject);
                 AddTTSAudioSourceOnNetworkObject(reference, useGlobalAudioSource, audioSourceSettings);
             }
         }

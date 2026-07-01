@@ -2,10 +2,10 @@
 
 namespace TTS_Company.Components.Networking.Components.Structs
 {
-    internal struct CancelAudioTTS_NET
+    internal readonly struct CancelAudioTTS_NET
     {
-        [SerializeField] internal ulong _taskId;
-        [SerializeField] internal string _reason;
+        [SerializeField] internal readonly ulong _taskId;
+        [SerializeField] internal readonly string _reason;
 
         internal CancelAudioTTS_NET(ulong taskId, string reason)
         {

@@ -2,17 +2,19 @@
 
 namespace TTS_Company.Components.Networking.Components.Structs
 {
-    internal struct PlayAudioTTS_NET
+    internal readonly struct PlayAudioTTS_NET
     {
-        [SerializeField] internal ulong _taskId;
-        [SerializeField] internal int _startIndex;
-        [SerializeField] internal int _endIndex;
+        [SerializeField] internal readonly ulong _taskId;
+        [SerializeField] internal readonly int _startIndex;
+        [SerializeField] internal readonly int _endIndex;
+        [SerializeField] internal readonly bool _isLastBatch;
 
-        internal PlayAudioTTS_NET(ulong taskId, int startIndex, int endIndex)
+        internal PlayAudioTTS_NET(ulong taskId, int startIndex, int endIndex, bool isLastBatch)
         {
             _taskId = taskId;
             _startIndex = startIndex;
             _endIndex = endIndex;
+            _isLastBatch = isLastBatch;
         }
     }
 }

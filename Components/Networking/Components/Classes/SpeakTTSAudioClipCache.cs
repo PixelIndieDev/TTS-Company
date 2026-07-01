@@ -11,6 +11,9 @@ namespace TTS_Company.Components.Networking.Components.Structs
         internal ConcurrentQueue<AudioClip> _audioQueue = new ConcurrentQueue<AudioClip>();
         private readonly ConcurrentDictionary<AudioClip, bool> _knownClips = new ConcurrentDictionary<AudioClip, bool>(); // ignore the bool
 
+        internal bool _isLastBatch;
+        internal void MarkLastBatch() => _isLastBatch = true;
+
         internal SpeakTTSAudioClipCache(GameObject foundNetworkObject, ulong callingAssemblyHash, AudioClip[] audioClips)
         {
             _foundNetworkObject = foundNetworkObject;

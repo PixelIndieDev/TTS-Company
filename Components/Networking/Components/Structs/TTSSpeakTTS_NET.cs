@@ -3,14 +3,14 @@ using UnityEngine;
 
 namespace TTS_Company.Components.Networking.Components.Structs
 {
-    internal struct TTSSpeakTTS_NET
+    internal readonly struct TTSSpeakTTS_NET
     {
-        [SerializeField] internal NetworkObjectReference _networkObjectRefOfSpeaker;
-        [SerializeField] internal ulong _callingAssemblyHash;
-        [SerializeField] internal string[] _textsToSpeak;
-        [SerializeField] internal PiperVoiceSettings _voiceSettings;
-        [SerializeField] internal TTSAudioSourceSettings _audioSourceSettings;
-        [SerializeField] internal ulong _trackingKeyHash;
+        [SerializeField] internal readonly NetworkObjectReference _networkObjectRefOfSpeaker;
+        [SerializeField] internal readonly ulong _callingAssemblyHash;
+        [SerializeField] internal readonly string[] _textsToSpeak;
+        [SerializeField] internal readonly PiperVoiceSettings _voiceSettings;
+        [SerializeField] internal readonly TTSAudioSourceSettings _audioSourceSettings;
+        [SerializeField] internal readonly ulong _trackingKeyHash;
 
         internal TTSSpeakTTS_NET(NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textToSpeak, PiperVoiceSettings voiceSettings, TTSAudioSourceSettings audioSourceSettings, ulong trackingKeyHash)
         {

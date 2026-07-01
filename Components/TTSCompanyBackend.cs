@@ -21,6 +21,7 @@ namespace TTS_Company.Components
         }
 
         internal static readonly ConcurrentDictionary<ulong, SpeakTTSAudioClipCache> WantedAudioClips = new ConcurrentDictionary<ulong, SpeakTTSAudioClipCache>();
+        internal static readonly ConcurrentDictionary<ulong, byte> SpeakingNetworkObjectIds = new ConcurrentDictionary<ulong, byte>();
 
         internal static void SpeakTTSAtNetworkObject_OnClient(TTSSpeakTTS_PLUS_NET data)
         {
@@ -98,7 +99,7 @@ namespace TTS_Company.Components
             }
         }
 
-        internal static void PlaySpeakTTSAtNetworkObject_OnClient(ulong taskid, NetworkObjectReference networkObjectReference, ulong callingAssemblyHash, AudioClip[] audioClip)
+        internal static void PlaySpeakTTSAtNetworkObject_OnClient(ulong taskid, NetworkObjectReference networkObjectReference, ulong callingAssemblyHash, AudioClip[] audioClip, bool isFinalBatch)
         {
             if (audioClip == null || !networkObjectReference.TryGet(out NetworkObject networkObject))
             {
@@ -118,6 +119,12 @@ namespace TTS_Company.Components
             else
             {
                 WantedAudioClips.TryAdd(taskid, new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip));
+                SpeakingNetworkObjectIds.TryAdd(networkObject.NetworkObjectId, 0);
+            }
+
+            if (isFinalBatch)
+            {
+                cache.MarkLastBatch();
             }
         }
 
