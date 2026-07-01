@@ -80,7 +80,14 @@ namespace TTS_Company.Components.Networking
                 return;
             }
 
-            TTS_networkMessage_SpawnTTSAudioSource_Clients.SendClients(data);
+            try
+            {
+                TTS_networkMessage_SpawnTTSAudioSource_Clients.SendClients(data);
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(SpawnTTSAudioSource), ex);
+            }
         }
 
         private static void DespawnTTSAudioSource(DespawnTTSAudioSource_NET data, ulong recievedFromPlayer)
@@ -90,7 +97,14 @@ namespace TTS_Company.Components.Networking
                 return;
             }
 
-            TTS_networkMessage_DespawnTTSAudioSource_Clients.SendClients(data);
+            try
+            {
+                TTS_networkMessage_DespawnTTSAudioSource_Clients.SendClients(data);
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(DespawnTTSAudioSource), ex);
+            }
         }
 
         // server only
@@ -246,7 +260,15 @@ namespace TTS_Company.Components.Networking
             session._cts?.Dispose();
 
             LogConstants.TTS_COMPANY_NETWORKING_TASK_CANCELLED.Log(nameof(TTSCompanyNetworking), sessionId, reason);
-            TTS_networkMessage_CancelSpeakTTS.SendClients(new CancelAudioTTS_NET(sessionId, reason));
+
+            try
+            {
+                TTS_networkMessage_CancelSpeakTTS.SendClients(new CancelAudioTTS_NET(sessionId, reason));
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(HostCancelSession), ex);
+            }
         }
 
         // all clients
