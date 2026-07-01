@@ -37,7 +37,7 @@ namespace TTS_Company.Components.Constants
 
         private const float TTS_TIMEOUT_BASE_BUFFER = 4.0f;
         private const float TTS_TIMEOUT_PER_WORD_BUFFER = 0.05f;
-        private const float TTS_PLAYBACK_TIMEOUT_BUFFER = 1.0f;
+        private const float TTS_PLAYBACK_TIMEOUT_BUFFER = 1.4f;
 
         internal static float TTS_TIMEOUT_BASE_BUFFER_SCALED = 0.0f;
         internal static float TTS_TIMEOUT_PER_WORD_BUFFER_SCALED = 0.0f;
