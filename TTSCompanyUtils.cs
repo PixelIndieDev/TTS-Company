@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using TTS_Company.Components;
+using TTS_Company.Components.Enums;
 using TTS_Company.Components.Networking.Components.Structs;
 using Unity.Netcode;
 using UnityEngine;
@@ -52,6 +53,47 @@ namespace TTS_Company
                 }
             }
             return false;
+        }
+
+        public static bool IsNetworkObjectAwaitingTTSGeneration(GameObject gameObject)
+        {
+            if (gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            {
+                return IsNetworkObjectAwaitingTTSGeneration(networkObject);
+            }
+            return false;
+        }
+        public static bool IsNetworkObjectAwaitingTTSGeneration(NetworkObject networkObject)
+        {
+            return networkObject != null && TTSCompanyBackend.GeneratingNetworkObjectIds.ContainsKey(networkObject.NetworkObjectId);
+        }
+
+        public static TTSNetworkObjectState GetTTSNetworkObjectState(GameObject gameObject)
+        {
+            if (gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            {
+                return GetTTSNetworkObjectState(networkObject);
+            }
+            return TTSNetworkObjectState.Invalid;
+        }
+        public static TTSNetworkObjectState GetTTSNetworkObjectState(NetworkObject networkObject)
+        {
+            if (networkObject == null)
+            {
+                return TTSNetworkObjectState.Invalid;
+            }
+
+            if (IsNetworkObjectCurrentlySpeaking(networkObject))
+            {
+                return TTSNetworkObjectState.ActivelySpeaking;
+            }
+
+            if (IsNetworkObjectAwaitingTTSGeneration(networkObject))
+            {
+                return TTSNetworkObjectState.GeneratingTTS;
+            }
+
+            return TTSNetworkObjectState.Idle;
         }
 
         // -------------------- private utils --------------------

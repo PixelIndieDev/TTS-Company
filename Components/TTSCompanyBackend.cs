@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using TTS_Company.Components.Constants;
 using TTS_Company.Components.Networking;
 using TTS_Company.Components.Networking.Components.Structs;
+using TTS_Company.Components.Server.Components;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -14,14 +15,10 @@ namespace TTS_Company.Components
     {
         // Keep track of all running running coroutines
         private static readonly ConcurrentDictionary<ulong, ActiveTTSState> ActiveTTSCoroutines = new ConcurrentDictionary<ulong, ActiveTTSState>();
-        private class ActiveTTSState
-        {
-            public Coroutine Coroutine;
-            public CancellationTokenSource Cts;
-        }
 
         internal static readonly ConcurrentDictionary<ulong, SpeakTTSAudioClipCache> WantedAudioClips = new ConcurrentDictionary<ulong, SpeakTTSAudioClipCache>();
-        internal static readonly ConcurrentDictionary<ulong, byte> SpeakingNetworkObjectIds = new ConcurrentDictionary<ulong, byte>();
+        internal static readonly ConcurrentDictionary<ulong, bool> SpeakingNetworkObjectIds = new ConcurrentDictionary<ulong, bool>();
+        internal static readonly ConcurrentDictionary<ulong, bool> GeneratingNetworkObjectIds = new ConcurrentDictionary<ulong, bool>();
 
         internal static void SpeakTTSAtNetworkObject_OnClient(TTSSpeakTTS_PLUS_NET data)
         {
@@ -38,11 +35,16 @@ namespace TTS_Company.Components
                     TTSCompanyPlugin.instance.StopCoroutine(activeState.Coroutine);
                 }
 
+                GeneratingNetworkObjectIds.TryRemove(activeState.NetworkObjectId, out _);
                 ActiveTTSCoroutines.TryRemove(data._trackingKeyHash, out _);
             }
 
             CancellationTokenSource newCts = new CancellationTokenSource();
-            ActiveTTSState newState = new ActiveTTSState { Cts = newCts };
+            ActiveTTSState newState = new ActiveTTSState
+            {
+                Cts = newCts,
+                NetworkObjectId = data._networkObjectRefOfSpeaker.NetworkObjectId
+            };
 
             if (TTSCompanyPlugin.instance == null)
             {
@@ -51,6 +53,7 @@ namespace TTS_Company.Components
 
             newState.Coroutine = TTSCompanyPlugin.instance.StartCoroutine(SpeakMultipleTTSInternalRoutine(data._sessionId, data._trackingKeyHash, data._networkObjectRefOfSpeaker, data._callingAssemblyHash, data._textsToSpeak, data._voiceSettings, newCts));
             ActiveTTSCoroutines[data._trackingKeyHash] = newState;
+            GeneratingNetworkObjectIds.TryAdd(data._networkObjectRefOfSpeaker.NetworkObjectId, false);
         }
 
         internal static IEnumerator SpeakMultipleTTSInternalRoutine(ulong sessionId, ulong trackingKeyHash, NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textsToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)
@@ -95,6 +98,7 @@ namespace TTS_Company.Components
                 if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState current) && current.Cts == cts)
                 {
                     ActiveTTSCoroutines.TryRemove(trackingKeyHash, out _);
+                    GeneratingNetworkObjectIds.TryRemove(networkObjectRefOfSpeaker.NetworkObjectId, out _);
                 }
             }
         }
@@ -119,7 +123,7 @@ namespace TTS_Company.Components
             else
             {
                 WantedAudioClips.TryAdd(taskid, new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip));
-                SpeakingNetworkObjectIds.TryAdd(networkObject.NetworkObjectId, 0);
+                SpeakingNetworkObjectIds.TryAdd(networkObject.NetworkObjectId, false);
             }
 
             if (isFinalBatch)

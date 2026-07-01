@@ -116,6 +116,7 @@
     <Compile Include="Components\Constants\TTSConstants.cs" />
     <Compile Include="Components\Enums\TimeoutBufferScaling.cs" />
     <Compile Include="Components\Enums\TTSGenPriority.cs" />
+    <Compile Include="Components\Enums\TTSNetworkObjectState.cs" />
     <Compile Include="Components\Helpers\HashHelper.cs" />
     <Compile Include="Components\Helpers\TTSTimeoutHelper.cs" />
     <Compile Include="Components\Helpers\VoiceHelper.cs" />
@@ -134,6 +135,7 @@
     <Compile Include="Components\Networking\Components\Structs\TTSSpeakTTS_NET.cs" />
     <Compile Include="Components\Networking\Components\Classes\TTSTask.cs" />
     <Compile Include="Components\Networking\TTSCompanyNetworking.cs" />
+    <Compile Include="Components\ActiveTTSState.cs" />
     <Compile Include="Components\Server\Components\BusyGeneration.cs" />
     <Compile Include="Components\Helpers\JSONHelper.cs" />
     <Compile Include="Components\Server\Components\TTSRawResult.cs" />
