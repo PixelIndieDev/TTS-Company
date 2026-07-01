@@ -10,6 +10,7 @@ using TTS_Company.Components.Managers;
 using TTS_Company.Components.Networking;
 using TTS_Company.Components.Networking.Components.Structs;
 using Unity.Netcode;
+using UnityEngine;
 
 namespace TTS_Company
 {
@@ -41,6 +42,19 @@ namespace TTS_Company
         }
 
         // -------------------- add audio sources --------------------
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void AddTTSAudioSourceOnNetworkObject(GameObject objectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
+        {
+            audioSourceSettings = audioSourceSettings ?? DefaultTTSAudioSourceSettings;
+            ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
+
+            if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            {
+                var reference = new NetworkObjectReference(networkObject);
+                AddTTSAudioSourceOnNetworkObject(reference, useGlobalAudioSource, audioSourceSettings);
+            }
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
