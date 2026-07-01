@@ -68,7 +68,8 @@ namespace TTS_Company.Debug
                     "Hygrodere",
                     "Jester",
                     "Nutcracker",
-                    "Jerma985"
+                    "Jerma985",
+                    "AAAHAHAHHH"
                 };
 
                 if (TTSCompanyPlugin.instance == null)
@@ -92,7 +93,7 @@ namespace TTS_Company.Debug
                         randomIndex = Random.Range(0, enemyNames.Length);
                         chosenArray[1] = enemyNames[randomIndex];
 
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, "chosenArray", voiceSettings: voice);
+                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, chosenArray, voiceSettings: voice);
                     }
                 }
             }

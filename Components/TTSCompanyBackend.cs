@@ -122,7 +122,8 @@ namespace TTS_Company.Components
             }
             else
             {
-                WantedAudioClips.TryAdd(taskid, new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip));
+                cache = new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip);
+                WantedAudioClips.TryAdd(taskid, cache);
                 SpeakingNetworkObjectIds.TryAdd(networkObject.NetworkObjectId, false);
             }
 

@@ -146,14 +146,22 @@ namespace TTS_Company.Components.Networking
             if (task._textsWaited >= task._startSpeakingAtAmountOfFinishedTasks)
             {
                 bool isLastBatch = task._textsWaited > task._amountOfTexts;
-                TTS_networkMessage_PlaySpeakTTS.SendClients(new PlayAudioTTS_NET(task._taskId, task._lastStartSpeakingIndex, (task._textsWaited - 1), isLastBatch));
+
+                try
+                {
+                    TTS_networkMessage_PlaySpeakTTS.SendClients(new PlayAudioTTS_NET(task._taskId, task._lastStartSpeakingIndex, task._textsWaited - 1, isLastBatch));
+                }
+                catch (Exception ex)
+                {
+                    LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), "TTS_networkMessage_PlaySpeakTTS.SendClients", ex);
+                }
+
                 task._lastStartSpeakingIndex += task._textsWaited - task._lastStartSpeakingIndex;
 
                 if (isLastBatch)
                 {
                     task._cts?.Dispose();
                     task._cts = null;
-
                     StartServerPlaybackCleanupTimeout(task);
                 }
             }
@@ -171,7 +179,6 @@ namespace TTS_Company.Components.Networking
             {
                 if (ActiveTasks_Server.TryRemove(task._taskId, out TTSTask _))
                 {
-
                     LogConstants.TTS_COMPANY_NETWORKING_PLAYBACK_CLEANUP.Log(nameof(TTSCompanyNetworking), task._taskId);
                 }
             });
@@ -275,22 +282,50 @@ namespace TTS_Company.Components.Networking
         // -------------------- requests --------------------
         internal static void Request_Server_SpawnTTSSource(SpawnTTSAudioSource_NET data)
         {
-            TTS_networkMessage_SpawnTTSAudioSource_Server.SendServer(data);
+            try
+            {
+                TTS_networkMessage_SpawnTTSAudioSource_Server.SendServer(data);
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(Request_Server_SpawnTTSSource), ex);
+            }
         }
 
         internal static void Request_Server_DespawnTTSSource(DespawnTTSAudioSource_NET data)
         {
-            TTS_networkMessage_DespawnTTSAudioSource_Server.SendServer(data);
+            try
+            {
+                TTS_networkMessage_DespawnTTSAudioSource_Server.SendServer(data);
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(Request_Server_DespawnTTSSource), ex);
+            }
         }
 
         internal static void Request_Server_SpeakTTS(TTSSpeakTTS_NET data)
         {
-            TTS_networkMessage_SpeakTTS_Server.SendServer(data);
+            try
+            {
+                TTS_networkMessage_SpeakTTS_Server.SendServer(data);
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(Request_Server_SpeakTTS), ex);
+            }
         }
 
         internal static void Request_Server_UpdateSentenceProgress(SentenceProgressData_NET data)
         {
-            TTS_networkMessage_SentenceProgress.SendServer(data);
+            try
+            {
+                TTS_networkMessage_SentenceProgress.SendServer(data);
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(Request_Server_UpdateSentenceProgress), ex);
+            }
         }
 
         // -------------------- client calls --------------------
