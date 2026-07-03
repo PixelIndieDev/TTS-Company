@@ -117,6 +117,7 @@
     <Compile Include="Components\Enums\TimeoutBufferScaling.cs" />
     <Compile Include="Components\Enums\TTSGenPriority.cs" />
     <Compile Include="Components\Enums\TTSNetworkObjectState.cs" />
+    <Compile Include="Components\Helpers\CtsHelper.cs" />
     <Compile Include="Components\Helpers\HashHelper.cs" />
     <Compile Include="Components\Helpers\TTSTimeoutHelper.cs" />
     <Compile Include="Components\Helpers\VoiceHelper.cs" />

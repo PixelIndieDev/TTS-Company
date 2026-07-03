@@ -368,7 +368,7 @@ namespace TTS_Company.Components.Networking
         {
             if (ClientTasks.TryRemove(taskId, out ClientTaskState oldState))
             {
-                oldState._cts?.Cancel();
+                CtsHelper.SafeCancel(oldState._cts);
                 oldState._cts?.Dispose();
             }
 
@@ -399,7 +399,7 @@ namespace TTS_Company.Components.Networking
         {
             if (ClientTasks.TryRemove(taskId, out ClientTaskState oldState))
             {
-                oldState._cts?.Cancel();
+                CtsHelper.SafeCancel(oldState._cts);
                 oldState._cts?.Dispose();
 
                 if (oldState._generatedClips != null)

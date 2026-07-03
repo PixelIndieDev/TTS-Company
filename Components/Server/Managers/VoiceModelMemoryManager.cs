@@ -309,10 +309,26 @@ namespace TTS_Company.Components.Server.Components
 
         private async Task ForceUnloadModelAsync(string modelName, CancellationToken cancellationToken)
         {
-            _evictedModels.TryAdd(modelName, true);
-
             string json = "{\"command\":\"unload_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\"}\n";
-            await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                Dictionary<string, object> response = await _piperServer.SendSimpleCommandAsync(json, cancellationToken).ConfigureAwait(false);
+                (bool Success, string Error) result = _piperServer.ToResult(response);
+
+                if (result.Success)
+                {
+                    _evictedModels.TryAdd(modelName, true);
+                }
+                else
+                {
+                    LogConstants.VOICE_MODEL_MEM_MANAGER_NO_MODEL_TO_EVICT.Log(nameof(VoiceModelMemoryManager), modelName);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(VoiceModelMemoryManager), nameof(ForceUnloadModelAsync), ex.Message);
+            }
         }
 
         private static long ConvertMBToLong(int valueInMb)

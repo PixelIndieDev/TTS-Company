@@ -63,7 +63,13 @@ namespace TTS_Company.Components
             TTSCompanyNetworking.CancelClientTask(data._taskId);
             if (TTSCompanyBackend.WantedAudioClips.TryRemove(data._taskId, out SpeakTTSAudioClipCache cache))
             {
-                while (cache._audioQueue.TryDequeue(out _)) { }
+                while (cache._audioQueue.TryDequeue(out AudioClip leftover))
+                {
+                    if (leftover != null)
+                    {
+                        Destroy(leftover);
+                    }
+                }
 
                 if (cache._foundNetworkObject != null)
                 {

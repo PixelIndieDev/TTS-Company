@@ -1,7 +1,6 @@
 ﻿using GameNetcodeStuff;
 using TTS_Company.Components;
 using TTS_Company.Components.Constants;
-using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -69,7 +68,6 @@ namespace TTS_Company.Debug
             LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), nameof(TriggerTestTTS01));
 
             GetSpeakingPlayer();
-
             if (speakingPlayer == null)
             {
                 LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), "speakingPlayer == null");
@@ -93,7 +91,6 @@ namespace TTS_Company.Debug
             LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), nameof(TriggerTestTTS01));
 
             GetSpeakingPlayer();
-
             if (speakingPlayer == null)
             {
                 LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), "speakingPlayer == null");

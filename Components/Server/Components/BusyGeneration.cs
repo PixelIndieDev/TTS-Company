@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using TTS_Company.Components.Helpers;
 
 namespace TTS_Company.Components.Server.Components
 {
@@ -8,20 +9,34 @@ namespace TTS_Company.Components.Server.Components
     {
         internal readonly CancellationTokenSource Cts = new CancellationTokenSource();
         internal readonly Task<TTSResult> Task;
+        private readonly object _lock = new object();
         private int _waiterCount;
+        private bool _finalized;
 
         internal BusyGeneration(Func<CancellationToken, Task<TTSResult>> factory)
         {
             Task = factory(Cts.Token);
         }
 
-        internal void AddBusy() => Interlocked.Increment(ref _waiterCount);
+        internal bool TryAddBusy()
+        {
+            lock (_lock)
+            {
+                if (_finalized) return false;
+                _waiterCount++;
+                return true;
+            }
+        }
 
         internal void RemoveBusy()
         {
-            if (Interlocked.Decrement(ref _waiterCount) <= 0)
+            lock (_lock)
             {
-                Cts.Cancel();
+                if (--_waiterCount <= 0)
+                {
+                    _finalized = true;
+                    CtsHelper.SafeCancel(Cts);
+                }
             }
         }
     }

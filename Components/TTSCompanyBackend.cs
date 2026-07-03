@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using TTS_Company.Components.Constants;
+using TTS_Company.Components.Helpers;
 using TTS_Company.Components.Networking;
 using TTS_Company.Components.Networking.Components.Structs;
 using TTS_Company.Components.Server.Components;
@@ -29,7 +30,7 @@ namespace TTS_Company.Components
             {
                 if (activeState.Cts != null)
                 {
-                    activeState.Cts.Cancel();
+                    CtsHelper.SafeCancel(activeState.Cts);
                 }
                 if (activeState.Coroutine != null)
                 {
@@ -81,7 +82,7 @@ namespace TTS_Company.Components
                     // if any audio clip failed, then cancel talking
                     if (currentTask.IsFaulted || currentTask.IsCanceled || !currentTask.Result.Success || currentTask.Result.AudioClip == null)
                     {
-                        cts.Cancel();
+                        CtsHelper.SafeCancel(cts);
                         yield break;
                     }
 
@@ -140,7 +141,7 @@ namespace TTS_Company.Components
 
             if (ActivePreGenTasks.TryRemove(trackingKeyHash, out CancellationTokenSource existingCts))
             {
-                existingCts.Cancel();
+                CtsHelper.SafeCancel(existingCts);
             }
             ActivePreGenTasks[trackingKeyHash] = cts;
 
@@ -161,15 +162,24 @@ namespace TTS_Company.Components
                     // if any audio clip failed, then cancel talking
                     if (currentTask.IsFaulted || currentTask.IsCanceled || !currentTask.Result.Success)
                     {
-                        cts.Cancel();
+                        CtsHelper.SafeCancel(cts);
                         yield break;
+                    }
+
+                    TTSResult result = currentTask.Result;
+                    if (result.AudioClip != null)
+                    {
+                        Object.Destroy(result.AudioClip);
                     }
                 }
             }
             finally
             {
                 cts.Dispose();
-                ActivePreGenTasks.TryRemove(trackingKeyHash, out _);
+                if (ActivePreGenTasks.TryGetValue(trackingKeyHash, out CancellationTokenSource current) && current == cts)
+                {
+                    ActivePreGenTasks.TryRemove(trackingKeyHash, out _);
+                }
             }
         }
     }

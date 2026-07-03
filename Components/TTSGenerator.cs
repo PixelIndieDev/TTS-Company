@@ -49,7 +49,7 @@ namespace TTS_Company.Components
 
         // cpu values
         private static readonly int CPU_totalCores = Environment.ProcessorCount;
-        private static readonly int CPU_coresReservedForGame = CPU_totalCores / 10;
+        private static readonly int CPU_coresReservedForGame = Mathf.Max(1, Mathf.CeilToInt(CPU_totalCores * 0.1f));
         private const int CPU_minimumMaxConcurrentRequests = 1;
         private static readonly int CPU_availableCoresForTTS = Math.Max(CPU_minimumMaxConcurrentRequests, CPU_totalCores - CPU_coresReservedForGame);
 
@@ -220,7 +220,15 @@ namespace TTS_Company.Components
             }
 
             BusyGeneration inFlight = _inFlightRequests.GetOrAdd(hashCacheFileName, _ => new BusyGeneration(ct => RunGenerationAsync(hashCacheFileName, fullCachePath, textToSpeak, settings, ct)));
-            inFlight.AddBusy();
+            while (true)
+            {
+                inFlight = _inFlightRequests.GetOrAdd(hashCacheFileName, _ => new BusyGeneration(ct => RunGenerationAsync(hashCacheFileName, fullCachePath, textToSpeak, settings, ct)));
+                if (inFlight.TryAddBusy())
+                {
+                    break;
+                }
+                _inFlightRequests.TryRemove(hashCacheFileName, out _);
+            }
 
             try
             {

@@ -39,8 +39,14 @@ namespace TTS_Company.Components.Managers.Components
                 return false;
             }
 
+            AudioClip previousClip = audioSource.clip;
             audioSource.clip = newAudioClip;
             audioSource.Play();
+
+            if (previousClip != null && previousClip != newAudioClip)
+            {
+                Destroy(previousClip);
+            }
             return true;
         }
 
@@ -52,6 +58,10 @@ namespace TTS_Company.Components.Managers.Components
             }
 
             audioSource.Stop();
+            if (audioSource.clip != null)
+            {
+                Destroy(audioSource.clip);
+            }
             audioSource.clip = null;
             return true;
         }
