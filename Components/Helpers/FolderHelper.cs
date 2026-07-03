@@ -3,7 +3,7 @@ using TTS_Company.Components.Constants;
 
 namespace TTS_Company.Components.Helpers
 {
-    internal static class ZipHelper
+    internal static class FolderHelper
     {
         internal static bool CheckForPiperTTS() // return true when succesfully loaded or created and loaded
         {
