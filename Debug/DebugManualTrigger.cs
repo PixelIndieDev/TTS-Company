@@ -9,7 +9,7 @@ namespace TTS_Company.Debug
 {
     internal static class DebugManualTrigger
     {
-        private static readonly string[] RandomVoiceLines = new[]
+        private static readonly string[] randomVoiceLines = new[]
         {
             "This is a testing text-to-speech voice line.",
             "System online. All networks are fully functional.",
@@ -23,80 +23,113 @@ namespace TTS_Company.Debug
             "FUCK!"
         };
 
-        public async static void triggerDEBUGTTS(InputAction.CallbackContext obj)
+        private static readonly string[] enemyNames = new[]
+        {
+            "Barber",
+            "Bracken",
+            "Bunker Spider",
+            "Coil-Head",
+            "Hoarding Bug",
+            "Hygrodere",
+            "Jester",
+            "Nutcracker"
+        };
+
+        private static PlayerControllerB speakingPlayer = null;
+
+        private static void GetSpeakingPlayer()
+        {
+            if (speakingPlayer != null)
+            {
+                return;
+            }
+
+            if (StartOfRound.Instance == null || StartOfRound.Instance.localPlayerController == null)
+            {
+                LogConstants.CODE_INPUT_VARIABLES_INVALID.Log(nameof(DebugManualTrigger), nameof(GetSpeakingPlayer), 1);
+                return;
+            }
+
+            speakingPlayer = StartOfRound.Instance.localPlayerController;
+            if (speakingPlayer == null)
+            {
+                return;
+            }
+
+            TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(speakingPlayer.gameObject);
+        }
+
+        internal async static void TriggerTestTTS01(InputAction.CallbackContext obj)
         {
             if (!obj.performed)
             {
                 return;
             }
 
-            LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), nameof(triggerDEBUGTTS));
+            LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), nameof(TriggerTestTTS01));
 
-            if (StartOfRound.Instance == null || StartOfRound.Instance.localPlayerController == null)
+            GetSpeakingPlayer();
+
+            if (speakingPlayer == null)
             {
-                LogConstants.CODE_INPUT_VARIABLES_INVALID.Log(nameof(DebugManualTrigger), nameof(triggerDEBUGTTS), 1);
+                LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), "speakingPlayer == null");
                 return;
             }
 
-            PlayerControllerB localPlayer = StartOfRound.Instance.localPlayerController;
+            PiperVoiceSettings voice = new PiperVoiceSettings();
+            voice.ModelName = TTSCompanyUtils.GetRandomLoadedTTSVoicename();
 
-            if (localPlayer != null)
+            int randomIndex = Random.Range(0, randomVoiceLines.Length);
+            TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, randomVoiceLines[randomIndex], voiceSettings: voice);
+        }
+
+        internal async static void TriggerTestTTS02(InputAction.CallbackContext obj)
+        {
+            if (!obj.performed)
             {
-                string[] customStrings = new[]
-                {
-                    "Warning, ",
-                    "ENTITYNAME",
-                    " detected near your position."
-                };
-
-                string[] customStrings2 = new[]
-                {
-                    "WATCH OUT, ",
-                    "ENTITYNAME",
-                    " BEHIND YOU!"
-                };
-
-                string[][] allCustomStrings = new[] { customStrings, customStrings2 };
-
-                string[] enemyNames = new[]
-                {
-                    "Barber",
-                    "Bracken",
-                    "Bunker Spider",
-                    "Coil-Head",
-                    "Hoarding Bug",
-                    "Hygrodere",
-                    "Jester",
-                    "Nutcracker",
-                    "Jerma985",
-                    "AAAHAHAHHH"
-                };
-
-                if (TTSCompanyPlugin.instance == null)
-                {
-                    return;
-                }
-
-                if (localPlayer.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
-                {
-                    NetworkObjectReference reference = new NetworkObjectReference(networkObject);
-                    TTSCompanyAPI.AddTTSAudioSourceOnNetworkObject(reference);
-
-                    for (int i = 0; i < 1; i++)
-                    {
-                        PiperVoiceSettings voice = new PiperVoiceSettings();
-                        voice.ModelName = TTSCompanyUtils.GetRandomLoadedTTSVoicename();
-
-                        int randomIndex = Random.Range(0, allCustomStrings.Length);
-                        string[] chosenArray = allCustomStrings[randomIndex];
-
-                        randomIndex = Random.Range(0, enemyNames.Length);
-                        chosenArray[1] = enemyNames[randomIndex];
-
-                        TTSCompanyAPI.SpeakTTSAtNetworkObject(reference, chosenArray, voiceSettings: voice);
-                    }
-                }
+                return;
             }
+
+            LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), nameof(TriggerTestTTS01));
+
+            GetSpeakingPlayer();
+
+            if (speakingPlayer == null)
+            {
+                LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), "speakingPlayer == null");
+                return;
+            }
+
+            string[] reactionEnemy01 = new[]
+            {
+                "Warning, ",
+                "ENTITYNAME",
+                " detected near your position."
+            };
+
+            string[] reactionEnemy02 = new[]
+            {
+                "WATCH OUT, ",
+                "ENTITYNAME",
+                " BEHIND YOU!"
+            };
+
+            string[][] reactionEnemyList = new[]
+            {
+                reactionEnemy01,
+                reactionEnemy02
+            };
+
+            PiperVoiceSettings voice = new PiperVoiceSettings();
+            voice.ModelName = TTSCompanyUtils.GetRandomLoadedTTSVoicename();
+
+            int randomIndex = Random.Range(0, reactionEnemy01.Length);
+            string[] chosenArray = reactionEnemyList[randomIndex];
+
+            randomIndex = Random.Range(0, enemyNames.Length);
+            chosenArray[1] = enemyNames[randomIndex];
+
+            TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, chosenArray, voiceSettings: voice);
         }
     }
 }

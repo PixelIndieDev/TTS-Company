@@ -436,7 +436,6 @@ namespace TTS_Company.Components
 
             TaskCompletionSource<AudioClip> tcs = new TaskCompletionSource<AudioClip>();
             TTSCompanyPlugin.instance.StartCoroutine(LoadCoroutine(absoluteFilePath, clipName, tcs));
-
             return tcs.Task;
         }
 

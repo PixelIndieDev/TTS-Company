@@ -16,13 +16,15 @@ using UnityEngine;
 namespace TTS_Company
 {
     [BepInPlugin(ModInfo.modGUID, ModInfo.modName, ModInfo.modVersion)]
-    [BepInDependency("com.rune580.LethalCompanyInputUtils")]
+    [BepInDependency("com.rune580.LethalCompanyInputUtils", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("ainavt.lc.lethalconfig")]
     [BepInDependency("LethalNetworkAPI")]
     internal sealed class TTSCompanyPlugin : BaseUnityPlugin
     {
         private readonly Harmony harmony = new Harmony(ModInfo.modGUID);
         internal static TTSCompanyPlugin instance { get; private set; }
+
+        internal static bool IsInputUtilsPresent { get; private set; }
 
         internal static TTSGenerator _tts;
         internal static TTSPlaybackManager _ttsPlaybackManagerObject { get; private set; }
@@ -41,7 +43,7 @@ namespace TTS_Company
 
         void Awake()
         {
-            this.gameObject.hideFlags = HideFlags.HideAndDontSave; // otherwise 'TTSCompanyPlugin.instance' before NULL
+            this.gameObject.hideFlags = HideFlags.HideAndDontSave; // otherwise 'TTSCompanyPlugin.instance' becomes NULL
 
             if (instance == null)
             {
@@ -50,8 +52,14 @@ namespace TTS_Company
 
             Application.wantsToQuit += OnWantsToQuit;
 
-            inputActionsInstance = new TTSCompanyDebugInputs();
-            inputActionsInstance.PixelIndieDev_DoTestTTS.performed += DebugManualTrigger.triggerDEBUGTTS;
+            IsInputUtilsPresent = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.rune580.LethalCompanyInputUtils");
+
+            if (IsInputUtilsPresent)
+            {
+                inputActionsInstance = new TTSCompanyDebugInputs();
+                inputActionsInstance.PixelIndieDev_TestTTS_01.performed += DebugManualTrigger.TriggerTestTTS01;
+                inputActionsInstance.PixelIndieDev_TestTTS_02.performed += DebugManualTrigger.TriggerTestTTS02;
+            }
 
             _tts = new TTSGenerator();
 

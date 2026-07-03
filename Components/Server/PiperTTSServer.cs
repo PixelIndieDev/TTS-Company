@@ -443,7 +443,6 @@ namespace TTS_Company.Components
                             leftover = new byte[leftoverLength];
                             Array.Copy(buffer, newlineIndex + 1, leftover, 0, leftoverLength);
                         }
-
                         return (Encoding.UTF8.GetString(ms.ToArray()), leftover);
                     }
                     ms.Write(buffer, 0, read);

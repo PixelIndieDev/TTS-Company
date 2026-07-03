@@ -6,7 +6,10 @@ namespace TTS_Company.Debug.Inputs
 {
     public class TTSCompanyDebugInputs : LcInputActions
     {
-        [InputAction(KeyboardControl.K, Name = "Do the test TTS")]
-        public InputAction PixelIndieDev_DoTestTTS { get; set; }
+        [InputAction(KeyboardControl.None, Name = "Test TTS (random strings)")]
+        public InputAction PixelIndieDev_TestTTS_01 { get; set; }
+
+        [InputAction(KeyboardControl.None, Name = "Test TTS (random enemy)")]
+        public InputAction PixelIndieDev_TestTTS_02 { get; set; }
     }
 }
