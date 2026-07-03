@@ -45,9 +45,6 @@ namespace TTS_Company
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void AddTTSAudioSourceOnNetworkObject(GameObject objectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
-            audioSourceSettings = audioSourceSettings ?? DefaultTTSAudioSourceSettings;
-            ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
-
             if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
             {
                 NetworkObjectReference reference = new NetworkObjectReference(networkObject);
@@ -73,6 +70,16 @@ namespace TTS_Company
                 }
 
                 TTSAudioSourceManager.AddPermanentTTSAudioSource(networkObject.gameObject, callerHash, audioSourceSettings);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void RemoveTTSAudioSourceOnNetworkObject(GameObject objectRefOfSpeaker)
+        {
+            if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            {
+                NetworkObjectReference reference = new NetworkObjectReference(networkObject);
+                RemoveTTSAudioSourceOnNetworkObject(reference);
             }
         }
 
@@ -148,7 +155,7 @@ namespace TTS_Company
         }
 
         // -------------------- generate TTS --------------------
-        public static void PreGenerateTTS(string textToSpeak, PiperVoiceSettings voiceSettings = null)
+        public static void PreGenerateTTS(string textToSpeak, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
         {
             if (string.IsNullOrWhiteSpace(textToSpeak))
             {
@@ -157,7 +164,7 @@ namespace TTS_Company
             PreGenerateTTS(TTSCompanyUtils.SplitTextToSpeak(textToSpeak), voiceSettings);
         }
 
-        public static void PreGenerateTTS(string[] textsToSpeak, PiperVoiceSettings voiceSettings = null)
+        public static void PreGenerateTTS(string[] textsToSpeak, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(PreGenerateTTS));
 
