@@ -26,6 +26,11 @@ namespace TTS_Company.Components.Networking.Components.Structs
         {
             foreach (AudioClip clip in audioClips)
             {
+                if (clip == null)
+                {
+                    continue;
+                }
+
                 if (_knownClips.TryAdd(clip, false))
                 {
                     _audioQueue.Enqueue(clip);

@@ -44,6 +44,18 @@ namespace TTS_Company.Components.Managers.Components
             return true;
         }
 
+        internal bool StopAudioClip(ulong callingAssemblyHash)
+        {
+            if (!GetAudioSource(callingAssemblyHash, out AudioSource audioSource))
+            {
+                return false;
+            }
+
+            audioSource.Stop();
+            audioSource.clip = null;
+            return true;
+        }
+
         internal bool UpdateAudioSourceSettings(ulong callingAssemblyHash, TTSAudioSourceSettings audioSourceSettings)
         {
             if (!GetAudioSource(callingAssemblyHash, out AudioSource audioSource))

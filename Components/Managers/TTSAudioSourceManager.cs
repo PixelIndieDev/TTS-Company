@@ -47,14 +47,9 @@ namespace TTS_Company.Components.Managers
             if (!DoesGameObjectHaveTTSAudioSourcesComponent(networkObject, out TTSAudioSourcesComponent audioGO))
             {
                 audioGO = networkObject.AddComponent<TTSAudioSourcesComponent>();
-
-                audioGO.transform.SetParent(networkObject.transform, false);
-
-                // add audiosource containing gameobject to cache
                 GameObjectWithTTSAudioSourcesComponent.Add(networkObject, audioGO);
-
-                // The GameObject will always have no audiosources when here
                 AddAudioSource(audioGO, callingAssemblyHash, audioSourceSettings);
+                return true;
             }
             else
             {
@@ -110,8 +105,16 @@ namespace TTS_Company.Components.Managers
                 LogConstants.TTS_AUDIO_SOURCE_MANAGER_FAIL_PLAYING_NO_AUDIO_SOURCE.Log(nameof(TTSAudioSourceManager), nameof(PlayAudioSource), networkObject.name);
                 return false;
             }
-
             return audioSourceContainingGameObject.PlayAudioClip(callingAssemblyHash, audioClipToPlay);
+        }
+
+        internal static bool StopAudioSource(GameObject networkObject, ulong callingAssemblyHash)
+        {
+            if (!DoesGameObjectHaveTTSAudioSourcesComponent(networkObject, out TTSAudioSourcesComponent audioSourceContainingGameObject))
+            {
+                return false;
+            }
+            return audioSourceContainingGameObject.StopAudioClip(callingAssemblyHash);
         }
 
         // only call when audioSourceName doesn't already exist

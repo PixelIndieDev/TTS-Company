@@ -61,14 +61,18 @@ namespace TTS_Company.Components
         internal void CancelPlayback(CancelAudioTTS_NET data)
         {
             TTSCompanyNetworking.CancelClientTask(data._taskId);
-
             if (TTSCompanyBackend.WantedAudioClips.TryRemove(data._taskId, out SpeakTTSAudioClipCache cache))
             {
                 while (cache._audioQueue.TryDequeue(out _)) { }
 
-                if (cache._foundNetworkObject != null && cache._foundNetworkObject.TryGetComponent(out NetworkObject netObj))
+                if (cache._foundNetworkObject != null)
                 {
-                    TTSCompanyBackend.SpeakingNetworkObjectIds.TryRemove(netObj.NetworkObjectId, out _);
+                    TTSAudioSourceManager.StopAudioSource(cache._foundNetworkObject, cache._callingAssemblyHash);
+
+                    if (cache._foundNetworkObject.TryGetComponent(out NetworkObject netObj))
+                    {
+                        TTSCompanyBackend.SpeakingNetworkObjectIds.TryRemove(netObj.NetworkObjectId, out _);
+                    }
                 }
             }
 

@@ -15,6 +15,7 @@ namespace TTS_Company.Components
     {
         // Keep track of all running running coroutines
         private static readonly ConcurrentDictionary<ulong, ActiveTTSState> ActiveTTSCoroutines = new ConcurrentDictionary<ulong, ActiveTTSState>();
+        private static readonly ConcurrentDictionary<ulong, CancellationTokenSource> ActivePreGenTasks = new ConcurrentDictionary<ulong, CancellationTokenSource>();
 
         internal static readonly ConcurrentDictionary<ulong, SpeakTTSAudioClipCache> WantedAudioClips = new ConcurrentDictionary<ulong, SpeakTTSAudioClipCache>();
         internal static readonly ConcurrentDictionary<ulong, bool> SpeakingNetworkObjectIds = new ConcurrentDictionary<ulong, bool>();
@@ -137,6 +138,12 @@ namespace TTS_Company.Components
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyBackend), nameof(PreGenerateTTS));
 
+            if (ActivePreGenTasks.TryRemove(trackingKeyHash, out CancellationTokenSource existingCts))
+            {
+                existingCts.Cancel();
+            }
+            ActivePreGenTasks[trackingKeyHash] = cts;
+
             try
             {
                 Task<TTSResult>[] ttsTasks = new Task<TTSResult>[textsToSpeak.Length];
@@ -162,11 +169,7 @@ namespace TTS_Company.Components
             finally
             {
                 cts.Dispose();
-
-                if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState current) && current.Cts == cts)
-                {
-                    ActiveTTSCoroutines.TryRemove(trackingKeyHash, out _);
-                }
+                ActivePreGenTasks.TryRemove(trackingKeyHash, out _);
             }
         }
     }

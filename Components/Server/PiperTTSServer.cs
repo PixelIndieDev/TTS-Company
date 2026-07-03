@@ -78,7 +78,14 @@ namespace TTS_Company.Components
 
             _ = DrainStreamAsync(process.StandardError, onLine =>
             {
-                lock (_stderrLog) _stderrLog.AppendLine(onLine);
+                lock (_stderrLog)
+                {
+                    _stderrLog.AppendLine(onLine);
+                    if (_stderrLog.Length > 8000)
+                    {
+                        _stderrLog.Remove(0, _stderrLog.Length - 8000);
+                    }
+                }
             });
 
             Task<string> readyLineTask = process.StandardOutput.ReadLineAsync();
@@ -102,8 +109,7 @@ namespace TTS_Company.Components
             }
 
             string line = await readyLineTask.ConfigureAwait(false);
-            if (line == null || !line.StartsWith(ReadyPrefix, StringComparison.Ordinal) ||
-                !int.TryParse(line.Substring(ReadyPrefix.Length).Trim(), out _port))
+            if (line == null || !line.StartsWith(ReadyPrefix, StringComparison.Ordinal) || !int.TryParse(line.Substring(ReadyPrefix.Length).Trim(), out _port))
             {
                 string stderr;
                 lock (_stderrLog) stderr = _stderrLog.ToString();
@@ -280,9 +286,9 @@ namespace TTS_Company.Components
                     {
                         client.Close();
                     }
-                    catch
+                    catch (Exception ex)
                     {
-
+                        LogConstants.CODE_GENERIC_CATCH.Log(nameof(PiperTTSServer), nameof(SynthesizeAsync), ex);
                     }
                     _ = SendCancelAsync(hash, port);
                 }))

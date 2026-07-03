@@ -31,10 +31,11 @@ namespace TTS_Company.Components
                     LogConstants.TTS_GENERATOR_ARGUMENT_OUT_OF_RANGE_EX.Log(nameof(TTSGenerator));
                 }
 
-                _maxConcurrent = value;
+                int clamped = Math.Max(1, value);
+                _maxConcurrent = clamped;
 
                 SemaphoreSlim oldSemaphore = _semaphore;
-                _semaphore = new SemaphoreSlim(value, value);
+                _semaphore = new SemaphoreSlim(clamped, clamped);
 
                 // Don't dispose, let the garbage collector clear it after its tasks are done
                 //oldSemaphore?.Dispose();
@@ -173,7 +174,6 @@ namespace TTS_Company.Components
             {
                 return Task.FromResult((false, TTSConstants.TTS_VOICE_MODEL_NAME_EMPTY));
             }
-
             return _server.UnloadModelAsync(voiceName, callingAssemblyHash, cancellationToken);
         }
 
@@ -213,7 +213,10 @@ namespace TTS_Company.Components
                 LogConstants.TTS_GENERATOR_FOUND_CACHED_TTS.Log(nameof(TTSGenerator), hashCacheFileName);
 
                 AudioClip clip = await LoadAudioClipFromDiskAsync(fullCachePath, hashCacheFileName).ConfigureAwait(false);
-                return new TTSResult { AudioClip = clip, Success = clip != null };
+                if (clip != null)
+                {
+                    return new TTSResult { AudioClip = clip, Success = true };
+                }
             }
 
             BusyGeneration inFlight = _inFlightRequests.GetOrAdd(hashCacheFileName, _ => new BusyGeneration(ct => RunGenerationAsync(hashCacheFileName, fullCachePath, textToSpeak, settings, ct)));
@@ -231,7 +234,6 @@ namespace TTS_Company.Components
                         LogConstants.TTS_GENERATOR_TTS_CANCELLED.Log(nameof(TTSGenerator), textToSpeak, hashCacheFileName);
                         await cancellationTcs.Task.ConfigureAwait(false);
                     }
-
                     return await inFlight.Task.ConfigureAwait(false);
                 }
             }
@@ -248,7 +250,8 @@ namespace TTS_Company.Components
 
         private async Task<TTSResult> RunGenerationAsync(string hashCacheFileName, string fullCachePath, string textToSpeak, PiperVoiceSettings settings, CancellationToken sharedCancellationToken)
         {
-            await _semaphore.WaitAsync();
+            SemaphoreSlim semaphore = _semaphore;
+            await semaphore.WaitAsync(sharedCancellationToken).ConfigureAwait(false);
             try
             {
                 // late cache hit
@@ -280,7 +283,7 @@ namespace TTS_Company.Components
                     return endResult;
                 }
 
-                bool wasConvertedToOgg = await ConvertPcmToOggAsync(synthResult.Pcm, hashCacheFileName, fullCachePath, sharedCancellationToken);
+                bool wasConvertedToOgg = await ConvertPcmToOggAsync(synthResult.Pcm, synthResult.SampleRate, hashCacheFileName, fullCachePath, sharedCancellationToken);
                 if (wasConvertedToOgg)
                 {
                     endResult.AudioClip = await LoadAudioClipFromDiskAsync(fullCachePath, hashCacheFileName);
@@ -296,26 +299,35 @@ namespace TTS_Company.Components
                     TryDeleteCorruptedCache(fullCachePath, hashCacheFileName);
                 }
 
-                _semaphore.Release();
+                try
+                {
+                    semaphore.Release();
+                }
+                catch (Exception ex)
+                {
+                    LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), nameof(RunGenerationAsync), ex);
+                }
+
                 _inFlightRequests.TryRemove(hashCacheFileName, out _);
             }
         }
 
-        private static Task<bool> ConvertPcmToOggAsync(byte[] pcmData, string fileHashName, string oggOutputPath, CancellationToken cancellationToken)
+        private static Task<bool> ConvertPcmToOggAsync(byte[] pcmData, int sourceSampleRate, string fileHashName, string oggOutputPath, CancellationToken cancellationToken)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSGenerator), nameof(ConvertPcmToOggAsync));
 
             return Task.Run(() =>
             {
+                string tempPath = oggOutputPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
                 try
                 {
                     short[] srcShorts = new short[pcmData.Length / 2];
                     Buffer.BlockCopy(pcmData, 0, srcShorts, 0, pcmData.Length);
-                    short[] resampledShorts = Resample22050To24000(srcShorts);
+                    short[] resampledShorts = sourceSampleRate == OggConstants.OGG_SAMPLE_RATE ? srcShorts : Resample(srcShorts, sourceSampleRate, OggConstants.OGG_SAMPLE_RATE);
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    using (FileStream fs = new FileStream(oggOutputPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    using (FileStream fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
                         IOpusEncoder encoder = OpusCodecFactory.CreateEncoder(OggConstants.OGG_SAMPLE_RATE, OggConstants.OGG_CHANNELS_AMOUNT, OpusApplication.OPUS_APPLICATION_VOIP);
                         encoder.Bitrate = OggConstants.OGG_BITRATE;
@@ -326,11 +338,18 @@ namespace TTS_Company.Components
                         oggStream.Finish();
                     }
 
+                    if (File.Exists(oggOutputPath) && new FileInfo(oggOutputPath).Length > 0)
+                    {
+                        TryDeleteTempFile(tempPath);
+                        return true;
+                    }
+
+                    AtomicReplace(tempPath, oggOutputPath);
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    TryDeleteCorruptedCache(oggOutputPath, fileHashName);
+                    TryDeleteTempFile(tempPath);
                     LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), nameof(ConvertPcmToOggAsync), ex);
                     return false;
                 }
@@ -338,10 +357,46 @@ namespace TTS_Company.Components
         }
 
         // ------------------- Helpers -------------------
-        private static short[] Resample22050To24000(short[] input)
+        private static void AtomicReplace(string tempPath, string destPath)
         {
-            double ratio = 22050.0 / 24000.0;
-            int dstLength = (int)(input.Length * (24000.0 / 22050.0));
+            try
+            {
+                if (File.Exists(destPath))
+                {
+                    File.Delete(destPath);
+                }
+                File.Move(tempPath, destPath);
+            }
+            catch (IOException)
+            {
+                TryDeleteTempFile(tempPath);
+            }
+        }
+
+        private static void TryDeleteTempFile(string path)
+        {
+            try 
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), nameof(TryDeleteTempFile), ex);
+            }
+        }
+
+        private static short[] Resample(short[] input, int sourceRate, int targetRate)
+        {
+            if (sourceRate == targetRate || input.Length == 0)
+            {
+                return input;
+            }
+
+            double ratio = (double)sourceRate / targetRate;
+            int dstLength = (int)(input.Length * ((double)targetRate / sourceRate));
             short[] output = new short[dstLength];
 
             for (int i = 0; i < dstLength; i++)
@@ -411,34 +466,42 @@ namespace TTS_Company.Components
 
         private static float[] DecodeOggOffThread(string absoluteFilePath)
         {
-            try
+            const int maxAttempts = 3;
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                using (FileStream fs = new FileStream(absoluteFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                try
                 {
-                    IOpusDecoder decoder = OpusCodecFactory.CreateDecoder(OggConstants.OGG_SAMPLE_RATE, OggConstants.OGG_CHANNELS_AMOUNT);
-                    OpusOggReadStream oggStream = new OpusOggReadStream(decoder, fs);
-
-                    List<float> sampleList = new List<float>();
-
-                    while (oggStream.HasNextPacket)
+                    using (FileStream fs = new FileStream(absoluteFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
                     {
-                        short[] packet = oggStream.DecodeNextPacket();
-                        if (packet != null)
+                        IOpusDecoder decoder = OpusCodecFactory.CreateDecoder(OggConstants.OGG_SAMPLE_RATE, OggConstants.OGG_CHANNELS_AMOUNT);
+                        OpusOggReadStream oggStream = new OpusOggReadStream(decoder, fs);
+
+                        List<float> sampleList = new List<float>();
+                        while (oggStream.HasNextPacket)
                         {
-                            for (int i = 0; i < packet.Length; i++)
+                            short[] packet = oggStream.DecodeNextPacket();
+                            if (packet != null)
                             {
-                                sampleList.Add(packet[i] / 32768f);
+                                for (int i = 0; i < packet.Length; i++)
+                                {
+                                    sampleList.Add(packet[i] / 32768f);
+                                }
                             }
                         }
+                        return sampleList.ToArray();
                     }
-                    return sampleList.ToArray();
+                }
+                catch (IOException) when (attempt < maxAttempts)
+                {
+                    Thread.Sleep(50 * attempt);
+                }
+                catch (Exception ex)
+                {
+                    LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), nameof(DecodeOggOffThread), ex.Message);
+                    return null;
                 }
             }
-            catch (Exception ex)
-            {
-                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), nameof(DecodeOggOffThread), ex.Message);
-                return null;
-            }
+            return null;
         }
 
         private bool ValidateInputs(string textToSpeak, PiperVoiceSettings settings)

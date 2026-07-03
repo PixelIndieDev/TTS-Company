@@ -135,6 +135,8 @@ namespace TTS_Company.Components.Networking
         // server only, called by UpdateActiveTask()
         private static void CheckForFinishedTask(TTSTask task)
         {
+            int minCompleted = int.MaxValue;
+
             foreach (KeyValuePair<ulong, bool> client in task._snapshotClientIds)
             {
                 if (!LNetworkUtils.AllConnectedClients.Contains(client.Key))
@@ -144,40 +146,51 @@ namespace TTS_Company.Components.Networking
 
                 if (task._completionList.TryGetValue(client.Key, out bool[] completionArray))
                 {
-                    if (task._lastStartSpeakingIndex < completionArray.Length)
+                    int completedForClient = 0;
+                    while (completedForClient < completionArray.Length && completionArray[completedForClient])
                     {
-                        if (!completionArray[task._lastStartSpeakingIndex])
-                        {
-                            return; // someone is still generating, do nothing
-                        }
+                        completedForClient++;
+                    }
+
+                    if (completedForClient < minCompleted)
+                    {
+                        minCompleted = completedForClient;
                     }
                 }
             }
 
-            // no one was generating
-            // now check if it should start playing
-            task._textsWaited += 1; // do first, otherwise if will fail with only 1 text
-            if (task._textsWaited >= task._startSpeakingAtAmountOfFinishedTasks)
+            if (minCompleted == int.MaxValue || minCompleted <= task._lastStartSpeakingIndex)
             {
-                bool isLastBatch = task._textsWaited > task._amountOfTexts;
+                return; // no new TTS that is ready yet
+            }
 
-                try
-                {
-                    TTS_networkMessage_PlaySpeakTTS.SendClients(new PlayAudioTTS_NET(task._taskId, task._lastStartSpeakingIndex, task._textsWaited - 1, isLastBatch));
-                }
-                catch (Exception ex)
-                {
-                    LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), "TTS_networkMessage_PlaySpeakTTS.SendClients", ex);
-                }
+            int newlyReady = minCompleted - task._lastStartSpeakingIndex;
+            bool isFinalRelease = minCompleted >= task._textsToSpeak.Length;
 
-                task._lastStartSpeakingIndex += task._textsWaited - task._lastStartSpeakingIndex;
+            if (newlyReady < task._startSpeakingAtAmountOfFinishedTasks && !isFinalRelease)
+            {
+                return;
+            }
 
-                if (isLastBatch)
-                {
-                    task._cts?.Dispose();
-                    task._cts = null;
-                    StartServerPlaybackCleanupTimeout(task);
-                }
+            int startIndex = task._lastStartSpeakingIndex;
+            int endIndex = minCompleted - 1;
+
+            try
+            {
+                TTS_networkMessage_PlaySpeakTTS.SendClients(new PlayAudioTTS_NET(task._taskId, startIndex, endIndex, isFinalRelease));
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), "TTS_networkMessage_PlaySpeakTTS.SendClients", ex);
+            }
+
+            task._lastStartSpeakingIndex = minCompleted;
+
+            if (isFinalRelease)
+            {
+                task._cts?.Dispose();
+                task._cts = null;
+                StartServerPlaybackCleanupTimeout(task);
             }
         }
 
