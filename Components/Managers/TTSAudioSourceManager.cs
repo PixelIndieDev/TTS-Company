@@ -48,6 +48,7 @@ namespace TTS_Company.Components.Managers
             {
                 audioGO = networkObject.AddComponent<TTSAudioSourcesComponent>();
                 GameObjectWithTTSAudioSourcesComponent.Add(networkObject, audioGO);
+
                 AddAudioSource(audioGO, callingAssemblyHash, audioSourceSettings);
                 return true;
             }
@@ -125,6 +126,32 @@ namespace TTS_Company.Components.Managers
                 LogConstants.TTS_AUDIO_SOURCE_MANAGER_AUDIO_SOURCE_ADDED.Log(nameof(TTSAudioSourceManager), callingAssemblyHash);
                 audioSourceContainingGameObject.UpdateAudioSourceSettings(callingAssemblyHash, audioSourceSettings);
             }
+        }
+
+        internal static void UpdateTTSAudioSourceSettings(UpdateTTSAudioSourceSettings_NET data)
+        {
+            if (!data._networkObjectRefOfSpeaker.TryGet(out NetworkObject networkObject))
+            {
+                LogConstants.API_NETWORK_OBJECT_NOT_FOUND.Log(nameof(TTSCompanyAPI), data._networkObjectRefOfSpeaker);
+                return;
+            }
+            UpdateTTSAudioSourceSettings(networkObject.gameObject, data._callingAssemblyHash, data._audioSourceSettings);
+        }
+
+        internal static bool UpdateTTSAudioSourceSettings(GameObject networkObject, ulong callingAssemblyHash, TTSAudioSourceSettings audioSourceSettings)
+        {
+            if (networkObject == null || audioSourceSettings == null)
+            {
+                LogConstants.CODE_INPUT_VARIABLES_INVALID.Log(nameof(TTSAudioSourceManager), nameof(UpdateTTSAudioSourceSettings), 1);
+                return false;
+            }
+
+            if (!DoesGameObjectHaveTTSAudioSourcesComponent(networkObject, out TTSAudioSourcesComponent audioGO))
+            {
+                LogConstants.CODE_INPUT_VARIABLES_INVALID.Log(nameof(TTSAudioSourceManager), nameof(UpdateTTSAudioSourceSettings), 2);
+                return false;
+            }
+            return audioGO.UpdateAudioSourceSettings(callingAssemblyHash, audioSourceSettings);
         }
     }
 }

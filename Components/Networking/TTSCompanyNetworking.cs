@@ -24,6 +24,9 @@ namespace TTS_Company.Components.Networking
         private const string messageId_SpawnTTSAudioSource_Server = ModInfo.modGUID + message_PREFIX + "SpawnTTSAudioSource_Server";
         private const string messageId_SpawnTTSAudioSource_Clients = ModInfo.modGUID + message_PREFIX + "SpawnTTSAudioSource_Clients";
 
+        private const string messageId_UpdateTTSAudioSourceSettings_Server = ModInfo.modGUID + message_PREFIX + "UpdateTTSAudioSourceSettings_Server";
+        private const string messageId_UpdateTTSAudioSourceSettings_Clients = ModInfo.modGUID + message_PREFIX + "UpdateTTSAudioSourceSettings_Clients";
+
         private const string messageId_DespawnTTSAudioSource_Server = ModInfo.modGUID + message_PREFIX + "DespawnTTSAudioSource_Server";
         private const string messageId_DespawnTTSAudioSource_Clients = ModInfo.modGUID + message_PREFIX + "DespawnTTSAudioSource_Clients";
 
@@ -37,6 +40,9 @@ namespace TTS_Company.Components.Networking
         // networking messages
         private static LNetworkMessage<SpawnTTSAudioSource_NET> TTS_networkMessage_SpawnTTSAudioSource_Server;
         private static LNetworkMessage<SpawnTTSAudioSource_NET> TTS_networkMessage_SpawnTTSAudioSource_Clients;
+
+        private static LNetworkMessage<UpdateTTSAudioSourceSettings_NET> TTS_networkMessage_UpdateTTSAudioSourceSettings_Server;
+        private static LNetworkMessage<UpdateTTSAudioSourceSettings_NET> TTS_networkMessage_UpdateTTSAudioSourceSettings_Clients;
 
         private static LNetworkMessage<DespawnTTSAudioSource_NET> TTS_networkMessage_DespawnTTSAudioSource_Server;
         private static LNetworkMessage<DespawnTTSAudioSource_NET> TTS_networkMessage_DespawnTTSAudioSource_Clients;
@@ -60,6 +66,9 @@ namespace TTS_Company.Components.Networking
             // initialize networking messages
             TTS_networkMessage_SpawnTTSAudioSource_Server = LNetworkMessage<SpawnTTSAudioSource_NET>.Connect(messageId_SpawnTTSAudioSource_Server, onServerReceived: SpawnTTSAudioSource);
             TTS_networkMessage_SpawnTTSAudioSource_Clients = LNetworkMessage<SpawnTTSAudioSource_NET>.Connect(messageId_SpawnTTSAudioSource_Clients, onClientReceived: TTSAudioSourceManager.AddPermanentTTSAudioSource);
+
+            TTS_networkMessage_UpdateTTSAudioSourceSettings_Server = LNetworkMessage<UpdateTTSAudioSourceSettings_NET>.Connect(messageId_UpdateTTSAudioSourceSettings_Server, onServerReceived: UpdateTTSAudioSourceSettings);
+            TTS_networkMessage_UpdateTTSAudioSourceSettings_Clients = LNetworkMessage<UpdateTTSAudioSourceSettings_NET>.Connect(messageId_UpdateTTSAudioSourceSettings_Clients, onClientReceived: TTSAudioSourceManager.UpdateTTSAudioSourceSettings);
 
             TTS_networkMessage_DespawnTTSAudioSource_Server = LNetworkMessage<DespawnTTSAudioSource_NET>.Connect(messageId_DespawnTTSAudioSource_Server, onServerReceived: DespawnTTSAudioSource);
             TTS_networkMessage_DespawnTTSAudioSource_Clients = LNetworkMessage<DespawnTTSAudioSource_NET>.Connect(messageId_DespawnTTSAudioSource_Clients, onClientReceived: TTSAudioSourceManager.RemovePermanentTTSAudioSource);
@@ -87,6 +96,23 @@ namespace TTS_Company.Components.Networking
             catch (Exception ex)
             {
                 LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(SpawnTTSAudioSource), ex);
+            }
+        }
+
+        private static void UpdateTTSAudioSourceSettings(UpdateTTSAudioSourceSettings_NET data, ulong recievedFromPlayer)
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+            {
+                return;
+            }
+
+            try
+            {
+                TTS_networkMessage_UpdateTTSAudioSourceSettings_Clients.SendClients(data);
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(UpdateTTSAudioSourceSettings), ex);
             }
         }
 
@@ -322,6 +348,18 @@ namespace TTS_Company.Components.Networking
             catch (Exception ex)
             {
                 LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(Request_Server_SpawnTTSSource), ex);
+            }
+        }
+
+        internal static void Request_Server_UpdateTTSAudioSourceSettings(UpdateTTSAudioSourceSettings_NET data)
+        {
+            try
+            {
+                TTS_networkMessage_UpdateTTSAudioSourceSettings_Server.SendServer(data);
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(Request_Server_UpdateTTSAudioSourceSettings), ex);
             }
         }
 

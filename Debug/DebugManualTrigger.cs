@@ -82,9 +82,15 @@ namespace TTS_Company.Debug
             }
 
             PiperVoiceSettings voice = new PiperVoiceSettings();
-            voice.ModelName = TTSCompanyUtils.GetRandomLoadedTTSVoicename();;
+            voice.ModelName = TTSCompanyUtils.GetRandomLoadedTTSVoicename();
 
             int randomIndex = Random.Range(0, randomVoiceLines.Length);
+
+            TTSAudioSourceSettings audioS = new TTSAudioSourceSettings();
+            audioS.Volume = 1.0f;
+
+            TTSCompanyAPI.UpdateTTSAudioSourceSettingsOnNetworkObject(speakingPlayer.gameObject, audioS);
+
             TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, randomVoiceLines[randomIndex], voiceSettings: voice);
             //TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, multipleLines, voiceSettings: voice);
         }
@@ -134,6 +140,10 @@ namespace TTS_Company.Debug
             randomIndex = Random.Range(0, enemyNames.Length);
             chosenArray[1] = enemyNames[randomIndex];
 
+            TTSAudioSourceSettings audioS = new TTSAudioSourceSettings();
+            audioS.Volume = 0.25f;
+
+            TTSCompanyAPI.UpdateTTSAudioSourceSettingsOnNetworkObject(speakingPlayer.gameObject, audioS);
             TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, chosenArray, voiceSettings: voice);
         }
     }

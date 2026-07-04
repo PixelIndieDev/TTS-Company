@@ -9,7 +9,6 @@ namespace TTS_Company.Components.Networking.Components.Structs
         [SerializeField] internal readonly ulong _callingAssemblyHash;
         [SerializeField] internal readonly string[] _textsToSpeak;
         [SerializeField] internal readonly PiperVoiceSettings _voiceSettings;
-        [SerializeField] internal readonly TTSAudioSourceSettings _audioSourceSettings;
         [SerializeField] internal readonly ulong _trackingKeyHash;
         [SerializeField] internal readonly ulong _sessionId;
 
@@ -18,7 +17,6 @@ namespace TTS_Company.Components.Networking.Components.Structs
             _networkObjectRefOfSpeaker = nonLiteVersion._networkObjectRefOfSpeaker;
             _textsToSpeak = nonLiteVersion._textsToSpeak;
             _voiceSettings = nonLiteVersion._voiceSettings;
-            _audioSourceSettings = nonLiteVersion._audioSourceSettings;
             _trackingKeyHash = nonLiteVersion._trackingKeyHash;
             _callingAssemblyHash = nonLiteVersion._callingAssemblyHash;
             _sessionId = sessionId;

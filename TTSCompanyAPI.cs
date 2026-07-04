@@ -104,9 +104,41 @@ namespace TTS_Company
             }
         }
 
+        // -------------------- update audio sources --------------------
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void UpdateTTSAudioSourceSettingsOnNetworkObject(GameObject objectRefOfSpeaker, TTSAudioSourceSettings audioSourceSettings, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE)
+        {
+            if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            {
+                NetworkObjectReference reference = new NetworkObjectReference(networkObject);
+                UpdateTTSAudioSourceSettingsOnNetworkObject(reference, audioSourceSettings, useGlobalAudioSource);
+            }
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void UpdateTTSAudioSourceSettingsOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, TTSAudioSourceSettings audioSourceSettings, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE)
+        {
+            audioSourceSettings = audioSourceSettings ?? DefaultTTSAudioSourceSettings;
+            ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
+
+            if (LNetworkUtils.IsConnected) // is in-game, do normal server stuff
+            {
+                TTSCompanyNetworking.Request_Server_UpdateTTSAudioSourceSettings(new UpdateTTSAudioSourceSettings_NET(networkObjectRefOfSpeaker, callerHash, audioSourceSettings));
+            }
+            else // is NOT in-game, so do it without networking
+            {
+                if (!networkObjectRefOfSpeaker.TryGet(out NetworkObject networkObject))
+                {
+                    LogConstants.API_NETWORK_OBJECT_NOT_FOUND.Log(nameof(TTSCompanyAPI), networkObjectRefOfSpeaker);
+                    return;
+                }
+
+                TTSAudioSourceManager.UpdateTTSAudioSourceSettings(networkObject.gameObject, callerHash, audioSourceSettings);
+            }
+        }
+
         // -------------------- speak tts --------------------
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(SpeakTTSAtNetworkObject));
 
@@ -132,25 +164,25 @@ namespace TTS_Company
                 trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId, callingA);
             }
 
-            TTSCompanyNetworking.Request_Server_SpeakTTS(new TTSSpeakTTS_NET(networkObjectRefOfSpeaker, callingAHash, textsToSpeak, voiceSettings, audioSourceSettings, trackingKeyHash));
+            TTSCompanyNetworking.Request_Server_SpeakTTS(new TTSSpeakTTS_NET(networkObjectRefOfSpeaker, callingAHash, textsToSpeak, voiceSettings, trackingKeyHash));
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
         {
-            SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings, audioSourceSettings);
+            SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
         {
-            SpeakTTSAtNetworkObject(objectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings, audioSourceSettings);
+            SpeakTTSAtNetworkObject(objectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings);
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
         {
             if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
             {
                 NetworkObjectReference reference = new NetworkObjectReference(networkObject);
-                SpeakTTSAtNetworkObject(reference, textsToSpeak, useGlobalAudioSource, voiceSettings, audioSourceSettings);
+                SpeakTTSAtNetworkObject(reference, textsToSpeak, useGlobalAudioSource, voiceSettings);
             }
         }
 
