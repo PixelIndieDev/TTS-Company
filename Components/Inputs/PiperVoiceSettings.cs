@@ -23,16 +23,49 @@ namespace TTS_Company.Components
             }
         }
 
-        /// <summary>Speech speed multiplier. 1.0 = normal, 0.5 = half speed, 2.0 = double speed</summary>
-        [SerializeField] public float SpeechRate { get; set; } = 1.0f;
+        private float speechRate = 1.0f;
+        /// <summary>Speech speed multiplier. 1.0 = normal, 0.5 = double speed, 2.0 = half speed</summary>
+        [SerializeField]
+        public float SpeechRate
+        {
+            get => speechRate;
+            set => speechRate = ClampHelper.ClampAndRound(value, 0.1f, 3.0f);
+        }
 
-        /// <summary>Noise scale for vocoder. Controls audio variation (default 0.667)</summary>
-        [SerializeField] public float NoiseScale { get; set; } = 0.667f;
+        private float noiseScale = 0.667f;
+        /// <summary>Controls pitch and intonation variance. Higher values increase emotional expressiveness, while lower values make the voice more stable but potentially monotone</summary>
+        [SerializeField]
+        public float NoiseScale
+        {
+            get => noiseScale;
+            set => noiseScale = ClampHelper.ClampAndRound(value, 0f, 1f);
+        }
 
-        /// <summary>Noise scale for phoneme duration (default 0.8)</summary>
-        [SerializeField] public float NoiseScaleW { get; set; } = 0.8f;
+        private float noiseScaleW = 0.8f;
+        /// <summary>Controls phoneme duration and pacing variance. Higher values add natural rhythmic changes, while lower values make the speech cadence rigid and robotic.</summary>
+        [SerializeField]
+        public float NoiseScaleW
+        {
+            get => noiseScaleW;
+            set => noiseScaleW = ClampHelper.ClampAndRound(value, 0f, 1f);
+        }
 
-        /// <summary>How many seconds are added after each sentence</summary>
-        [SerializeField] public float SentenceSilence { get; set; } = 0.2f;
+        private float sentenceSilence = 0.2f;
+        /// <summary>The time in seconds for how long the model does silence between sentences</summary>
+        [SerializeField]
+        public float SentenceSilence
+        {
+            get => sentenceSilence;
+            set => sentenceSilence = ClampHelper.ClampAndRound(value, 0f, 5f);
+        }
+
+        private float punctuationSilence = 0.08f;
+        /// <summary>The time in seconds for how long the model does silence after punctuations</summary>
+        [SerializeField]
+        public float PunctuationSilence
+        {
+            get => punctuationSilence;
+            set => punctuationSilence = ClampHelper.ClampAndRound(value, 0f, 2f);
+        }
     }
 }

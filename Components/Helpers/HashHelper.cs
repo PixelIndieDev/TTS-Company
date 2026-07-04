@@ -91,7 +91,6 @@ namespace TTS_Company.Components.Helpers
                     CombineFloat(ref hash, settings.SpeechRate);
                     CombineFloat(ref hash, settings.NoiseScale);
                     CombineFloat(ref hash, settings.NoiseScaleW);
-                    CombineFloat(ref hash, settings.SentenceSilence);
                 }
 
                 return $"{hash:X16}.ogg";

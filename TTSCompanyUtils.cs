@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using TTS_Company.Components;
 using TTS_Company.Components.Enums;
@@ -99,6 +100,11 @@ namespace TTS_Company
         // -------------------- private utils --------------------
         internal static string[] SplitTextToSpeak(string textToSpeak)
         {
+            if (string.IsNullOrEmpty(textToSpeak))
+            {
+                return Array.Empty<string>();
+            }
+
             MatchCollection matches = SentenceRegex.Matches(textToSpeak);
             List<string> sentences = new List<string>(matches.Count);
 
@@ -106,10 +112,13 @@ namespace TTS_Company
             // this speeds up generation for paragraphs
             for (int i = 0; i < matches.Count; i++)
             {
-                string trimmed = matches[i].Value.Trim();
+                Match match = matches[i];
+                ReadOnlySpan<char> matchSpan = textToSpeak.AsSpan(match.Index, match.Length);
+                ReadOnlySpan<char> trimmed = matchSpan.Trim();
+
                 if (trimmed.Length > 0)
                 {
-                    sentences.Add(trimmed);
+                    sentences.Add(trimmed.ToString());
                 }
             }
 
@@ -120,6 +129,54 @@ namespace TTS_Company
             }
 
             return sentences.ToArray();
+        }
+
+        internal static float DetermineEndPause(string sentenceText, float sentenceSilence, float punctuationSilence)
+        {
+            if (string.IsNullOrEmpty(sentenceText))
+            {
+                return 0f;
+            }
+
+            string trimmed = sentenceText.TrimEnd();
+            int i = trimmed.Length - 1;
+
+            while (i >= 0 && char.IsWhiteSpace(sentenceText[i]))
+            {
+                i--;
+            }
+
+            while (i >= 0)
+            {
+                char c = sentenceText[i];
+                if (c == '"' || c == '\'' || c == ')' || c == ']')
+                {
+                    i--;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (i < 0)
+            {
+                return 0f;
+            }
+
+            switch (sentenceText[i])
+            {
+                case '.':
+                case '!':
+                case '?':
+                    return sentenceSilence;
+                case ',':
+                case ';':
+                case ':':
+                    return punctuationSilence;
+                default:
+                    return 0f;
+            }
         }
     }
 }

@@ -363,7 +363,6 @@ namespace TTS_Company.Components
             sb.Append(",\"length_scale\":").Append((1.0f / options.SpeechRate).ToString("F4", CultureInfo.InvariantCulture));
             sb.Append(",\"noise_scale\":").Append(options.NoiseScale.ToString("F4", CultureInfo.InvariantCulture));
             sb.Append(",\"noise_w\":").Append(options.NoiseScaleW.ToString("F4", CultureInfo.InvariantCulture));
-            sb.Append(",\"sentence_silence\":").Append(options.SentenceSilence.ToString("F4", CultureInfo.InvariantCulture));
             sb.Append("}\n");
             return sb.ToString();
         }

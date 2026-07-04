@@ -71,7 +71,7 @@ namespace TTS_Company.Components
                 }
 
                 // client network
-                TTSCompanyNetworking.CreateClientTask(sessionId, networkObjectRefOfSpeaker, callingAssemblyHash, textsToSpeak, cts);
+                TTSCompanyNetworking.CreateClientTask(sessionId, networkObjectRefOfSpeaker, callingAssemblyHash, textsToSpeak, voiceSettings.SentenceSilence, voiceSettings.PunctuationSilence, cts);
 
                 for (int i = 0; i < ttsTasks.Length; i++)
                 {
@@ -105,7 +105,7 @@ namespace TTS_Company.Components
             }
         }
 
-        internal static void PlaySpeakTTSAtNetworkObject_OnClient(ulong taskid, NetworkObjectReference networkObjectReference, ulong callingAssemblyHash, AudioClip[] audioClip, bool isFinalBatch)
+        internal static void PlaySpeakTTSAtNetworkObject_OnClient(ulong taskid, NetworkObjectReference networkObjectReference, ulong callingAssemblyHash, AudioClip[] audioClip, float[] pauseDurations, bool isFinalBatch)
         {
             if (audioClip == null || !networkObjectReference.TryGet(out NetworkObject networkObject))
             {
@@ -120,11 +120,11 @@ namespace TTS_Company.Components
 
             if (WantedAudioClips.TryGetValue(taskid, out SpeakTTSAudioClipCache cache))
             {
-                cache.AddAudioClips(audioClip);
+                cache.AddAudioClips(audioClip, pauseDurations);
             }
             else
             {
-                cache = new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip);
+                cache = new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip, pauseDurations);
                 WantedAudioClips.TryAdd(taskid, cache);
                 SpeakingNetworkObjectIds.TryAdd(networkObject.NetworkObjectId, false);
             }

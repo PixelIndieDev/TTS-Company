@@ -93,13 +93,13 @@ namespace TTS_Company.Components
                 return true;
             }
 
-            if (!ZipHelper.CheckForPiperTTS())
+            if (!FolderHelper.CheckForPiperTTS())
             {
                 LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), TTSConstants.PIPER_EXE_NAME);
                 return false;
             }
 
-            if (!ZipHelper.CheckForDefaultVoiceModels())
+            if (!FolderHelper.CheckForDefaultVoiceModels())
             {
                 LogConstants.TTS_GENERATOR_UNZIP_FAILED.Log(nameof(TTSGenerator), TTSConstants.TTS_VOICE_MODELS_FOLDER);
                 return false;

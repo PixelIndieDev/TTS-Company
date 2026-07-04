@@ -292,21 +292,19 @@ namespace TTS_Company.Components.Networking
                 return;
             }
 
-            AudioClip[] clips = new AudioClip[(playData._endIndex - playData._startIndex) + 1];
-            float totalPlaybackDuration = 0f;
+            int count = (playData._endIndex - playData._startIndex) + 1;
+            AudioClip[] clips = new AudioClip[count];
+            float[] pauses = new float[count];
 
             for (int i = playData._startIndex; i <= playData._endIndex; i++)
             {
-                AudioClip clip = taskValue._generatedClips[i];
-                clips[i - playData._startIndex] = clip;
-                if (clip != null)
-                {
-                    totalPlaybackDuration += clip.length;
-                }
+                int localIndex = i - playData._startIndex;
+                clips[localIndex] = taskValue._generatedClips[i];
+                pauses[localIndex] = taskValue._pauseDurations[i];
                 taskValue._generatedClips[i] = null;
             }
 
-            TTSCompanyBackend.PlaySpeakTTSAtNetworkObject_OnClient(playData._taskId, taskValue._networkObjectReference, taskValue._callingAssemblyHash, clips, playData._isLastBatch);
+            TTSCompanyBackend.PlaySpeakTTSAtNetworkObject_OnClient(playData._taskId, taskValue._networkObjectReference, taskValue._callingAssemblyHash, clips, pauses, playData._isLastBatch);
 
             if (playData._endIndex >= taskValue._generatedClips.Length - 1)
             {
@@ -364,7 +362,7 @@ namespace TTS_Company.Components.Networking
         }
 
         // -------------------- client calls --------------------
-        internal static void CreateClientTask(ulong taskId, NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textsToSpeak, CancellationTokenSource cts)
+        internal static void CreateClientTask(ulong taskId, NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textsToSpeak, float sentenceSilence, float punctuationSilence, CancellationTokenSource cts)
         {
             if (ClientTasks.TryRemove(taskId, out ClientTaskState oldState))
             {
@@ -372,11 +370,18 @@ namespace TTS_Company.Components.Networking
                 oldState._cts?.Dispose();
             }
 
+            float[] pauses = new float[textsToSpeak.Length];
+            for (int i = 0; i < textsToSpeak.Length; i++)
+            {
+                pauses[i] = TTSCompanyUtils.DetermineEndPause(textsToSpeak[i], sentenceSilence, punctuationSilence);
+            }
+
             ClientTaskState task = new ClientTaskState
             {
                 _sentences = textsToSpeak,
                 _generatedClips = new AudioClip[textsToSpeak.Length],
                 _callingAssemblyHash = callingAssemblyHash,
+                _pauseDurations = pauses,
                 _cts = cts,
                 _networkObjectReference = networkObjectRefOfSpeaker
             };

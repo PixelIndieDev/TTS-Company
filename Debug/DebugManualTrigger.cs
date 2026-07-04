@@ -34,6 +34,13 @@ namespace TTS_Company.Debug
             "Nutcracker"
         };
 
+        private static readonly string[] multipleLines = new[]
+        {
+            "This is a testing text-to-speech voice line.",
+            "This is a voice line test.",
+            "Testing complete."
+        };
+
         private static PlayerControllerB speakingPlayer = null;
 
         private static void GetSpeakingPlayer()
@@ -75,10 +82,11 @@ namespace TTS_Company.Debug
             }
 
             PiperVoiceSettings voice = new PiperVoiceSettings();
-            voice.ModelName = TTSCompanyUtils.GetRandomLoadedTTSVoicename();
+            voice.ModelName = TTSCompanyUtils.GetRandomLoadedTTSVoicename();;
 
             int randomIndex = Random.Range(0, randomVoiceLines.Length);
             TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, randomVoiceLines[randomIndex], voiceSettings: voice);
+            //TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, multipleLines, voiceSettings: voice);
         }
 
         internal async static void TriggerTestTTS02(InputAction.CallbackContext obj)

@@ -33,11 +33,17 @@ namespace TTS_Company.Components
                     break;
                 }
 
-                if (cache._audioQueue.TryDequeue(out AudioClip nextClip))
+                if (cache._audioQueue.TryDequeue(out QueuedClip queued))
                 {
-                    if (TTSAudioSourceManager.PlayAudioSource(cache._foundNetworkObject, cache._callingAssemblyHash, nextClip))
+                    if (TTSAudioSourceManager.PlayAudioSource(cache._foundNetworkObject, cache._callingAssemblyHash, queued.Clip))
                     {
-                        yield return new WaitForSeconds(nextClip.length);
+                        yield return new WaitForSeconds(queued.Clip.length);
+
+                        bool wasFinalClip = cache._isLastBatch && cache._audioQueue.IsEmpty;
+                        if (!wasFinalClip && queued.PauseAfter > 0f)
+                        {
+                            yield return new WaitForSeconds(queued.PauseAfter);
+                        }
                     }
                     else
                     {
@@ -63,11 +69,11 @@ namespace TTS_Company.Components
             TTSCompanyNetworking.CancelClientTask(data._taskId);
             if (TTSCompanyBackend.WantedAudioClips.TryRemove(data._taskId, out SpeakTTSAudioClipCache cache))
             {
-                while (cache._audioQueue.TryDequeue(out AudioClip leftover))
+                while (cache._audioQueue.TryDequeue(out QueuedClip queued))
                 {
-                    if (leftover != null)
+                    if (queued.Clip != null)
                     {
-                        Destroy(leftover);
+                        Destroy(queued.Clip);
                     }
                 }
 
