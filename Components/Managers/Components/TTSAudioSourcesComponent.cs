@@ -76,30 +76,30 @@ namespace TTS_Company.Components.Managers.Components
             audioSource.spatialize = false;
             audioSource.spatializePostEffects = false;
 
-            audioSource.bypassEffects = audioSourceSettings._bypassEffects;
-            audioSource.bypassListenerEffects = audioSourceSettings._bypassListenerEffects;
-            audioSource.bypassReverbZones = audioSourceSettings._bypassReverbZones;
+            audioSource.bypassEffects = audioSourceSettings.BypassEffects;
+            audioSource.bypassListenerEffects = audioSourceSettings.BypassListenerEffects;
+            audioSource.bypassReverbZones = audioSourceSettings.BypassReverbZones;
 
             audioSource.playOnAwake = false; // call play() manually, so not play on awake
 
             audioSource.loop = false;
-            audioSource.priority = audioSourceSettings._priority;
-            audioSource.volume = audioSourceSettings._volume;
+            audioSource.priority = audioSourceSettings.Priority;
+            audioSource.volume = audioSourceSettings.Volume;
 
-            audioSource.spatialBlend = audioSourceSettings._spatialBlend;
-            audioSource.reverbZoneMix = audioSourceSettings._reverbZoneMix;
+            audioSource.spatialBlend = audioSourceSettings.SpatialBlend;
+            audioSource.reverbZoneMix = audioSourceSettings.ReverbZoneMix;
 
-            audioSource.dopplerLevel = audioSourceSettings._dopplerLevel;
-            audioSource.minDistance = audioSourceSettings._minDistance;
-            audioSource.maxDistance = audioSourceSettings._maxDistance;
-            audioSource.rolloffMode = audioSourceSettings._rolloffMode;
+            audioSource.dopplerLevel = audioSourceSettings.DopplerLevel;
+            audioSource.minDistance = audioSourceSettings.MinDistance;
+            audioSource.maxDistance = audioSourceSettings.MaxDistance;
+            audioSource.rolloffMode = audioSourceSettings.RolloffMode;
 
-            audioSource.outputAudioMixerGroup = audioSourceSettings._outputAudioMixerGroup;
+            audioSource.outputAudioMixerGroup = audioSourceSettings.OutputAudioMixerGroup;
             audioSource.mute = audioSourceSettings._mute;
 
-            if (audioSourceSettings._customCurve != null)
+            if (audioSourceSettings.CustomCurve != null)
             {
-                (AudioSourceCurveType type, AnimationCurve curve) curveValue = audioSourceSettings._customCurve.Value;
+                (AudioSourceCurveType type, AnimationCurve curve) curveValue = audioSourceSettings.CustomCurve.Value;
                 audioSource.SetCustomCurve(curveValue.type, curveValue.curve);
             }
 

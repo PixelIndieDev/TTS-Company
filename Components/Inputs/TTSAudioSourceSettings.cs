@@ -5,9 +5,9 @@ namespace TTS_Company.Components
 {
     public sealed class TTSAudioSourceSettings // public as this needs to be able to be accessed by other mods
     {
-        [SerializeField] public bool _bypassEffects { get; set; } = false;
-        [SerializeField] public bool _bypassListenerEffects { get; set; } = false;
-        [SerializeField] public bool _bypassReverbZones { get; set; } = false;
+        [SerializeField] public bool BypassEffects { get; set; } = false;
+        [SerializeField] public bool BypassListenerEffects { get; set; } = false;
+        [SerializeField] public bool BypassReverbZones { get; set; } = false;
 
         private int priority = 128;
         [SerializeField]
@@ -66,9 +66,9 @@ namespace TTS_Company.Components
             set => maxDistance = Mathf.Clamp(value, 0.0f, 128.0f);
         }
 
-        [SerializeField] public AudioRolloffMode _rolloffMode { get; set; } = AudioRolloffMode.Linear;
+        [SerializeField] public AudioRolloffMode RolloffMode { get; set; } = AudioRolloffMode.Linear;
 
-        [SerializeField] public AudioMixerGroup _outputAudioMixerGroup { get; set; } = null;
-        [SerializeField] public (AudioSourceCurveType type, AnimationCurve curve)? _customCurve { get; set; } = null;
+        [SerializeField] public AudioMixerGroup OutputAudioMixerGroup { get; set; } = null;
+        [SerializeField] public (AudioSourceCurveType type, AnimationCurve curve)? CustomCurve { get; set; } = null;
     }
 }
