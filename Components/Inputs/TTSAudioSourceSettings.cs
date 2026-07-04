@@ -9,16 +9,62 @@ namespace TTS_Company.Components
         [SerializeField] public bool _bypassListenerEffects { get; set; } = false;
         [SerializeField] public bool _bypassReverbZones { get; set; } = false;
 
-        [SerializeField] public int _priority { get; set; } = 128;
-        [SerializeField] public float _volume { get; set; } = 1.0f;
+        private int priority = 128;
+        [SerializeField]
+        public int Priority
+        {
+            get => priority;
+            set => priority = Mathf.Clamp(value, 0, 255);
+        }
+
+        private float volume = 1.0f;
+        [SerializeField]
+        public float Volume
+        {
+            get => volume;
+            set => volume = Mathf.Clamp(value, 0.0f, 1.0f);
+        }
         [SerializeField] public bool _mute { get; set; } = false;
 
-        [SerializeField] public float _spatialBlend { get; set; } = 1.0f;
-        [SerializeField] public float _reverbZoneMix { get; set; } = 1.0f;
+        private float spatialBlend = 1.0f;
+        [SerializeField]
+        public float SpatialBlend
+        {
+            get => spatialBlend;
+            set => spatialBlend = Mathf.Clamp(value, 0.0f, 1.0f);
+        }
 
-        [SerializeField] public float _dopplerLevel { get; set; } = 0.0f;
+        private float reverbZoneMix = 1.0f;
+        [SerializeField]
+        public float ReverbZoneMix
+        {
+            get => reverbZoneMix;
+            set => reverbZoneMix = Mathf.Clamp(value, 0.0f, 1.0f);
+        }
+
+        private float dopplerLevel = 0.0f;
+        [SerializeField]
+        public float DopplerLevel
+        {
+            get => dopplerLevel;
+            set => dopplerLevel = Mathf.Clamp(value, 0.0f, 1.0f);
+        }
+
+        private float minDistance = 1.0f;
         [SerializeField] public float _minDistance { get; set; } = 1.0f;
-        [SerializeField] public float _maxDistance { get; set; } = 40.0f;
+        public float MinDistance
+        {
+            get => minDistance;
+            set => minDistance = Mathf.Clamp(value, 0.0f, 128.0f);
+        }
+
+        private float maxDistance = 40.0f;
+        [SerializeField]
+        public float MaxDistance
+        {
+            get => maxDistance;
+            set => maxDistance = Mathf.Clamp(value, 0.0f, 128.0f);
+        }
 
         [SerializeField] public AudioRolloffMode _rolloffMode { get; set; } = AudioRolloffMode.Linear;
 
