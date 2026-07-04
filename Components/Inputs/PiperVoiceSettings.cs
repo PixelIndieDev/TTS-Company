@@ -8,7 +8,7 @@ namespace TTS_Company.Components
     {
         [SerializeField] private string modelNameWithoutPathOrExtention = ExampleConstants.VOICE_MODEL_NAME;
 
-        /// <summary>Name0 of the .onnx model file</summary>
+        /// <summary>Name of the .onnx model file</summary>
         [SerializeField]
         public string ModelName
         {
