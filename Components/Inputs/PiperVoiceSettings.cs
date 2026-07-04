@@ -29,10 +29,10 @@ namespace TTS_Company.Components
         public float SpeechRate
         {
             get => speechRate;
-            set => speechRate = ClampHelper.ClampAndRound(value, 0.1f, 3.0f);
+            set => speechRate = ClampHelper.ClampAndRound(value, 0.05f, 5.0f);
         }
 
-        private float noiseScale = 0.667f;
+        private float noiseScale = 0.67f;
         /// <summary>Controls pitch and intonation variance. Higher values increase emotional expressiveness, while lower values make the voice more stable but potentially monotone</summary>
         [SerializeField]
         public float NoiseScale
@@ -65,7 +65,7 @@ namespace TTS_Company.Components
         public float PunctuationSilence
         {
             get => punctuationSilence;
-            set => punctuationSilence = ClampHelper.ClampAndRound(value, 0f, 2f);
+            set => punctuationSilence = ClampHelper.ClampAndRound(value, 0f, 2.5f);
         }
     }
 }
