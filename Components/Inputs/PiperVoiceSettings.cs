@@ -6,7 +6,7 @@ namespace TTS_Company.Components
 {
     public sealed class PiperVoiceSettings // public as this needs to be able to be accessed by other mods
     {
-        [SerializeField] private string modelNameWithoutPathOrExtention = ExampleConstants.VOICE_MODEL_NAME;
+        private string modelNameWithoutPathOrExtention = ExampleConstants.VOICE_MODEL_NAME;
 
         /// <summary>Name of the .onnx model file</summary>
         [SerializeField]

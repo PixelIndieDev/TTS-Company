@@ -14,7 +14,7 @@ namespace TTS_Company.Components
         public int Priority
         {
             get => priority;
-            set => priority = Mathf.Clamp(value, 0, 255);
+            set => priority = Mathf.Clamp(value, 0, 256);
         }
 
         private float volume = 1.0f;
