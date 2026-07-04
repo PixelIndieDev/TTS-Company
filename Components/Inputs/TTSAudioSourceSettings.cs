@@ -24,7 +24,6 @@ namespace TTS_Company.Components
             get => volume;
             set => volume = Mathf.Clamp(value, 0.0f, 1.0f);
         }
-        [SerializeField] public bool _mute { get; set; } = false;
 
         private float spatialBlend = 1.0f;
         [SerializeField]
@@ -63,7 +62,7 @@ namespace TTS_Company.Components
         public float MaxDistance
         {
             get => maxDistance;
-            set => maxDistance = Mathf.Clamp(value, 0.0f, 128.0f);
+            set => maxDistance = Mathf.Clamp(value, 1.0f, 128.0f);
         }
 
         [SerializeField] public AudioRolloffMode RolloffMode { get; set; } = AudioRolloffMode.Linear;

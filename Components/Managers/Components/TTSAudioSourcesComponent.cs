@@ -95,7 +95,6 @@ namespace TTS_Company.Components.Managers.Components
             audioSource.rolloffMode = audioSourceSettings.RolloffMode;
 
             audioSource.outputAudioMixerGroup = audioSourceSettings.OutputAudioMixerGroup;
-            audioSource.mute = audioSourceSettings._mute;
 
             if (audioSourceSettings.CustomCurve != null)
             {
