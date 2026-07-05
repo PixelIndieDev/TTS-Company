@@ -1,7 +1,12 @@
 # TTS-Company
-A text-to-speech library mod for Lethal Company that integrates the lightweight, local Piper TTS engine. This library makes it easy to add TTS speech to your Lethal Company mods.
+A text-to-speech library mod for Lethal Company that integrates the lightweight, local [Piper TTS](https://github.com/OHF-Voice/piper1-gpl) engine. This library makes it easy for devs to add TTS speech to their mods, with generation happening fully offline on the player's machine.
 
-> All players in the lobby are required to have the `TTS-Company` mod installed. Any players missing the mod will not be able to hear any generated text-to-speech audio.
+> **All players in the lobby must have `TTS-Company` installed.** Players missing the mod will not hear any generated text-to-speech audio.
+
+## For devs
+- **[Usage Guides](https://pixelindiedev.github.io/TTS-Company-docs/gettingstarted_docs.html)**
+- **[API Documentation](https://pixelindiedev.github.io/TTS-Company-docs/api_docs.html)**
+- **[Utils Documentation](https://pixelindiedev.github.io/TTS-Company-docs/utils_docs.html)**
 
 ## What it does
 - Provides a API for other mods to generate local, low-latency text-to-speech audio.
@@ -23,7 +28,7 @@ This mod makes use of the following third-party software:
 #### [Piper TTS](https://github.com/OHF-Voice/piper1-gpl)
 - **License:** GPL-3.0 License
 - **Usage:** Included as modified source code, compiled into a frozen server executable via PyInstaller.
-- **Source Code:** The source code used to build the server executable is included in a `.7z` archive inside the `Assets/piperTTS.zip`.
+- **Source Code:** The source code used to build the executable is included as a `.7z` archive inside `/PiperTTS`.
 
 #### [Concentus](https://www.nuget.org/packages/Concentus/)
 - **License:** Microsoft Public License

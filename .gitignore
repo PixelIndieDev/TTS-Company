@@ -8,3 +8,5 @@ Properties/
 *.nuget.props
 *.nuget.targets
 packages/
+Thunderstore/TTS-Company/TTS-Company-Voices/
+Thunderstore/TTS-Company/PiperTTS/
