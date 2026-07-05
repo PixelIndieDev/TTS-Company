@@ -10,6 +10,6 @@
 
         internal static TTSRawResult Ok(byte[] pcm, int sampleRate) => new TTSRawResult { IsSuccess = true, Pcm = pcm, SampleRate = sampleRate };
         internal static TTSRawResult Failure(string error) => new TTSRawResult { IsSuccess = false, Error = error };
-        internal static TTSRawResult Cancelled() => new TTSRawResult { IsSuccess = false, IsCancelled = true };
+        internal static TTSRawResult Cancelled() => new TTSRawResult { IsSuccess = false, IsCancelled = true, Error = "Cancelled" };
     }
 }

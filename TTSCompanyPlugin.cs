@@ -105,7 +105,8 @@ namespace TTS_Company
             go.hideFlags = HideFlags.HideAndDontSave;
             DontDestroyOnLoad(go);
 
-            harmony.PatchAll(typeof(NetworkPatch));
+            harmony.PatchAll(typeof(StartOfRoundPatch));
+            harmony.PatchAll(typeof(GameNetworkManagerPatch));
 
             TTSCompanyNetworking.Initialize();
 

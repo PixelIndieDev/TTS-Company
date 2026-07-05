@@ -154,7 +154,8 @@
     <Compile Include="Debug\DebugManualTrigger.cs" />
     <Compile Include="Debug\Inputs\TTSCompanyDebugInputs.cs" />
     <Compile Include="ModInfo.cs" />
-    <Compile Include="Patches\NetworkPatch.cs" />
+    <Compile Include="Patches\GameNetworkManagerPatch.cs" />
+    <Compile Include="Patches\StartOfRoundPatch.cs" />
     <Compile Include="TTSCompanyPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TTSCompanyAPI.cs" />

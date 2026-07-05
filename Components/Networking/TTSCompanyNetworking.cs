@@ -58,6 +58,8 @@ namespace TTS_Company.Components.Networking
         private static readonly ConcurrentDictionary<ulong, TTSTask> ActiveTasks_Server = new ConcurrentDictionary<ulong, TTSTask>();
         private static ulong _nextSessionId_Speak = 0;
 
+        private static readonly ConcurrentDictionary<(ulong NetworkObjectId, ulong CallingAssemblyHash), SpawnTTSAudioSource_NET> ActiveAudioSources_Server = new ConcurrentDictionary<(ulong, ulong), SpawnTTSAudioSource_NET>();
+
         // client bookkeeping for cached audioclips
         private static readonly ConcurrentDictionary<ulong, ClientTaskState> ClientTasks = new ConcurrentDictionary<ulong, ClientTaskState>();
 
@@ -89,6 +91,8 @@ namespace TTS_Company.Components.Networking
                 return;
             }
 
+            ActiveAudioSources_Server[(data._networkObjectRefOfSpeaker.NetworkObjectId, data._callingAssemblyHash)] = data;
+
             try
             {
                 TTS_networkMessage_SpawnTTSAudioSource_Clients.SendClients(data);
@@ -104,6 +108,12 @@ namespace TTS_Company.Components.Networking
             if (!LNetworkUtils.IsHostOrServer)
             {
                 return;
+            }
+
+            (ulong NetworkObjectId, ulong _callingAssemblyHash) key = (data._networkObjectRefOfSpeaker.NetworkObjectId, data._callingAssemblyHash);
+            if (ActiveAudioSources_Server.TryGetValue(key, out SpawnTTSAudioSource_NET existing))
+            {
+                ActiveAudioSources_Server[key] = new SpawnTTSAudioSource_NET(existing._networkObjectRefOfSpeaker, existing._callingAssemblyHash, data._audioSourceSettings);
             }
 
             try
@@ -122,6 +132,8 @@ namespace TTS_Company.Components.Networking
             {
                 return;
             }
+
+            ActiveAudioSources_Server.TryRemove((data._networkObjectRefOfSpeaker.NetworkObjectId, data._callingAssemblyHash), out _);
 
             try
             {
@@ -450,6 +462,88 @@ namespace TTS_Company.Components.Networking
                     Array.Clear(oldState._generatedClips, 0, oldState._generatedClips.Length);
                 }
             }
+        }
+
+        // -------------------- patch calls --------------------
+        internal static void SyncActiveAudioSourcesTo(ulong clientId)
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+            {
+                return;
+            }
+
+            foreach (SpawnTTSAudioSource_NET state in ActiveAudioSources_Server.Values)
+            {
+                try
+                {
+                    TTS_networkMessage_SpawnTTSAudioSource_Clients.SendClient(state, clientId);
+                    LogConstants.TTS_COMPANY_NETWORKING_SEND_AUDIO_SOURCES.Log(nameof(TTSCompanyNetworking), clientId);
+                }
+                catch (Exception ex)
+                {
+                    LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(SyncActiveAudioSourcesTo), ex);
+                }
+            }
+        }
+
+        internal static void HandlePlayerDisconnected(ulong clientId)
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+            {
+                return;
+            }
+
+            foreach (TTSTask task in ActiveTasks_Server.Values)
+            {
+                task._snapshotClientIds.TryRemove(clientId, out _);
+                task._completionList.TryRemove(clientId, out _);
+            }
+
+            foreach (KeyValuePair<(ulong NetworkObjectId, ulong CallingAssemblyHash), SpawnTTSAudioSource_NET> kvp in ActiveAudioSources_Server)
+            {
+                if (!kvp.Value._networkObjectRefOfSpeaker.TryGet(out _))
+                {
+                    ActiveAudioSources_Server.TryRemove(kvp.Key, out _);
+                }
+            }
+        }
+
+        internal static void ClearClientTasks()
+        {
+            foreach (ClientTaskState task in ClientTasks.Values)
+            {
+                task._cts?.SafeCancel();
+                task._cts?.Dispose();
+
+                if (task._generatedClips != null)
+                {
+                    for (int i = 0; i < task._generatedClips.Length; i++)
+                    {
+                        if (task._generatedClips[i] != null)
+                        {
+                            UnityEngine.Object.Destroy(task._generatedClips[i]);
+                            task._generatedClips[i] = null;
+                        }
+                    }
+                }
+            }
+            ClientTasks.Clear();
+        }
+
+        internal static void ClearServerTasks()
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+            {
+                return;
+            }
+
+            foreach (TTSTask task in ActiveTasks_Server.Values)
+            {
+                task._cts?.SafeCancel();
+                task._cts?.Dispose();
+            }
+            ActiveTasks_Server.Clear();
+            ActiveAudioSources_Server.Clear();
         }
     }
 }

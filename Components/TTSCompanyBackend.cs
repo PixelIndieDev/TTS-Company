@@ -182,5 +182,33 @@ namespace TTS_Company.Components
                 }
             }
         }
+
+        // -------------------- patch calls --------------------
+        internal static void OnReturnedToMainMenu()
+        {
+            foreach (ActiveTTSState state in ActiveTTSCoroutines.Values)
+            {
+                state.Cts?.SafeCancel();
+            }
+            ActiveTTSCoroutines.Clear();
+
+            foreach (SpeakTTSAudioClipCache cache in WantedAudioClips.Values)
+            {
+                while (cache._audioQueue.TryDequeue(out QueuedClip queued))
+                {
+                    if (queued.Clip != null)
+                    {
+                        Object.Destroy(queued.Clip);
+                    }
+                }
+            }
+            WantedAudioClips.Clear();
+
+            SpeakingNetworkObjectIds.Clear();
+            GeneratingNetworkObjectIds.Clear();
+
+            TTSCompanyNetworking.ClearClientTasks();
+            TTSCompanyNetworking.ClearServerTasks();
+        }
     }
 }

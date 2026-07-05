@@ -102,5 +102,6 @@ namespace TTS_Company.Components.Constants
         // debug
         internal static readonly LogMessage TTS_COMPANY_NETWORKING_UPDATE_TASK = new LogMessage(LogLevel.Debug, "Player {1} send a task update for task {2}");
         internal static readonly LogMessage TTS_COMPANY_NETWORKING_PLAYBACK_CLEANUP = new LogMessage(LogLevel.Debug, "Playback timeout cleaned up task {1}");
+        internal static readonly LogMessage TTS_COMPANY_NETWORKING_SEND_AUDIO_SOURCES = new LogMessage(LogLevel.Debug, "Send the audio sources to player with id: {1}");
     }
 }
