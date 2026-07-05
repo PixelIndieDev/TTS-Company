@@ -189,4 +189,17 @@
     <WriteLinesToFile File="$(ManifestPath)" Lines="$(UpdatedManifest)" Overwrite="true" Encoding="UTF-8" />
     <Message Importance="High" Text="[TTSCompany] Extracted Version $(ManifestVersion) from ModInfo.cs and updated manifest.json!" />
   </Target>
+  <Target Name="CopyReadmeAndLicense" AfterTargets="Build">
+    <PropertyGroup>
+      <CopyDestination>$(ProjectDir)Thunderstore\TTS-Company\</CopyDestination>
+    </PropertyGroup>
+    <ItemGroup>
+      <FilesToCopy Include="$(ProjectDir)README.md" Condition="Exists('$(ProjectDir)README.md')" />
+      <FilesToCopy Include="$(ProjectDir)LICENSE" Condition="Exists('$(ProjectDir)LICENSE')" />
+      <FilesToCopy Include="$(ProjectDir)readme.md" Condition="Exists('$(ProjectDir)readme.md') And !Exists('$(ProjectDir)README.md')" />
+      <FilesToCopy Include="$(ProjectDir)license" Condition="Exists('$(ProjectDir)license') And !Exists('$(ProjectDir)LICENSE')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FilesToCopy)" DestinationFolder="$(CopyDestination)" SkipUnchangedFiles="true" />
+    <Message Importance="High" Text="[TTSCompany] Successfully copied README and LICENSE to $(CopyDestination)" />
+  </Target>
 </Project>
