@@ -2,15 +2,15 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using TTS_Company.Components.Constants;
-using TTS_Company.Components.Helpers;
-using TTS_Company.Components.Networking;
-using TTS_Company.Components.Networking.Components.Structs;
-using TTS_Company.Components.Server.Components;
+using TTSCompany.Components.Constants;
+using TTSCompany.Components.Helpers;
+using TTSCompany.Components.Networking;
+using TTSCompany.Components.Networking.Components.Structs;
+using TTSCompany.Components.Server.Components;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace TTS_Company.Components
+namespace TTSCompany.Components
 {
     internal static class TTSCompanyBackend
     {

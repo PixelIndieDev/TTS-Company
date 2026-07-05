@@ -1,8 +1,8 @@
-﻿using TTS_Company.Components.Constants;
-using TTS_Company.Components.Helpers;
+﻿using TTSCompany.Components.Constants;
+using TTSCompany.Components.Helpers;
 using UnityEngine;
 
-namespace TTS_Company.Components
+namespace TTSCompany.Components
 {
     public sealed class PiperVoiceSettings // public as this needs to be able to be accessed by other mods
     {

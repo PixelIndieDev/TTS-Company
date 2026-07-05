@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace TTS_Company.Components
+namespace TTSCompany.Components
 {
     public sealed class TTSResult
     {

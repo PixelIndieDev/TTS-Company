@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Audio;
 
-namespace TTS_Company.Components
+namespace TTSCompany.Components
 {
     public sealed class TTSAudioSourceSettings // public as this needs to be able to be accessed by other mods
     {

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Concurrent;
-using TTS_Company.Components.Constants;
+using TTSCompany.Components.Constants;
 using UnityEngine;
 
-namespace TTS_Company.Components.Managers.Components
+namespace TTSCompany.Components.Managers.Components
 {
     internal sealed class TTSAudioSourcesComponent : MonoBehaviour
     {

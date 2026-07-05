@@ -1,4 +1,4 @@
-﻿namespace TTS_Company
+﻿namespace TTSCompany
 {
     internal static class ModInfo
     {

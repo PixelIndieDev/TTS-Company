@@ -7,9 +7,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using TTS_Company.Components.Constants;
+using TTSCompany.Components.Constants;
 
-namespace TTS_Company.Components.Server.Components
+namespace TTSCompany.Components.Server.Components
 {
     internal sealed class VoiceModelMemoryManager
     {

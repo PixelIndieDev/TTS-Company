@@ -1,4 +1,4 @@
-﻿namespace TTS_Company.Components.Server.Components
+﻿namespace TTSCompany.Components.Server.Components
 {
     internal struct TTSRawResult
     {

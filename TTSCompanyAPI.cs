@@ -3,16 +3,16 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using TTS_Company.Components;
-using TTS_Company.Components.Constants;
-using TTS_Company.Components.Helpers;
-using TTS_Company.Components.Managers;
-using TTS_Company.Components.Networking;
-using TTS_Company.Components.Networking.Components.Structs;
+using TTSCompany.Components;
+using TTSCompany.Components.Constants;
+using TTSCompany.Components.Helpers;
+using TTSCompany.Components.Managers;
+using TTSCompany.Components.Networking;
+using TTSCompany.Components.Networking.Components.Structs;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace TTS_Company
+namespace TTSCompany
 {
     public static class TTSCompanyAPI
     {

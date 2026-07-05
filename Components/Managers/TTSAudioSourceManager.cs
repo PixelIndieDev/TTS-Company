@@ -1,11 +1,11 @@
 ﻿using System.Runtime.CompilerServices;
-using TTS_Company.Components.Constants;
-using TTS_Company.Components.Managers.Components;
-using TTS_Company.Components.Networking.Components.Structs;
+using TTSCompany.Components.Constants;
+using TTSCompany.Components.Managers.Components;
+using TTSCompany.Components.Networking.Components.Structs;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace TTS_Company.Components.Managers
+namespace TTSCompany.Components.Managers
 {
     internal static class TTSAudioSourceManager
     {

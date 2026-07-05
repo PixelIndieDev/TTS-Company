@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using TTS_Company.Components;
-using TTS_Company.Components.Enums;
-using TTS_Company.Components.Networking.Components.Structs;
+using TTSCompany.Components;
+using TTSCompany.Components.Enums;
+using TTSCompany.Components.Networking.Components.Structs;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace TTS_Company
+namespace TTSCompany
 {
     public static class TTSCompanyUtils
     {

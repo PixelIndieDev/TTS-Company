@@ -1,4 +1,4 @@
-﻿namespace TTS_Company.Components.Enums
+﻿namespace TTSCompany.Components.Enums
 {
     internal enum TimeoutBufferScaling : byte
     {

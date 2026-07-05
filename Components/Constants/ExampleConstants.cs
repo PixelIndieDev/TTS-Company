@@ -1,4 +1,4 @@
-﻿namespace TTS_Company.Components.Constants
+﻿namespace TTSCompany.Components.Constants
 {
     // for copy reasons
     internal static class ExampleConstants

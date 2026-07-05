@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
-namespace TTS_Company.Components.Server.Components
+namespace TTSCompany.Components.Server.Components
 {
     internal static class JSONHelper
     {

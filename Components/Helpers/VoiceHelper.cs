@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TTS_Company.Components.Helpers
+namespace TTSCompany.Components.Helpers
 {
     internal static class VoiceHelper
     {

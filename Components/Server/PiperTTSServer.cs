@@ -8,10 +8,10 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TTS_Company.Components.Constants;
-using TTS_Company.Components.Server.Components;
+using TTSCompany.Components.Constants;
+using TTSCompany.Components.Server.Components;
 
-namespace TTS_Company.Components
+namespace TTSCompany.Components
 {
     internal sealed class PiperTTSServer
     {

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace TTS_Company.Components.Networking.Components.Structs
+namespace TTSCompany.Components.Networking.Components.Structs
 {
     internal readonly struct QueuedClip
     {

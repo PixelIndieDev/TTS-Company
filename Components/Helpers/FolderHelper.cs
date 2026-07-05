@@ -1,7 +1,7 @@
 ﻿using System.IO;
-using TTS_Company.Components.Constants;
+using TTSCompany.Components.Constants;
 
-namespace TTS_Company.Components.Helpers
+namespace TTSCompany.Components.Helpers
 {
     internal static class FolderHelper
     {

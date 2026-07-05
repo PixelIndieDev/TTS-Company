@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using TTS_Company.Components.Constants;
+using TTSCompany.Components.Constants;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace TTS_Company.Components.Networking.Components
+namespace TTSCompany.Components.Networking.Components
 {
     internal sealed class TTSTask
     {

@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
-using TTS_Company.Components;
+using TTSCompany.Components;
 
-namespace TTS_Company.Patches
+namespace TTSCompany.Patches
 {
     [HarmonyPatch(typeof(GameNetworkManager))]
     internal static class GameNetworkManagerPatch

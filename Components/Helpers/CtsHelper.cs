@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading;
-using TTS_Company.Components.Constants;
+using TTSCompany.Components.Constants;
 
-namespace TTS_Company.Components.Helpers
+namespace TTSCompany.Components.Helpers
 {
     internal static class CtsHelper
     {

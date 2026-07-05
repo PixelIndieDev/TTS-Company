@@ -1,12 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using TTS_Company.Components.Managers;
-using TTS_Company.Components.Networking;
-using TTS_Company.Components.Networking.Components.Structs;
+using TTSCompany.Components.Managers;
+using TTSCompany.Components.Networking;
+using TTSCompany.Components.Networking.Components.Structs;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace TTS_Company.Components
+namespace TTSCompany.Components
 {
     internal sealed class TTSPlaybackManager : MonoBehaviour
     {

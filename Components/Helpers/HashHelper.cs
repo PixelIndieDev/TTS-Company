@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace TTS_Company.Components.Helpers
+namespace TTSCompany.Components.Helpers
 {
     internal static class HashHelper
     {

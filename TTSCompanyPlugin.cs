@@ -4,16 +4,16 @@ using HarmonyLib;
 using LethalConfig;
 using LethalConfig.ConfigItems;
 using System.IO;
-using TTS_Company.Components;
-using TTS_Company.Components.Constants;
-using TTS_Company.Components.Enums;
-using TTS_Company.Components.Networking;
-using TTS_Company.Debug;
-using TTS_Company.Debug.Inputs;
-using TTS_Company.Patches;
+using TTSCompany.Components;
+using TTSCompany.Components.Constants;
+using TTSCompany.Components.Enums;
+using TTSCompany.Components.Networking;
+using TTSCompany.Debug;
+using TTSCompany.Debug.Inputs;
+using TTSCompany.Patches;
 using UnityEngine;
 
-namespace TTS_Company
+namespace TTSCompany
 {
     [BepInPlugin(ModInfo.modGUID, ModInfo.modName, ModInfo.modVersion)]
     [BepInDependency("com.rune580.LethalCompanyInputUtils", BepInDependency.DependencyFlags.SoftDependency)]

@@ -6,15 +6,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TTS_Company.Components.Constants;
-using TTS_Company.Components.Helpers;
-using TTS_Company.Components.Managers;
-using TTS_Company.Components.Networking.Components;
-using TTS_Company.Components.Networking.Components.Structs;
+using TTSCompany.Components.Constants;
+using TTSCompany.Components.Helpers;
+using TTSCompany.Components.Managers;
+using TTSCompany.Components.Networking.Components;
+using TTSCompany.Components.Networking.Components.Structs;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace TTS_Company.Components.Networking
+namespace TTSCompany.Components.Networking
 {
     internal static class TTSCompanyNetworking
     {

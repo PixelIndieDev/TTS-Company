@@ -2,7 +2,7 @@
 using LethalCompanyInputUtils.BindingPathEnums;
 using UnityEngine.InputSystem;
 
-namespace TTS_Company.Debug.Inputs
+namespace TTSCompany.Debug.Inputs
 {
     public class TTSCompanyDebugInputs : LcInputActions
     {

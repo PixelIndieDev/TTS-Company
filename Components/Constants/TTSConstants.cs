@@ -1,8 +1,8 @@
 ﻿using System.IO;
 using System.Reflection;
-using TTS_Company.Components.Enums;
+using TTSCompany.Components.Enums;
 
-namespace TTS_Company.Components.Constants
+namespace TTSCompany.Components.Constants
 {
     internal static class TTSConstants
     {

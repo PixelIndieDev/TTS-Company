@@ -8,13 +8,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using TTS_Company.Components.Constants;
-using TTS_Company.Components.Enums;
-using TTS_Company.Components.Helpers;
-using TTS_Company.Components.Server.Components;
+using TTSCompany.Components.Constants;
+using TTSCompany.Components.Enums;
+using TTSCompany.Components.Helpers;
+using TTSCompany.Components.Server.Components;
 using UnityEngine;
 
-namespace TTS_Company.Components
+namespace TTSCompany.Components
 {
     internal sealed class TTSGenerator
     {

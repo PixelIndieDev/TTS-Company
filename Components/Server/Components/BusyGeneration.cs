@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using TTS_Company.Components.Helpers;
+using TTSCompany.Components.Helpers;
 
-namespace TTS_Company.Components.Server.Components
+namespace TTSCompany.Components.Server.Components
 {
     internal sealed class BusyGeneration
     {

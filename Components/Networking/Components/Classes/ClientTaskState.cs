@@ -2,7 +2,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-namespace TTS_Company.Components.Networking.Components
+namespace TTSCompany.Components.Networking.Components
 {
     internal sealed class ClientTaskState
     {

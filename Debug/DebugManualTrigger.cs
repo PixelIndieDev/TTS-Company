@@ -1,10 +1,10 @@
 ﻿using GameNetcodeStuff;
-using TTS_Company.Components;
-using TTS_Company.Components.Constants;
+using TTSCompany.Components;
+using TTSCompany.Components.Constants;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace TTS_Company.Debug
+namespace TTSCompany.Debug
 {
     internal static class DebugManualTrigger
     {

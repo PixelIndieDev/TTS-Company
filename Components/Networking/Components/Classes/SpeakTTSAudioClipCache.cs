@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using UnityEngine;
 
-namespace TTS_Company.Components.Networking.Components.Structs
+namespace TTSCompany.Components.Networking.Components.Structs
 {
     internal sealed class SpeakTTSAudioClipCache
     {

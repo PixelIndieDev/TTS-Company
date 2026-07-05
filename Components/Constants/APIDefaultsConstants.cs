@@ -1,4 +1,4 @@
-﻿namespace TTS_Company.Components.Constants
+﻿namespace TTSCompany.Components.Constants
 {
     internal static class APIDefaultsConstants
     {

@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
-using TTS_Company.Components.Networking;
+using TTSCompany.Components.Networking;
 
-namespace TTS_Company.Patches
+namespace TTSCompany.Patches
 {
     [HarmonyPatch(typeof(StartOfRound))]
     internal static class StartOfRoundPatch
