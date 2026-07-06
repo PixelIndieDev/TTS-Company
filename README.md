@@ -3,6 +3,8 @@ A text-to-speech library mod for Lethal Company that integrates the lightweight,
 
 > **All players in the lobby must have `TTS-Company` installed.** Players missing the mod will not hear any generated text-to-speech audio.
 
+> Marked as `AI-Generated` cause of the AI TTS it produces.
+
 ## For devs
 - **[Usage Guides](https://pixelindiedev.github.io/TTS-Company-docs/gettingstarted_docs.html)**
 - **[API Documentation](https://pixelindiedev.github.io/TTS-Company-docs/api_docs.html)**
