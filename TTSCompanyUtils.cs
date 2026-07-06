@@ -16,20 +16,31 @@ namespace TTSCompany
 
         // -------------------- public utils --------------------
         // client side
+        /// <summary>Checks whether a TTS voice model is currently loaded into memory</summary>
+        /// <param name="voiceModelName">The file name of the voice model to check</param>
+        /// <returns><c>true</c> if the model is currently loaded into memory, <c>false</c> otherwise</returns>
         public static bool HasTTSVoiceModelBeenLoadedIntoMemory(string voiceModelName)
         {
             return TTSCompanyPlugin._tts.isVoiceModelLoaded(voiceModelName);
         }
 
+        /// <summary>Returns the name of a random TTS voice found by the library, whether or not that voice model is currently loaded into memory</summary>
+        /// <returns>The <c>string</c> name of a random TTS voice model</returns>
         public static string GetRandomFoundTTSVoiceName()
         {
             return TTSCompanyPlugin._tts._server._memoryManager.GetRandomFoundTTSVoiceName();
         }
+
+        /// <summary>Returns the name of a random TTS voice that is currently loaded into memory</summary>
+        /// <returns>The <c>string</c> name of a random TTS voice model</returns>
         public static string GetRandomLoadedTTSVoicename()
         {
             return TTSCompanyPlugin._tts._server._memoryManager.GetRandomLoadedTTSVoiceName();
         }
 
+        /// <summary>Checks whether a network object is currently playing TTS audio</summary>
+        /// <param name="gameObject">The GameObject to check</param>
+        /// <returns><c>true</c> if the object is currently speaking TTS audio, <c>false</c> otherwise</returns>
         public static bool IsNetworkObjectCurrentlySpeaking(GameObject gameObject)
         {
             if (gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
@@ -38,6 +49,9 @@ namespace TTSCompany
             }
             return false;
         }
+        /// <summary>Checks whether a network object is currently playing TTS audio</summary>
+        /// <param name="networkObject">The NetworkObject to check</param>
+        /// <returns><c>true</c> if the object is currently speaking TTS audio, <c>false</c> otherwise</returns>
         public static bool IsNetworkObjectCurrentlySpeaking(NetworkObject networkObject)
         {
             if (networkObject == null)
@@ -56,6 +70,9 @@ namespace TTSCompany
             return false;
         }
 
+        /// <summary>Checks whether a network object is currently waiting on TTS audio to finish generating</summary>
+        /// <param name="gameObject">The GameObject to check</param>
+        /// <returns><c>true</c> if the object is currently waiting on TTS generation to complete, <c>false</c> otherwise</returns>
         public static bool IsNetworkObjectAwaitingTTSGeneration(GameObject gameObject)
         {
             if (gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
@@ -64,11 +81,17 @@ namespace TTSCompany
             }
             return false;
         }
+        /// <summary>Checks whether a network object is currently waiting on TTS audio to finish generating</summary>
+        /// <param name="networkObject">The NetworkObject to check</param>
+        /// <returns><c>true</c> if the object is currently waiting on TTS generation to complete, <c>false</c> otherwise</returns>
         public static bool IsNetworkObjectAwaitingTTSGeneration(NetworkObject networkObject)
         {
             return networkObject != null && TTSCompanyBackend.GeneratingNetworkObjectIds.ContainsKey(networkObject.NetworkObjectId);
         }
 
+        /// <summary>Returns the current TTSNetworkObjectState of a network object (e.g. Invalid, Idle, GeneratingTTS, ActivelySpeaking)</summary>
+        /// <param name="gameObject">The GameObject to check the state of</param>
+        /// <returns>The object's current <c>TTSNetworkObjectState</c></returns>
         public static TTSNetworkObjectState GetTTSNetworkObjectState(GameObject gameObject)
         {
             if (gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
@@ -77,6 +100,9 @@ namespace TTSCompany
             }
             return TTSNetworkObjectState.Invalid;
         }
+        /// <summary>Returns the current TTSNetworkObjectState of a network object (e.g. Invalid, Idle, GeneratingTTS, ActivelySpeaking)</summary>
+        /// <param name="networkObject">The NetworkObject to check the state of</param>
+        /// <returns>The object's current <c>TTSNetworkObjectState</c></returns>
         public static TTSNetworkObjectState GetTTSNetworkObjectState(NetworkObject networkObject)
         {
             if (networkObject == null)

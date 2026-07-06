@@ -8,7 +8,7 @@ namespace TTSCompany.Components
     {
         private string modelNameWithoutPathOrExtention = ExampleConstants.VOICE_MODEL_NAME;
 
-        /// <summary>Name of the .onnx model file</summary>
+        /// <summary>The file name of the .onnx voice model to use for speech generation</summary>
         [SerializeField]
         public string ModelName
         {
@@ -24,7 +24,7 @@ namespace TTSCompany.Components
         }
 
         private float speechRate = 1.0f;
-        /// <summary>Speech speed multiplier. 1.0 = normal, 0.5 = double speed, 2.0 = half speed</summary>
+        /// <summary>Multiplier for how fast the voice speaks (values below 1.0 speed up speech, values above 1.0 slow it down, e.g. 0.5 = twice as fast, 2.0 = half speed)</summary>
         [SerializeField]
         public float SpeechRate
         {
@@ -33,7 +33,7 @@ namespace TTSCompany.Components
         }
 
         private float noiseScale = 0.67f;
-        /// <summary>Controls pitch and intonation variance. Higher values increase emotional expressiveness, while lower values make the voice more stable but potentially monotone</summary>
+        /// <summary>Controls pitch and intonation variation (higher values make the voice sound more expressive and varied, lower values make it more flat and monotone)</summary>
         [SerializeField]
         public float NoiseScale
         {
@@ -42,7 +42,7 @@ namespace TTSCompany.Components
         }
 
         private float noiseScaleW = 0.8f;
-        /// <summary>Controls phoneme duration and pacing variance. Higher values add natural rhythmic changes, while lower values make the speech cadence rigid and robotic.</summary>
+        /// <summary>Controls variation in phoneme timing and pacing (higher values add natural rhythmic variety, lower values produce a stiffer more robotic cadence)</summary>
         [SerializeField]
         public float NoiseScaleW
         {
@@ -51,7 +51,7 @@ namespace TTSCompany.Components
         }
 
         private float sentenceSilence = 0.2f;
-        /// <summary>The time in seconds for how long the model does silence between sentences</summary>
+        /// <summary>The pause, in seconds, inserted after sentence-ending punctuation ("!", ".", "?", etc)</summary>
         [SerializeField]
         public float SentenceSilence
         {
@@ -60,7 +60,7 @@ namespace TTSCompany.Components
         }
 
         private float punctuationSilence = 0.08f;
-        /// <summary>The time in seconds for how long the model does silence after punctuations</summary>
+        /// <summary>The pause, in seconds, inserted after mid-sentence punctuation (",", ":", ";", etc)</summary>
         [SerializeField]
         public float PunctuationSilence
         {
