@@ -92,13 +92,11 @@ namespace TTSCompany.Components.Managers.Components
                     maxRmsSnapshot = rms;
                 }
 
-                LogConstants.logSource.LogInfo($"maxRmsSnapshot = {maxRmsSnapshot}");
                 if (loopsMade >= 2)
                 {
                     loopsMade = 0;
 
                     float normalizedRms = Mathf.Clamp01(maxRmsSnapshot * audioSource.volume * RmsScaler);
-                    LogConstants.logSource.LogInfo($"normalizedRms = {normalizedRms}");
                     if (normalizedRms > 0.01f && RoundManager.Instance != null)
                     {
                         float calculatedRange = Mathf.Lerp(audioSource.minDistance, audioSource.maxDistance, normalizedRms);
