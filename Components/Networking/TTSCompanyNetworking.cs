@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TTS_Company.Components.Networking.Components.Structs;
 using TTSCompany.Components.Constants;
 using TTSCompany.Components.Helpers;
 using TTSCompany.Components.Managers;
@@ -37,6 +38,8 @@ namespace TTSCompany.Components.Networking
         private const string messageId_PlaySpeakTTS = ModInfo.modGUID + message_PREFIX + "PlaySpeakTTS";
         private const string messageId_CancelSpeakTTS = ModInfo.modGUID + message_PREFIX + "CancelSpeakTTS";
 
+        private const string messageId_StopSpeakingTTS_Server = ModInfo.modGUID + message_PREFIX + "StopSpeakingTTS_Server";
+
         // networking messages
         private static LNetworkMessage<SpawnTTSAudioSource_NET> TTS_networkMessage_SpawnTTSAudioSource_Server;
         private static LNetworkMessage<SpawnTTSAudioSource_NET> TTS_networkMessage_SpawnTTSAudioSource_Clients;
@@ -53,6 +56,8 @@ namespace TTSCompany.Components.Networking
 
         private static LNetworkMessage<PlayAudioTTS_NET> TTS_networkMessage_PlaySpeakTTS;
         private static LNetworkMessage<CancelAudioTTS_NET> TTS_networkMessage_CancelSpeakTTS;
+
+        private static LNetworkMessage<StopSpeakingTTS_NET> TTS_networkMessage_StopSpeakingTTS_Server;
 
         // host/server bookkeeping
         private static readonly ConcurrentDictionary<ulong, TTSTask> ActiveTasks_Server = new ConcurrentDictionary<ulong, TTSTask>();
@@ -81,6 +86,8 @@ namespace TTSCompany.Components.Networking
 
             TTS_networkMessage_PlaySpeakTTS = LNetworkMessage<PlayAudioTTS_NET>.Connect(messageId_PlaySpeakTTS, onClientReceived: PlayTTS);
             TTS_networkMessage_CancelSpeakTTS = LNetworkMessage<CancelAudioTTS_NET>.Connect(messageId_CancelSpeakTTS, onClientReceived: TTSCompanyPlugin._ttsPlaybackManagerObject.CancelPlayback);
+
+            TTS_networkMessage_StopSpeakingTTS_Server = LNetworkMessage<StopSpeakingTTS_NET>.Connect(messageId_StopSpeakingTTS_Server, onServerReceived: StopSpeakingTTS);
         }
 
         // server only
@@ -322,6 +329,16 @@ namespace TTSCompany.Components.Networking
             }
         }
 
+        private static void StopSpeakingTTS(StopSpeakingTTS_NET data, ulong recievedFromPlayer)
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+            {
+                return;
+            }
+
+            CancelAnyExistingSessionFor(data._networkObjectRefOfSpeaker, data._callingAssemblyHash, "Stopped speaking");
+        }
+
         // all clients
         private static void PlayTTS(PlayAudioTTS_NET playData)
         {
@@ -408,6 +425,18 @@ namespace TTSCompany.Components.Networking
             catch (Exception ex)
             {
                 LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(Request_Server_UpdateSentenceProgress), ex);
+            }
+        }
+
+        internal static void Request_Server_StopSpeakingTTS(StopSpeakingTTS_NET data)
+        {
+            try
+            {
+                TTS_networkMessage_StopSpeakingTTS_Server.SendServer(data);
+            }
+            catch (Exception ex)
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSCompanyNetworking), nameof(Request_Server_StopSpeakingTTS), ex);
             }
         }
 

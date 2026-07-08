@@ -133,6 +133,7 @@
     <Compile Include="Components\Networking\Components\Structs\SentenceProgressData_NET.cs" />
     <Compile Include="Components\Networking\Components\Classes\SpeakTTSAudioClipCache.cs" />
     <Compile Include="Components\Networking\Components\Structs\SpawnTTSAudioSource_NET.cs" />
+    <Compile Include="Components\Networking\Components\Structs\StopSpeakingTTS_NET.cs" />
     <Compile Include="Components\Networking\Components\Structs\TTSPregenerateTTS_NET.cs" />
     <Compile Include="Components\Networking\Components\Structs\TTSSpeakTTS_PLUS_NET.cs" />
     <Compile Include="Components\Networking\Components\Structs\TTSSpeakTTS_NET.cs" />

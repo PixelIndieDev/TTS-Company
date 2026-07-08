@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using TTSCompany.Components;
 using TTSCompany.Components.Enums;
+using TTSCompany.Components.Helpers;
 using TTSCompany.Components.Networking.Components.Structs;
 using Unity.Netcode;
 using UnityEngine;
@@ -155,6 +157,21 @@ namespace TTSCompany
             }
 
             return sentences.ToArray();
+        }
+
+        internal static void GetAudioHashes(NetworkObjectReference networkObjectRefOfSpeaker, bool useGlobalAudioSource, out ulong callingAHash, out ulong trackingKeyHash)
+        {
+            if (useGlobalAudioSource)
+            {
+                callingAHash = HashHelper.GlobalCallerHash;
+                trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId);
+            }
+            else
+            {
+                Assembly callingA = Assembly.GetCallingAssembly();
+                callingAHash = HashHelper.GetCallingAssemblyHash(callingA);
+                trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId, callingA);
+            }
         }
 
         internal static float DetermineEndPause(string sentenceText, float sentenceSilence, float punctuationSilence)

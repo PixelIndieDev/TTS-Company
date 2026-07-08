@@ -162,7 +162,12 @@ namespace TTSCompany.Debug
                 return;
             }
 
+            TTSAudioSourceSettings audioS = new TTSAudioSourceSettings();
+            audioS.Volume = 1.0f;
+            TTSCompanyAPI.UpdateTTSAudioSourceSettingsOnNetworkObject(speakingPlayer.gameObject, audioS);
+
             TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, multipleLines, noiseRangeMultiplier: 1.0f);
+            TTSCompanyAPI.StopSpeakingTTSAtNetworkObject(speakingPlayer.gameObject);
             //TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, "This is one big line, that never seems to end, or does it, or does it just go on and on and on and on, where will this sentence end, is there even a end, that the question");
         }
     }
