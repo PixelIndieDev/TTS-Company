@@ -10,6 +10,9 @@ namespace TTSCompany.Components.Managers.Components
         private readonly ConcurrentDictionary<ulong, AudioSource> audioSources = new ConcurrentDictionary<ulong, AudioSource>();
         private readonly ConcurrentDictionary<ulong, Coroutine> noiseLoopCoroutines = new ConcurrentDictionary<ulong, Coroutine>();
 
+        const float RmsScaler = 2.9f;
+        const float LoudnessScaler = 2.0f;
+
         internal bool AddAudioSource(ulong callingAssemblyHash)
         {
             if (!DoesAudioSourceExist(callingAssemblyHash))
@@ -45,6 +48,7 @@ namespace TTSCompany.Components.Managers.Components
             audioSource.clip = newAudioClip;
             audioSource.Play();
 
+
             StopNoiseLoop(callingAssemblyHash);
             Coroutine loop = StartCoroutine(EmitNoise(callingAssemblyHash, audioSource, noiseRangeMultiplier));
             noiseLoopCoroutines[callingAssemblyHash] = loop;
@@ -65,38 +69,50 @@ namespace TTSCompany.Components.Managers.Components
                 yield break;
             }
 
-            float[] TTSAudioBuffer = new float[64];
+            LogConstants.CODE_TRIGGERED.Log(nameof(TTSAudioSourcesComponent), nameof(EmitNoise) + " after");
 
-            WaitForSeconds wait = new WaitForSeconds(0.35f);
+            float[] TTSAudioBuffer = new float[512];
+            float maxRmsSnapshot = 0f;
+            byte loopsMade = 0;
+
+            WaitForSeconds wait = new WaitForSeconds(0.1f);
             while (audioSource != null && audioSource.isPlaying)
             {
+                // recalculate rms
                 audioSource.GetOutputData(TTSAudioBuffer, 0);
-                float peakAmplitude = 0f;
+
+                float sum = 0f;
                 for (int i = 0; i < TTSAudioBuffer.Length; i++)
                 {
-                    float abs = Mathf.Abs(TTSAudioBuffer[i]);
-                    if (abs > peakAmplitude)
-                    {
-                        peakAmplitude = abs;
-                    }
+                    sum += TTSAudioBuffer[i] * TTSAudioBuffer[i];
+                }
+                float rms = Mathf.Sqrt(sum / TTSAudioBuffer.Length) * RmsScaler;
+                if (rms > maxRmsSnapshot)
+                {
+                    maxRmsSnapshot = rms;
                 }
 
-                float currentAmplitude = peakAmplitude * audioSource.volume;
-                float num = currentAmplitude / 0.025f;
-
-                // calculations based on voice chat PlayAudibleNoise decompile
-                if (num > 3f && RoundManager.Instance != null)
+                LogConstants.logSource.LogInfo($"maxRmsSnapshot = {maxRmsSnapshot}");
+                if (loopsMade >= 2)
                 {
-                    float minRange = audioSource.minDistance;
+                    loopsMade = 0;
 
-                    float baseRange = Mathf.Clamp(minRange * num, minRange, audioSource.maxDistance);
-                    float calculatedRange = Mathf.Max(0, baseRange * noiseRangeMultiplier);
-                    float calculatedLoudness = Mathf.Clamp(num / 7f, 0.6f, 0.9f);
+                    float normalizedRms = Mathf.Clamp01(maxRmsSnapshot * audioSource.volume * RmsScaler);
+                    LogConstants.logSource.LogInfo($"normalizedRms = {normalizedRms}");
+                    if (normalizedRms > 0.01f && RoundManager.Instance != null)
+                    {
+                        float calculatedRange = Mathf.Lerp(audioSource.minDistance, audioSource.maxDistance, normalizedRms);
+                        float calculatedLoudness = Mathf.Clamp(normalizedRms * LoudnessScaler, 0.6f, 0.9f);
+                        bool noiseIsInsideClosedShip = false;
 
-                    bool noiseIsInsideClosedShip = false;
-
-                    LogConstants.TTS_AUDIO_SOURCE_COMPONENT_NOISE_LEVEL.Log(nameof(TTSAudioSourcesComponent), calculatedRange, calculatedLoudness);
-                    RoundManager.Instance.PlayAudibleNoise(transform.position, calculatedRange, calculatedLoudness, 0, noiseIsInsideClosedShip, 75);
+                        LogConstants.TTS_AUDIO_SOURCE_COMPONENT_NOISE_LEVEL.Log(nameof(TTSAudioSourcesComponent), calculatedRange, calculatedLoudness);
+                        RoundManager.Instance.PlayAudibleNoise(transform.position, calculatedRange, calculatedLoudness, 0, noiseIsInsideClosedShip, 75);
+                    }
+                    maxRmsSnapshot = 0f;
+                }
+                else
+                {
+                    loopsMade += 1;
                 }
                 yield return wait;
             }

@@ -205,7 +205,6 @@ namespace TTSCompany
                 callingAHash = HashHelper.GetCallingAssemblyHash(callingA);
                 trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId, callingA);
             }
-
             TTSCompanyNetworking.Request_Server_SpeakTTS(new TTSSpeakTTS_NET(networkObjectRefOfSpeaker, callingAHash, textsToSpeak, voiceSettings, trackingKeyHash, noiseRangeMultiplier));
         }
         /// <summary>Generates and plays TTS audio at a network object, if the TTS audio source is found on the network object</summary>
@@ -217,7 +216,7 @@ namespace TTSCompany
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
-            SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings);
+            SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings, noiseRangeMultiplier);
         }
         /// <summary>Generates and plays TTS audio at a network object, if the TTS audio source is found on the network object</summary>
         /// <param name="objectRefOfSpeaker">The local GameObject instance that owns the TTS audio source</param>
@@ -228,7 +227,7 @@ namespace TTSCompany
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
-            SpeakTTSAtNetworkObject(objectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings);
+            SpeakTTSAtNetworkObject(objectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings, noiseRangeMultiplier);
         }
         /// <summary>Generates and plays TTS audio at a network object, if the TTS audio source is found on the network object</summary>
         /// <param name="objectRefOfSpeaker">The local GameObject instance that owns the TTS audio source</param>
@@ -242,8 +241,13 @@ namespace TTSCompany
             if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
             {
                 NetworkObjectReference reference = new NetworkObjectReference(networkObject);
-                SpeakTTSAtNetworkObject(reference, textsToSpeak, useGlobalAudioSource, voiceSettings);
+                SpeakTTSAtNetworkObject(reference, textsToSpeak, useGlobalAudioSource, voiceSettings, noiseRangeMultiplier);
             }
+        }
+
+        public static void StopSpeakingTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker)
+        {
+
         }
 
         // -------------------- generate TTS --------------------
