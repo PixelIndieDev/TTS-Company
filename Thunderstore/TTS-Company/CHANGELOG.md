@@ -1,4 +1,4 @@
-## v1.0.3
+## v1.1.0
 - TTS speech now has the ability to be heard by entities
 - Added StopSpeakingTTSAtNetworkObject() to the API
 - Added a third test keybind that says three sentences using the default settings

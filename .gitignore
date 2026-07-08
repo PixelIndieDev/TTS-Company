@@ -10,3 +10,5 @@ Properties/
 packages/
 Thunderstore/TTS-Company/TTS-Company-Voices/
 Thunderstore/TTS-Company/PiperTTS/
+Thunderstore/TTS-Company/*.zip
+Thunderstore/TTS-Company/*.dll
