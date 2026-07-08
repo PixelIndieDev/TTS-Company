@@ -234,7 +234,7 @@ namespace TTSCompany
             }
         }
 
-        /// <summary>Stops any currently playing TTS audio on a network object TTS audio source</summary>
+        /// <summary>Stops any currently playing TTS audio at a network object TTS audio source</summary>
         /// <param name="networkObjectRefOfSpeaker">A reference to the network object that owns the TTS audio source</param>
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         public static void StopSpeakingTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
@@ -242,7 +242,7 @@ namespace TTSCompany
             TTSCompanyUtils.GetAudioHashes(networkObjectRefOfSpeaker, useGlobalAudioSource, out ulong callingAHash, out ulong trackingKeyHash);
             TTSCompanyNetworking.Request_Server_StopSpeakingTTS(new StopSpeakingTTS_NET(networkObjectRefOfSpeaker, callingAHash));
         }
-        /// <summary>Stops any currently playing TTS audio on a network object TTS audio source</summary>
+        /// <summary>Stops any currently playing TTS audio at a network object TTS audio source</summary>
         /// <param name="objectRefOfSpeaker">The local GameObject instance that owns the TTS audio source</param>
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         public static void StopSpeakingTTSAtNetworkObject(GameObject objectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
