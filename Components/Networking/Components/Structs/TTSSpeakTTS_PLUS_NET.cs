@@ -10,6 +10,7 @@ namespace TTSCompany.Components.Networking.Components.Structs
         [SerializeField] internal readonly string[] _textsToSpeak;
         [SerializeField] internal readonly PiperVoiceSettings _voiceSettings;
         [SerializeField] internal readonly ulong _trackingKeyHash;
+        [SerializeField] internal readonly float _noiseRangeMultiplier;
         [SerializeField] internal readonly ulong _sessionId;
 
         internal TTSSpeakTTS_PLUS_NET(TTSSpeakTTS_NET nonLiteVersion, ulong sessionId)
@@ -19,6 +20,7 @@ namespace TTSCompany.Components.Networking.Components.Structs
             _voiceSettings = nonLiteVersion._voiceSettings;
             _trackingKeyHash = nonLiteVersion._trackingKeyHash;
             _callingAssemblyHash = nonLiteVersion._callingAssemblyHash;
+            _noiseRangeMultiplier = nonLiteVersion._noiseRangeMultiplier;
             _sessionId = sessionId;
         }
     }

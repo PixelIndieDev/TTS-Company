@@ -178,8 +178,9 @@ namespace TTSCompany
         /// <param name="textsToSpeak">An array of text lines to convert to speech</param>
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <param name="voiceSettings">A PiperVoiceSettings object controlling voice parameters (speaking rate, model, expressiveness, etc.) used to generate this audio</param>
+        /// <param name="noiseRangeMultiplier">A multiplier applied to the amplitude-calculated range (clamped by the AudioSource's min/max distance) at which entities can hear this audio</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(SpeakTTSAtNetworkObject));
 
@@ -205,15 +206,16 @@ namespace TTSCompany
                 trackingKeyHash = HashHelper.GetTrackingKeyHash(networkObjectRefOfSpeaker.NetworkObjectId, callingA);
             }
 
-            TTSCompanyNetworking.Request_Server_SpeakTTS(new TTSSpeakTTS_NET(networkObjectRefOfSpeaker, callingAHash, textsToSpeak, voiceSettings, trackingKeyHash));
+            TTSCompanyNetworking.Request_Server_SpeakTTS(new TTSSpeakTTS_NET(networkObjectRefOfSpeaker, callingAHash, textsToSpeak, voiceSettings, trackingKeyHash, noiseRangeMultiplier));
         }
         /// <summary>Generates and plays TTS audio at a network object, if the TTS audio source is found on the network object</summary>
         /// <param name="networkObjectRefOfSpeaker">A reference to the network object that owns the TTS audio source</param>
         /// <param name="textToSpeak">A single line of text to convert to speech</param>
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <param name="voiceSettings">A PiperVoiceSettings object controlling voice parameters (speaking rate, model, expressiveness, etc.) used to generate this audio</param>
+        /// <param name="noiseRangeMultiplier">A multiplier applied to the amplitude-calculated range (clamped by the AudioSource's min/max distance) at which entities can hear this audio</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
             SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings);
         }
@@ -222,8 +224,9 @@ namespace TTSCompany
         /// <param name="textToSpeak">A single line of text to convert to speech</param>
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <param name="voiceSettings">A PiperVoiceSettings object controlling voice parameters (speaking rate, model, expressiveness, etc.) used to generate this audio</param>
+        /// <param name="noiseRangeMultiplier">A multiplier applied to the amplitude-calculated range (clamped by the AudioSource's min/max distance) at which entities can hear this audio</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
             SpeakTTSAtNetworkObject(objectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings);
         }
@@ -232,8 +235,9 @@ namespace TTSCompany
         /// <param name="textsToSpeak">An array of text lines to convert to speech</param>
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <param name="voiceSettings">A PiperVoiceSettings object controlling voice parameters (speaking rate, model, expressiveness, etc.) used to generate this audio</param>
+        /// <param name="noiseRangeMultiplier">A multiplier applied to the amplitude-calculated range (clamped by the AudioSource's min/max distance) at which entities can hear this audio</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
             if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
             {

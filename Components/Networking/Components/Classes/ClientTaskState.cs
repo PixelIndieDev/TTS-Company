@@ -12,5 +12,6 @@ namespace TTSCompany.Components.Networking.Components
         internal float[] _pauseDurations;
         internal CancellationTokenSource _cts;
         internal NetworkObjectReference _networkObjectReference;
+        internal float _noiseRangeMultiplier;
     }
 }

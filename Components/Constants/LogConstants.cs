@@ -96,6 +96,10 @@ namespace TTSCompany.Components.Constants
         // debug
         internal static readonly LogMessage TTS_AUDIO_SOURCE_MANAGER_AUDIO_SOURCE_ADDED = new LogMessage(LogLevel.Debug, "Added audio source for caller with hash: {1}");
 
+        // -------------------- TTS audio source component --------------------
+        // debug
+        internal static readonly LogMessage TTS_AUDIO_SOURCE_COMPONENT_NOISE_LEVEL = new LogMessage(LogLevel.Debug, "TTS voice made a noise with range: {1} | loudness: {2}");
+
         // -------------------- TTS company networking --------------------  
         // errors
         internal static readonly LogMessage TTS_COMPANY_NETWORKING_TASK_CANCELLED = new LogMessage(LogLevel.Warning, "Host cancelled session {1} with reason: {2}");

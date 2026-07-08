@@ -11,13 +11,17 @@ namespace TTSCompany.Components.Networking.Components.Structs
         internal ConcurrentQueue<QueuedClip> _audioQueue = new ConcurrentQueue<QueuedClip>();
         private readonly ConcurrentDictionary<AudioClip, bool> _knownClips = new ConcurrentDictionary<AudioClip, bool>(); // ignore the bool
 
+        internal readonly float _noiseRangeMultiplier;
+
         internal bool _isLastBatch;
         internal void MarkLastBatch() => _isLastBatch = true;
 
-        internal SpeakTTSAudioClipCache(GameObject foundNetworkObject, ulong callingAssemblyHash, AudioClip[] audioClips, float[] pauseDurations)
+        internal SpeakTTSAudioClipCache(GameObject foundNetworkObject, ulong callingAssemblyHash, AudioClip[] audioClips, float[] pauseDurations, float noiseRangeMultiplier)
         {
             _foundNetworkObject = foundNetworkObject;
             _callingAssemblyHash = callingAssemblyHash;
+
+            _noiseRangeMultiplier = noiseRangeMultiplier;
 
             AddAudioClips(audioClips, pauseDurations);
         }

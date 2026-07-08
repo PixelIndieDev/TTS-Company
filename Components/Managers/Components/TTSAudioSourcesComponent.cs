@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System.Collections;
+using System.Collections.Concurrent;
 using TTSCompany.Components.Constants;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ namespace TTSCompany.Components.Managers.Components
     internal sealed class TTSAudioSourcesComponent : MonoBehaviour
     {
         private readonly ConcurrentDictionary<ulong, AudioSource> audioSources = new ConcurrentDictionary<ulong, AudioSource>();
+        private readonly ConcurrentDictionary<ulong, Coroutine> noiseLoopCoroutines = new ConcurrentDictionary<ulong, Coroutine>();
 
         internal bool AddAudioSource(ulong callingAssemblyHash)
         {
@@ -25,7 +27,7 @@ namespace TTSCompany.Components.Managers.Components
 
         internal bool GetAudioSource(ulong callingAssemblyHash, out AudioSource source) => audioSources.TryGetValue(callingAssemblyHash, out source);
 
-        internal bool PlayAudioClip(ulong callingAssemblyHash, AudioClip newAudioClip)
+        internal bool PlayAudioClip(ulong callingAssemblyHash, AudioClip newAudioClip, float noiseRangeMultiplier)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSAudioSourcesComponent), nameof(PlayAudioClip));
 
@@ -43,11 +45,70 @@ namespace TTSCompany.Components.Managers.Components
             audioSource.clip = newAudioClip;
             audioSource.Play();
 
+            StopNoiseLoop(callingAssemblyHash);
+            Coroutine loop = StartCoroutine(EmitNoise(callingAssemblyHash, audioSource, noiseRangeMultiplier));
+            noiseLoopCoroutines[callingAssemblyHash] = loop;
+
             if (previousClip != null && previousClip != newAudioClip)
             {
                 Destroy(previousClip);
             }
             return true;
+        }
+
+        private IEnumerator EmitNoise(ulong callingAssemblyHash, AudioSource audioSource, float noiseRangeMultiplier)
+        {
+            LogConstants.CODE_TRIGGERED.Log(nameof(TTSAudioSourcesComponent), nameof(EmitNoise));
+
+            if (noiseRangeMultiplier <= 0.0f)
+            {
+                yield break;
+            }
+
+            float[] TTSAudioBuffer = new float[64];
+
+            WaitForSeconds wait = new WaitForSeconds(0.35f);
+            while (audioSource != null && audioSource.isPlaying)
+            {
+                audioSource.GetOutputData(TTSAudioBuffer, 0);
+                float peakAmplitude = 0f;
+                for (int i = 0; i < TTSAudioBuffer.Length; i++)
+                {
+                    float abs = Mathf.Abs(TTSAudioBuffer[i]);
+                    if (abs > peakAmplitude)
+                    {
+                        peakAmplitude = abs;
+                    }
+                }
+
+                float currentAmplitude = peakAmplitude * audioSource.volume;
+                float num = currentAmplitude / 0.025f;
+
+                // calculations based on voice chat PlayAudibleNoise decompile
+                if (num > 3f && RoundManager.Instance != null)
+                {
+                    float minRange = audioSource.minDistance;
+
+                    float baseRange = Mathf.Clamp(minRange * num, minRange, audioSource.maxDistance);
+                    float calculatedRange = Mathf.Max(0, baseRange * noiseRangeMultiplier);
+                    float calculatedLoudness = Mathf.Clamp(num / 7f, 0.6f, 0.9f);
+
+                    bool noiseIsInsideClosedShip = false;
+
+                    LogConstants.TTS_AUDIO_SOURCE_COMPONENT_NOISE_LEVEL.Log(nameof(TTSAudioSourcesComponent), calculatedRange, calculatedLoudness);
+                    RoundManager.Instance.PlayAudibleNoise(transform.position, calculatedRange, calculatedLoudness, 0, noiseIsInsideClosedShip, 75);
+                }
+                yield return wait;
+            }
+            noiseLoopCoroutines.TryRemove(callingAssemblyHash, out _);
+        }
+
+        private void StopNoiseLoop(ulong callingAssemblyHash)
+        {
+            if (noiseLoopCoroutines.TryRemove(callingAssemblyHash, out Coroutine running) && running != null)
+            {
+                StopCoroutine(running);
+            }
         }
 
         internal bool StopAudioClip(ulong callingAssemblyHash)
@@ -57,6 +118,7 @@ namespace TTSCompany.Components.Managers.Components
                 return false;
             }
 
+            StopNoiseLoop(callingAssemblyHash);
             audioSource.Stop();
             if (audioSource.clip != null)
             {
@@ -107,6 +169,7 @@ namespace TTSCompany.Components.Managers.Components
 
         internal bool RemoveAudioSource(ulong callingAssemblyHash)
         {
+            StopNoiseLoop(callingAssemblyHash);
             if (audioSources.TryRemove(callingAssemblyHash, out AudioSource source))
             {
                 Destroy(source);
@@ -117,6 +180,15 @@ namespace TTSCompany.Components.Managers.Components
 
         private void OnDestroy()
         {
+            foreach (Coroutine loop in noiseLoopCoroutines.Values)
+            {
+                if (loop != null)
+                {
+                    StopCoroutine(loop);
+                }
+            }
+            noiseLoopCoroutines.Clear();
+
             foreach (AudioSource source in audioSources.Values)
             {
                 if (source != null)

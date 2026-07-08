@@ -91,7 +91,7 @@ namespace TTSCompany.Components.Managers
             return false;
         }
 
-        internal static bool PlayAudioSource(GameObject networkObject, ulong callingAssemblyHash, AudioClip audioClipToPlay)
+        internal static bool PlayAudioSource(GameObject networkObject, ulong callingAssemblyHash, AudioClip audioClipToPlay, float noiseRangeMultiplier)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSAudioSourceManager), nameof(PlayAudioSource));
 
@@ -106,7 +106,7 @@ namespace TTSCompany.Components.Managers
                 LogConstants.TTS_AUDIO_SOURCE_MANAGER_FAIL_PLAYING_NO_AUDIO_SOURCE.Log(nameof(TTSAudioSourceManager), nameof(PlayAudioSource), networkObject.name);
                 return false;
             }
-            return audioSourceContainingGameObject.PlayAudioClip(callingAssemblyHash, audioClipToPlay);
+            return audioSourceContainingGameObject.PlayAudioClip(callingAssemblyHash, audioClipToPlay, noiseRangeMultiplier);
         }
 
         internal static bool StopAudioSource(GameObject networkObject, ulong callingAssemblyHash)

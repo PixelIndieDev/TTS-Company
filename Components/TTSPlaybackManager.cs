@@ -35,7 +35,7 @@ namespace TTSCompany.Components
 
                 if (cache._audioQueue.TryDequeue(out QueuedClip queued))
                 {
-                    if (TTSAudioSourceManager.PlayAudioSource(cache._foundNetworkObject, cache._callingAssemblyHash, queued.Clip))
+                    if (TTSAudioSourceManager.PlayAudioSource(cache._foundNetworkObject, cache._callingAssemblyHash, queued.Clip, cache._noiseRangeMultiplier))
                     {
                         yield return new WaitForSeconds(queued.Clip.length);
 

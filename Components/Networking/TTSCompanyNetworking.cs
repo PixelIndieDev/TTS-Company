@@ -342,7 +342,7 @@ namespace TTSCompany.Components.Networking
                 taskValue._generatedClips[i] = null;
             }
 
-            TTSCompanyBackend.PlaySpeakTTSAtNetworkObject_OnClient(playData._taskId, taskValue._networkObjectReference, taskValue._callingAssemblyHash, clips, pauses, playData._isLastBatch);
+            TTSCompanyBackend.PlaySpeakTTSAtNetworkObject_OnClient(playData._taskId, taskValue._networkObjectReference, taskValue._callingAssemblyHash, clips, pauses, playData._isLastBatch, taskValue._noiseRangeMultiplier);
 
             if (playData._endIndex >= taskValue._generatedClips.Length - 1)
             {
@@ -412,7 +412,7 @@ namespace TTSCompany.Components.Networking
         }
 
         // -------------------- client calls --------------------
-        internal static void CreateClientTask(ulong taskId, NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textsToSpeak, float sentenceSilence, float punctuationSilence, CancellationTokenSource cts)
+        internal static void CreateClientTask(ulong taskId, NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textsToSpeak, float sentenceSilence, float punctuationSilence, float noiseRangeMultiplier, CancellationTokenSource cts)
         {
             if (ClientTasks.TryRemove(taskId, out ClientTaskState oldState))
             {
@@ -433,7 +433,8 @@ namespace TTSCompany.Components.Networking
                 _callingAssemblyHash = callingAssemblyHash,
                 _pauseDurations = pauses,
                 _cts = cts,
-                _networkObjectReference = networkObjectRefOfSpeaker
+                _networkObjectReference = networkObjectRefOfSpeaker,
+                _noiseRangeMultiplier = noiseRangeMultiplier
             };
 
             ClientTasks.TryAdd(taskId, task);

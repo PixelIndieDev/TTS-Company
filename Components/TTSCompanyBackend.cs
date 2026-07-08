@@ -53,12 +53,12 @@ namespace TTSCompany.Components
                 return;
             }
 
-            newState.Coroutine = TTSCompanyPlugin.instance.StartCoroutine(SpeakMultipleTTSInternalRoutine(data._sessionId, data._trackingKeyHash, data._networkObjectRefOfSpeaker, data._callingAssemblyHash, data._textsToSpeak, data._voiceSettings, newCts));
+            newState.Coroutine = TTSCompanyPlugin.instance.StartCoroutine(SpeakMultipleTTSInternalRoutine(data._sessionId, data._trackingKeyHash, data._networkObjectRefOfSpeaker, data._callingAssemblyHash, data._textsToSpeak, data._voiceSettings, data._noiseRangeMultiplier, newCts));
             ActiveTTSCoroutines[data._trackingKeyHash] = newState;
             GeneratingNetworkObjectIds.TryAdd(data._networkObjectRefOfSpeaker.NetworkObjectId, false);
         }
 
-        internal static IEnumerator SpeakMultipleTTSInternalRoutine(ulong sessionId, ulong trackingKeyHash, NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textsToSpeak, PiperVoiceSettings voiceSettings, CancellationTokenSource cts)
+        internal static IEnumerator SpeakMultipleTTSInternalRoutine(ulong sessionId, ulong trackingKeyHash, NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textsToSpeak, PiperVoiceSettings voiceSettings, float noiseRangeMultiplier, CancellationTokenSource cts)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyBackend), nameof(SpeakMultipleTTSInternalRoutine));
 
@@ -71,7 +71,7 @@ namespace TTSCompany.Components
                 }
 
                 // client network
-                TTSCompanyNetworking.CreateClientTask(sessionId, networkObjectRefOfSpeaker, callingAssemblyHash, textsToSpeak, voiceSettings.SentenceSilence, voiceSettings.PunctuationSilence, cts);
+                TTSCompanyNetworking.CreateClientTask(sessionId, networkObjectRefOfSpeaker, callingAssemblyHash, textsToSpeak, voiceSettings.SentenceSilence, voiceSettings.PunctuationSilence, noiseRangeMultiplier, cts);
 
                 for (int i = 0; i < ttsTasks.Length; i++)
                 {
@@ -105,7 +105,7 @@ namespace TTSCompany.Components
             }
         }
 
-        internal static void PlaySpeakTTSAtNetworkObject_OnClient(ulong taskid, NetworkObjectReference networkObjectReference, ulong callingAssemblyHash, AudioClip[] audioClip, float[] pauseDurations, bool isFinalBatch)
+        internal static void PlaySpeakTTSAtNetworkObject_OnClient(ulong taskid, NetworkObjectReference networkObjectReference, ulong callingAssemblyHash, AudioClip[] audioClip, float[] pauseDurations, bool isFinalBatch, float noiseRangeMultiplier)
         {
             if (audioClip == null || !networkObjectReference.TryGet(out NetworkObject networkObject))
             {
@@ -124,7 +124,7 @@ namespace TTSCompany.Components
             }
             else
             {
-                cache = new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip, pauseDurations);
+                cache = new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip, pauseDurations, noiseRangeMultiplier);
                 WantedAudioClips.TryAdd(taskid, cache);
                 SpeakingNetworkObjectIds.TryAdd(networkObject.NetworkObjectId, false);
             }

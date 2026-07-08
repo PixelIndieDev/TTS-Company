@@ -10,14 +10,16 @@ namespace TTSCompany.Components.Networking.Components.Structs
         [SerializeField] internal readonly string[] _textsToSpeak;
         [SerializeField] internal readonly PiperVoiceSettings _voiceSettings;
         [SerializeField] internal readonly ulong _trackingKeyHash;
+        [SerializeField] internal readonly float _noiseRangeMultiplier;
 
-        internal TTSSpeakTTS_NET(NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textToSpeak, PiperVoiceSettings voiceSettings, ulong trackingKeyHash)
+        internal TTSSpeakTTS_NET(NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textToSpeak, PiperVoiceSettings voiceSettings, ulong trackingKeyHash, float noiseRangeMultiplier)
         {
             _networkObjectRefOfSpeaker = networkObjectRefOfSpeaker;
             _callingAssemblyHash = callingAssemblyHash;
             _textsToSpeak = textToSpeak;
             _voiceSettings = voiceSettings;
             _trackingKeyHash = trackingKeyHash;
+            _noiseRangeMultiplier = noiseRangeMultiplier;
         }
     }
 }
