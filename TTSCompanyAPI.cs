@@ -63,7 +63,7 @@ namespace TTSCompany
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <param name="audioSourceSettings">A TTSAudioSourceSettings object controlling playback (volume, spatial blend, rolloff, etc.) for this audio source</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void AddTTSAudioSourceOnNetworkObject(GameObject objectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
+        public static void AddTTSAudioSourceOnNetworkObject(GameObject objectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
             if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
             {
@@ -76,7 +76,7 @@ namespace TTSCompany
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <param name="audioSourceSettings">A TTSAudioSourceSettings object controlling playback (volume, spatial blend, rolloff, etc.) for this audio source</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
+        public static void AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
             audioSourceSettings = audioSourceSettings ?? DefaultTTSAudioSourceSettings;
             ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
@@ -138,7 +138,7 @@ namespace TTSCompany
         /// <param name="audioSourceSettings">A TTSAudioSourceSettings object controlling playback (volume, spatial blend, rolloff, etc.) for this audio source</param>
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void UpdateTTSAudioSourceSettingsOnNetworkObject(GameObject objectRefOfSpeaker, TTSAudioSourceSettings audioSourceSettings, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE)
+        public static void UpdateTTSAudioSourceSettingsOnNetworkObject(GameObject objectRefOfSpeaker, TTSAudioSourceSettings audioSourceSettings, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
             if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
             {
@@ -151,7 +151,7 @@ namespace TTSCompany
         /// <param name="audioSourceSettings">A TTSAudioSourceSettings object controlling playback (volume, spatial blend, rolloff, etc.) for this audio source</param>
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void UpdateTTSAudioSourceSettingsOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, TTSAudioSourceSettings audioSourceSettings, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE)
+        public static void UpdateTTSAudioSourceSettingsOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, TTSAudioSourceSettings audioSourceSettings, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
             audioSourceSettings = audioSourceSettings ?? DefaultTTSAudioSourceSettings;
             ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
@@ -180,7 +180,7 @@ namespace TTSCompany
         /// <param name="voiceSettings">A PiperVoiceSettings object controlling voice parameters (speaking rate, model, expressiveness, etc.) used to generate this audio</param>
         /// <param name="noiseRangeMultiplier">A multiplier applied to the amplitude-calculated range (clamped by the AudioSource's min/max distance) at which entities can hear this audio</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyAPI), nameof(SpeakTTSAtNetworkObject));
 
@@ -215,7 +215,7 @@ namespace TTSCompany
         /// <param name="voiceSettings">A PiperVoiceSettings object controlling voice parameters (speaking rate, model, expressiveness, etc.) used to generate this audio</param>
         /// <param name="noiseRangeMultiplier">A multiplier applied to the amplitude-calculated range (clamped by the AudioSource's min/max distance) at which entities can hear this audio</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
             SpeakTTSAtNetworkObject(networkObjectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings);
         }
@@ -226,7 +226,7 @@ namespace TTSCompany
         /// <param name="voiceSettings">A PiperVoiceSettings object controlling voice parameters (speaking rate, model, expressiveness, etc.) used to generate this audio</param>
         /// <param name="noiseRangeMultiplier">A multiplier applied to the amplitude-calculated range (clamped by the AudioSource's min/max distance) at which entities can hear this audio</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string textToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
             SpeakTTSAtNetworkObject(objectRefOfSpeaker, TTSCompanyUtils.SplitTextToSpeak(textToSpeak), useGlobalAudioSource, voiceSettings);
         }
@@ -237,7 +237,7 @@ namespace TTSCompany
         /// <param name="voiceSettings">A PiperVoiceSettings object controlling voice parameters (speaking rate, model, expressiveness, etc.) used to generate this audio</param>
         /// <param name="noiseRangeMultiplier">A multiplier applied to the amplitude-calculated range (clamped by the AudioSource's min/max distance) at which entities can hear this audio</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
+        public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
             if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
             {
