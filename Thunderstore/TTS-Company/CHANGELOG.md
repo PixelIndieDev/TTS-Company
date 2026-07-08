@@ -1,3 +1,6 @@
+## v1.0.3
+- Added a third test keybind that says three sentences using the default settings
+
 ## v1.0.2
 - Added the changelog
 

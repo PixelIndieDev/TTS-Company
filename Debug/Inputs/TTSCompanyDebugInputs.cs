@@ -11,5 +11,8 @@ namespace TTSCompany.Debug.Inputs
 
         [InputAction(KeyboardControl.None, Name = "Test TTS (random enemy)")]
         public InputAction PixelIndieDev_TestTTS_02 { get; set; }
+
+        [InputAction(KeyboardControl.None, Name = "Test TTS (multiple strings)")]
+        public InputAction PixelIndieDev_TestTTS_03 { get; set; }
     }
 }

@@ -59,6 +59,7 @@ namespace TTSCompany
                 inputActionsInstance = new TTSCompanyDebugInputs();
                 inputActionsInstance.PixelIndieDev_TestTTS_01.performed += DebugManualTrigger.TriggerTestTTS01;
                 inputActionsInstance.PixelIndieDev_TestTTS_02.performed += DebugManualTrigger.TriggerTestTTS02;
+                inputActionsInstance.PixelIndieDev_TestTTS_03.performed += DebugManualTrigger.TriggerTestTTS03;
             }
 
             _tts = new TTSGenerator();

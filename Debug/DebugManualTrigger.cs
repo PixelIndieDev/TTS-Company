@@ -92,7 +92,6 @@ namespace TTSCompany.Debug
             TTSCompanyAPI.UpdateTTSAudioSourceSettingsOnNetworkObject(speakingPlayer.gameObject, audioS);
 
             TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, randomVoiceLines[randomIndex], voiceSettings: voice);
-            //TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, multipleLines, voiceSettings: voice);
         }
 
         internal async static void TriggerTestTTS02(InputAction.CallbackContext obj)
@@ -102,7 +101,7 @@ namespace TTSCompany.Debug
                 return;
             }
 
-            LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), nameof(TriggerTestTTS01));
+            LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), nameof(TriggerTestTTS02));
 
             GetSpeakingPlayer();
             if (speakingPlayer == null)
@@ -145,6 +144,25 @@ namespace TTSCompany.Debug
 
             TTSCompanyAPI.UpdateTTSAudioSourceSettingsOnNetworkObject(speakingPlayer.gameObject, audioS);
             TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, chosenArray, voiceSettings: voice);
+        }
+
+        internal async static void TriggerTestTTS03(InputAction.CallbackContext obj)
+        {
+            if (!obj.performed)
+            {
+                return;
+            }
+
+            LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), nameof(TriggerTestTTS03));
+
+            GetSpeakingPlayer();
+            if (speakingPlayer == null)
+            {
+                LogConstants.CODE_TRIGGERED.Log(nameof(DebugManualTrigger), "speakingPlayer == null");
+                return;
+            }
+
+            TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, multipleLines);
         }
     }
 }
