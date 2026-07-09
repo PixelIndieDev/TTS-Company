@@ -140,7 +140,7 @@ namespace TTSCompany.Debug
             chosenArray[1] = enemyNames[randomIndex];
 
             TTSAudioSourceSettings audioS = new TTSAudioSourceSettings();
-            audioS.Volume = 0.25f;
+            audioS.Volume = 0.5f;
 
             TTSCompanyAPI.UpdateTTSAudioSourceSettingsOnNetworkObject(speakingPlayer.gameObject, audioS);
             TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, chosenArray, voiceSettings: voice, noiseRangeMultiplier: 1.0f);

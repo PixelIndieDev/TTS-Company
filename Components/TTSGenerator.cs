@@ -2,6 +2,7 @@
 using Concentus.Enums;
 using Concentus.Oggfile;
 using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -324,11 +325,31 @@ namespace TTSCompany.Components
             return Task.Run(() =>
             {
                 string tempPath = oggOutputPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+
+                short[] srcShorts = null;
+                short[] rentedResampleBuffer = null;
+
                 try
                 {
-                    short[] srcShorts = new short[pcmData.Length / 2];
+                    int srcCount = pcmData.Length / 2;
+                    srcShorts = ArrayPool<short>.Shared.Rent(srcCount);
                     Buffer.BlockCopy(pcmData, 0, srcShorts, 0, pcmData.Length);
-                    short[] resampledShorts = sourceSampleRate == OggConstants.OGG_SAMPLE_RATE ? srcShorts : Resample(srcShorts, sourceSampleRate, OggConstants.OGG_SAMPLE_RATE);
+
+                    short[] resampledShorts;
+                    int resampledCount;
+
+                    if (sourceSampleRate == OggConstants.OGG_SAMPLE_RATE || srcCount == 0)
+                    {
+                        resampledShorts = srcShorts;
+                        resampledCount = srcCount;
+                    }
+                    else
+                    {
+                        resampledCount = (int)(srcCount * ((double)OggConstants.OGG_SAMPLE_RATE / sourceSampleRate));
+                        rentedResampleBuffer = ArrayPool<short>.Shared.Rent(resampledCount);
+                        Resample(srcShorts, srcCount, sourceSampleRate, OggConstants.OGG_SAMPLE_RATE, rentedResampleBuffer, resampledCount);
+                        resampledShorts = rentedResampleBuffer;
+                    }
 
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -339,7 +360,7 @@ namespace TTSCompany.Components
                         encoder.UseVBR = true;
 
                         OpusOggWriteStream oggStream = new OpusOggWriteStream(encoder, fs);
-                        oggStream.WriteSamples(resampledShorts, 0, resampledShorts.Length);
+                        oggStream.WriteSamples(resampledShorts, 0, resampledCount);
                         oggStream.Finish();
                     }
 
@@ -357,6 +378,17 @@ namespace TTSCompany.Components
                     TryDeleteTempFile(tempPath);
                     LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(TTSGenerator), nameof(ConvertPcmToOggAsync), ex);
                     return false;
+                }
+                finally
+                {
+                    if (srcShorts != null)
+                    {
+                        ArrayPool<short>.Shared.Return(srcShorts);
+                    }
+                    if (rentedResampleBuffer != null)
+                    {
+                        ArrayPool<short>.Shared.Return(rentedResampleBuffer);
+                    }
                 }
             });
         }
@@ -393,26 +425,17 @@ namespace TTSCompany.Components
             }
         }
 
-        private static short[] Resample(short[] input, int sourceRate, int targetRate)
+        private static void Resample(short[] input, int inputCount, int sourceRate, int targetRate, short[] output, int outputCount)
         {
-            if (sourceRate == targetRate || input.Length == 0)
-            {
-                return input;
-            }
-
             double ratio = (double)sourceRate / targetRate;
-            int dstLength = (int)(input.Length * ((double)targetRate / sourceRate));
-            short[] output = new short[dstLength];
-
-            for (int i = 0; i < dstLength; i++)
+            for (int i = 0; i < outputCount; i++)
             {
                 double srcIndex = i * ratio;
                 int indexLeft = (int)Math.Floor(srcIndex);
-                int indexRight = Math.Min(indexLeft + 1, input.Length - 1);
+                int indexRight = Math.Min(indexLeft + 1, inputCount - 1);
                 double t = srcIndex - indexLeft;
                 output[i] = (short)((1 - t) * input[indexLeft] + t * input[indexRight]);
             }
-            return output;
         }
 
         private static void TryDeleteCorruptedCache(string fullCachePath, string hashCacheFileName)

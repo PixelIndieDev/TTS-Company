@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -419,34 +420,41 @@ namespace TTSCompany.Components
 
         private static async Task<(string Line, byte[] Leftover)> ReadLineWithLeftoverAsync(NetworkStream stream, CancellationToken cancellationToken)
         {
-            byte[] buffer = new byte[4096];
-            using (MemoryStream ms = new MemoryStream())
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(4096);
+            try
             {
-                while (true)
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    int read = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
-                    if (read == 0)
+                    while (true)
                     {
-                        break;
-                    }
-
-                    int newlineIndex = Array.IndexOf(buffer, (byte)'\n', 0, read);
-                    if (newlineIndex >= 0)
-                    {
-                        ms.Write(buffer, 0, newlineIndex);
-
-                        int leftoverLength = read - newlineIndex - 1;
-                        byte[] leftover = Array.Empty<byte>();
-                        if (leftoverLength > 0)
+                        int read = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
+                        if (read == 0)
                         {
-                            leftover = new byte[leftoverLength];
-                            Array.Copy(buffer, newlineIndex + 1, leftover, 0, leftoverLength);
+                            break;
                         }
-                        return (Encoding.UTF8.GetString(ms.ToArray()), leftover);
+
+                        int newlineIndex = Array.IndexOf(buffer, (byte)'\n', 0, read);
+                        if (newlineIndex >= 0)
+                        {
+                            ms.Write(buffer, 0, newlineIndex);
+
+                            int leftoverLength = read - newlineIndex - 1;
+                            byte[] leftover = Array.Empty<byte>();
+                            if (leftoverLength > 0)
+                            {
+                                leftover = new byte[leftoverLength];
+                                Array.Copy(buffer, newlineIndex + 1, leftover, 0, leftoverLength);
+                            }
+                            return (Encoding.UTF8.GetString(ms.GetBuffer(), 0, (int)ms.Length), leftover);
+                        }
+                        ms.Write(buffer, 0, read);
                     }
-                    ms.Write(buffer, 0, read);
+                    return (Encoding.UTF8.GetString(ms.GetBuffer(), 0, (int)ms.Length), Array.Empty<byte>());
                 }
-                return (Encoding.UTF8.GetString(ms.ToArray()), Array.Empty<byte>());
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
 
