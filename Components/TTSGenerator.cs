@@ -191,16 +191,13 @@ namespace TTSCompany.Components
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            string hashCacheFileName = await Task.Run(() =>
+            if (!ValidateInputs(textToSpeak, settings))
             {
-                if (!ValidateInputs(textToSpeak, settings))
-                {
-                    return string.Empty;
-                }
+                return new TTSResult { AudioClip = null, Success = false };
+            }
 
-                Directory.CreateDirectory(TTSConstants.TTS_VOICE_CACHE_SOUNDCLIPS_PATH);
-                return HashHelper.GetHashTTSFileNameWithFileType(textToSpeak, settings);
-            }, cancellationToken).ConfigureAwait(false);
+            Directory.CreateDirectory(TTSConstants.TTS_VOICE_CACHE_SOUNDCLIPS_PATH);
+            string hashCacheFileName = HashHelper.GetHashTTSFileNameWithFileType(textToSpeak, settings);
 
             if (string.IsNullOrWhiteSpace(hashCacheFileName))
             {

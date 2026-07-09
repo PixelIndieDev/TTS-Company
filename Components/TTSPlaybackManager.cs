@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using TTSCompany.Components.Managers;
 using TTSCompany.Components.Networking;
@@ -14,12 +15,11 @@ namespace TTSCompany.Components
 
         private void Update()
         {
-            foreach (ulong speakerHash in TTSCompanyBackend.WantedAudioClips.Keys)
+            while (TTSCompanyBackend.NewSpeakerQueue.TryDequeue(out ulong speakerHash))
             {
                 if (!_activeCoroutines.ContainsKey(speakerHash))
                 {
-                    Coroutine routine = StartCoroutine(ProcessAudioQueue(speakerHash));
-                    _activeCoroutines.Add(speakerHash, routine);
+                    _activeCoroutines.Add(speakerHash, StartCoroutine(ProcessAudioQueue(speakerHash)));
                 }
             }
         }

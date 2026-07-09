@@ -22,6 +22,8 @@ namespace TTSCompany.Components
         internal static readonly ConcurrentDictionary<ulong, bool> SpeakingNetworkObjectIds = new ConcurrentDictionary<ulong, bool>();
         internal static readonly ConcurrentDictionary<ulong, bool> GeneratingNetworkObjectIds = new ConcurrentDictionary<ulong, bool>();
 
+        internal static readonly ConcurrentQueue<ulong> NewSpeakerQueue = new ConcurrentQueue<ulong>();
+
         internal static void SpeakTTSAtNetworkObject_OnClient(TTSSpeakTTS_PLUS_NET data)
         {
             LogConstants.CODE_TRIGGERED.Log(nameof(TTSCompanyBackend), nameof(SpeakTTSAtNetworkObject_OnClient));
@@ -127,6 +129,7 @@ namespace TTSCompany.Components
                 cache = new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip, pauseDurations, noiseRangeMultiplier);
                 WantedAudioClips.TryAdd(taskid, cache);
                 SpeakingNetworkObjectIds.TryAdd(networkObject.NetworkObjectId, false);
+                NewSpeakerQueue.Enqueue(taskid);
             }
 
             if (isFinalBatch)
@@ -203,6 +206,10 @@ namespace TTSCompany.Components
                 }
             }
             WantedAudioClips.Clear();
+            while (NewSpeakerQueue.TryDequeue(out _))
+            {
+                // dont' do anything here, we are clearing it out
+            }
 
             SpeakingNetworkObjectIds.Clear();
             GeneratingNetworkObjectIds.Clear();
