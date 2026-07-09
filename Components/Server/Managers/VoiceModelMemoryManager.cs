@@ -24,6 +24,11 @@ namespace TTSCompany.Components.Server.Components
         private readonly ConcurrentDictionary<string, HashSet<ulong>> _modelAssemblies = new ConcurrentDictionary<string, HashSet<ulong>>(StringComparer.OrdinalIgnoreCase);
 
         private readonly ConcurrentDictionary<string, bool> _evictedModels = new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        private long _currentLoadedBytes;
+
+        private readonly LinkedList<string> _LRU_list = new LinkedList<string>();
+        private readonly Dictionary<string, LinkedListNode<string>> _LRU_elements = new Dictionary<string, LinkedListNode<string>>(StringComparer.OrdinalIgnoreCase);
+        private readonly object _LRU_lock = new object();
 
         internal VoiceModelMemoryManager(PiperTTSServer piperServer)
         {
@@ -79,6 +84,38 @@ namespace TTSCompany.Components.Server.Components
         internal void UpdateLastUse(string modelName)
         {
             _modelLastAccess[modelName] = DateTime.UtcNow;
+
+            lock (_LRU_lock)
+            {
+                if (_LRU_elements.TryGetValue(modelName, out LinkedListNode<string> node))
+                {
+                    _LRU_list.Remove(node);
+                }
+                else
+                {
+                    node = new LinkedListNode<string>(modelName);
+                }
+                _LRU_list.AddLast(node);
+                _LRU_elements[modelName] = node;
+            }
+        }
+
+        private string FindOldestEvictableModel(string excludeModelName)
+        {
+            lock (_LRU_lock)
+            {
+                for (LinkedListNode<string> current = _LRU_list.First; current != null; current = current.Next)
+                {
+                    string candidate = current.Value;
+                    if (_modelAssemblies.ContainsKey(candidate)
+                        && !_evictedModels.ContainsKey(candidate)
+                        && !candidate.Equals(excludeModelName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return candidate;
+                    }
+                }
+                return null;
+            }
         }
 
         internal string GetRandomFoundTTSVoiceName()
@@ -149,6 +186,8 @@ namespace TTSCompany.Components.Server.Components
             if (result.Success)
             {
                 _evictedModels.TryRemove(modelName, out _);
+                long modelSize = _modelSizes.TryGetValue(modelName, out long s) ? s : _fallbackModelSizeBytes;
+                Interlocked.Add(ref _currentLoadedBytes, modelSize);
                 LogConstants.PIPER_TTS_RELOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
             }
 
@@ -199,6 +238,9 @@ namespace TTSCompany.Components.Server.Components
             if (result.Success)
             {
                 _evictedModels.TryRemove(modelName, out _);
+                long modelSize = _modelSizes.TryGetValue(modelName, out long s) ? s : _fallbackModelSizeBytes;
+                Interlocked.Add(ref _currentLoadedBytes, modelSize);
+
                 lock (assemblies)
                 {
                     assemblies.Add(callingAssemblyHash);
@@ -263,6 +305,9 @@ namespace TTSCompany.Components.Server.Components
 
             if (result.Success)
             {
+                long modelSize = _modelSizes.TryGetValue(modelName, out long s) ? s : _fallbackModelSizeBytes;
+                Interlocked.Add(ref _currentLoadedBytes, -modelSize);
+
                 lock (assemblies)
                 {
                     assemblies.Remove(callingAssemblyHash);
@@ -287,14 +332,14 @@ namespace TTSCompany.Components.Server.Components
 
             while (true)
             {
-                long currentLoadedBytes = _modelAssemblies.Keys.Where(model => !_evictedModels.ContainsKey(model)).Sum(model => _modelSizes.TryGetValue(model, out long s) ? s : _fallbackModelSizeBytes);
+                long currentLoadedBytes = Interlocked.Read(ref _currentLoadedBytes);
 
                 if (currentLoadedBytes + targetModelSize <= _maxMemoryPoolBytes)
                 {
                     break;
                 }
 
-                string oldestModel = _modelLastAccess.Where(kvp => _modelAssemblies.ContainsKey(kvp.Key) && !_evictedModels.ContainsKey(kvp.Key) && !kvp.Key.Equals(targetModelName, StringComparison.OrdinalIgnoreCase)).OrderBy(kvp => kvp.Value).Select(kvp => kvp.Key).FirstOrDefault();
+                string oldestModel = FindOldestEvictableModel(targetModelName);
 
                 if (string.IsNullOrEmpty(oldestModel))
                 {
@@ -319,6 +364,8 @@ namespace TTSCompany.Components.Server.Components
                 if (result.Success)
                 {
                     _evictedModels.TryAdd(modelName, true);
+                    long modelSize = _modelSizes.TryGetValue(modelName, out long s) ? s : _fallbackModelSizeBytes;
+                    Interlocked.Add(ref _currentLoadedBytes, -modelSize);
                 }
                 else
                 {

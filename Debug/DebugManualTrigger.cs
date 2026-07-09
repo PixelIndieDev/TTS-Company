@@ -82,7 +82,7 @@ namespace TTSCompany.Debug
             }
 
             PiperVoiceSettings voice = new PiperVoiceSettings();
-            voice.ModelName = TTSCompanyUtils.GetRandomLoadedTTSVoicename();
+            voice.ModelName = TTSCompanyUtils.GetRandomFoundTTSVoiceName();
 
             int randomIndex = Random.Range(0, randomVoiceLines.Length);
 
@@ -131,7 +131,7 @@ namespace TTSCompany.Debug
             };
 
             PiperVoiceSettings voice = new PiperVoiceSettings();
-            voice.ModelName = TTSCompanyUtils.GetRandomLoadedTTSVoicename();
+            voice.ModelName = TTSCompanyUtils.GetRandomFoundTTSVoiceName();
 
             int randomIndex = Random.Range(0, reactionEnemy01.Length);
             string[] chosenArray = reactionEnemyList[randomIndex];
