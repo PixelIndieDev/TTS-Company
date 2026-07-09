@@ -480,19 +480,28 @@ namespace TTSCompany.Components
                         IOpusDecoder decoder = OpusCodecFactory.CreateDecoder(OggConstants.OGG_SAMPLE_RATE, OggConstants.OGG_CHANNELS_AMOUNT);
                         OpusOggReadStream oggStream = new OpusOggReadStream(decoder, fs);
 
-                        List<float> sampleList = new List<float>();
+                        List<short[]> packets = new List<short[]>();
+                        int totalSamples = 0;
                         while (oggStream.HasNextPacket)
                         {
                             short[] packet = oggStream.DecodeNextPacket();
-                            if (packet != null)
+                            if (packet != null) 
                             {
-                                for (int i = 0; i < packet.Length; i++)
-                                {
-                                    sampleList.Add(packet[i] / 32768f);
-                                }
+                                packets.Add(packet); 
+                                totalSamples += packet.Length;
                             }
                         }
-                        return sampleList.ToArray();
+                        float[] samples = new float[totalSamples];
+                        int offset = 0;
+                        foreach (short[] packet in packets)
+                        {
+                            for (int i = 0; i < packet.Length; i++)
+                            {
+                                samples[offset + i] = packet[i] / 32768f;
+                            }
+                            offset += packet.Length;
+                        }
+                        return samples;
                     }
                 }
                 catch (IOException) when (attempt < maxAttempts)
