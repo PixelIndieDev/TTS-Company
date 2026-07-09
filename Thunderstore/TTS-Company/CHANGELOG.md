@@ -1,3 +1,6 @@
+## v1.1.1
+- Made some small performant improvements
+
 ## v1.1.0
 - TTS speech now has the ability to be heard by entities
 - Added StopSpeakingTTSAtNetworkObject() to the API
