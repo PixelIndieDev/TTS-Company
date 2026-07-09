@@ -168,7 +168,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets" Condition="Exists('packages\ILRepack.Lib.MSBuild.Task.2.0.45\build\ILRepack.Lib.MSBuild.Task.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+  <Target Name="SyncModVersion" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ModInfoPath>$(ProjectDir)ModInfo.cs</ModInfoPath>
       <ManifestPath>$(ProjectDir)Thunderstore\TTS-Company\manifest.json</ManifestPath>
@@ -187,8 +187,20 @@
       <Pattern>(?&lt;="version_number"\s*:\s*")[^"\r\n]*(?=")</Pattern>
       <UpdatedManifest>$([System.Text.RegularExpressions.Regex]::Replace($(ManifestText), $(Pattern), $(ManifestVersion)))</UpdatedManifest>
     </PropertyGroup>
+    <PropertyGroup>
+      <FourNumFileVersion>$(ManifestVersion).0</FourNumFileVersion>
+    </PropertyGroup>
     <WriteLinesToFile File="$(ManifestPath)" Lines="$(UpdatedManifest)" Overwrite="true" Encoding="UTF-8" />
-    <Message Importance="High" Text="[TTSCompany] Extracted Version $(ManifestVersion) from ModInfo.cs and updated manifest.json!" />
+    <ItemGroup>
+      <AssemblyAttributes Include="System.Reflection.AssemblyFileVersionAttribute">
+        <_Parameter1>$(FourNumFileVersion)</_Parameter1>
+      </AssemblyAttributes>
+    </ItemGroup>
+    <WriteCodeFragment Language="C#" OutputFile="$(IntermediateOutputPath)GeneratedAssemblyInfo.cs" AssemblyAttributes="@(AssemblyAttributes)" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)GeneratedAssemblyInfo.cs" />
+    </ItemGroup>
+    <Message Importance="High" Text="[TTSCompany] Successfully injected AssemblyVersion $(ManifestVersion) into compilation!" />
   </Target>
   <Target Name="CopyFilesAfterBuilt" AfterTargets="Build">
     <PropertyGroup>
