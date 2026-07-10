@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using TTSCompany.Components;
+using TTSCompany.Components.Constants;
 using TTSCompany.Components.Enums;
 using TTSCompany.Components.Helpers;
 using TTSCompany.Components.Networking.Components.Structs;
@@ -234,6 +235,55 @@ namespace TTSCompany
                 default:
                     return 0f;
             }
+        }
+
+        internal static (int TotalWordCount, int SentenceCount) GetTextToSpeakInfo(string[] textsToSpeak)
+        {
+            if (textsToSpeak == null || textsToSpeak.Length == 0)
+            {
+                return (0, 0);
+            }
+
+            int totalWordCount = 0;
+            int sentenceCount = 0;
+
+            foreach (string segment in textsToSpeak)
+            {
+                if (string.IsNullOrWhiteSpace(segment))
+                {
+                    continue;
+                }
+
+                int segmentWordCount = 0;
+                bool inWord = false;
+
+                for (int i = 0; i < segment.Length; i++)
+                {
+                    char c = segment[i];
+                    if (c == ' ' || c == '\r' || c == '\n')
+                    {
+                        if (inWord)
+                        {
+                            segmentWordCount++;
+                            inWord = false;
+                        }
+                    }
+                    else
+                    {
+                        inWord = true;
+                    }
+                }
+
+                if (inWord)
+                {
+                    segmentWordCount++;
+                }
+
+                totalWordCount += segmentWordCount;
+                sentenceCount++;
+            }
+            LogConstants.UTILS_TIMEOUT_TIME_GENERATION.Log(nameof(TTSGenerator), string.Join(", ", textsToSpeak), totalWordCount, sentenceCount);
+            return (totalWordCount, sentenceCount);
         }
     }
 }

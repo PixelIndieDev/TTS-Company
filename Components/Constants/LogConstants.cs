@@ -66,6 +66,10 @@ namespace TTSCompany.Components.Constants
         internal static readonly LogMessage API_TRIGGER_PRELOAD_VOICE_MODEL = new LogMessage(LogLevel.Debug, "Started preloading voice model: {1}");
         internal static readonly LogMessage API_TRIGGER_UNLOAD_VOICE_MODEL = new LogMessage(LogLevel.Debug, "Started unloading voice model: {1}");
 
+        // -------------------- TTS Company Utils --------------------
+        // debug
+        internal static readonly LogMessage UTILS_TIMEOUT_TIME_GENERATION = new LogMessage(LogLevel.Debug, "The text input '{1}' has {2} words and {3} sentences");
+
         // -------------------- Piper TTS Server --------------------
         internal static readonly LogMessage PIPER_TTS_SERVER_SUCCESS_STARTUP = new LogMessage(LogLevel.Info, "Started piper tts server on port {1} (pid {2})");
         internal static readonly LogMessage PIPER_TTS_SERVER_STOPPED = new LogMessage(LogLevel.Info, "Stopped piper tts server");

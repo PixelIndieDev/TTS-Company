@@ -6,7 +6,6 @@ namespace TTSCompany.Components.Helpers
     internal static class TTSTimeoutHelper
     {
         private const float baseWordsPerSecond = 2.5f;
-        private static readonly char[] wordSplitChars = new[] { ' ', '\r', '\n' };
 
         internal static TimeSpan GetPlaybackTimeout(string[] textsToSpeak, PiperVoiceSettings settings)
         {
@@ -17,20 +16,7 @@ namespace TTSCompany.Components.Helpers
                 return minimumTimeout;
             }
 
-            int totalWordCount = 0;
-            int sentenceCount = 0;
-
-            foreach (string segment in textsToSpeak)
-            {
-                if (string.IsNullOrWhiteSpace(segment))
-                {
-                    continue;
-                }
-
-                totalWordCount += segment.Split(wordSplitChars, StringSplitOptions.RemoveEmptyEntries).Length;
-                sentenceCount++;
-            }
-
+            (int totalWordCount, int sentenceCount) = TTSCompanyUtils.GetTextToSpeakInfo(textsToSpeak);
             if (totalWordCount == 0)
             {
                 return minimumTimeout;
@@ -56,17 +42,7 @@ namespace TTSCompany.Components.Helpers
                 return minimumTimeout;
             }
 
-            int totalWordCount = 0;
-
-            foreach (string segment in textsToSpeak)
-            {
-                if (string.IsNullOrWhiteSpace(segment))
-                {
-                    continue;
-                }
-                totalWordCount += segment.Split(wordSplitChars, StringSplitOptions.RemoveEmptyEntries).Length;
-            }
-
+            (int totalWordCount, int _) = TTSCompanyUtils.GetTextToSpeakInfo(textsToSpeak);
             if (totalWordCount == 0)
             {
                 return minimumTimeout;
