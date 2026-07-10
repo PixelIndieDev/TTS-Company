@@ -143,7 +143,7 @@ namespace TTSCompany.Debug
             audioS.Volume = 0.5f;
 
             TTSCompanyAPI.UpdateTTSAudioSourceSettingsOnNetworkObject(speakingPlayer.gameObject, audioS);
-            TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, chosenArray, voiceSettings: voice, noiseRangeMultiplier: 1.0f);
+            TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, chosenArray, voiceSettings: voice);
         }
 
         internal async static void TriggerTestTTS03(InputAction.CallbackContext obj)
@@ -166,7 +166,7 @@ namespace TTSCompany.Debug
             audioS.Volume = 1.0f;
             TTSCompanyAPI.UpdateTTSAudioSourceSettingsOnNetworkObject(speakingPlayer.gameObject, audioS);
 
-            TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, multipleLines);
+            TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, multipleLines, noiseRangeMultiplier: 1.5f);
             //TTSCompanyAPI.SpeakTTSAtNetworkObject(speakingPlayer.gameObject, "This is one big line, that never seems to end, or does it, or does it just go on and on and on and on, where will this sentence end, is there even a end, that the question");
         }
     }
