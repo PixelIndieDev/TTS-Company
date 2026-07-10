@@ -23,6 +23,9 @@ namespace TTSCompany.Components.Server.Components
         private readonly ConcurrentDictionary<string, DateTime> _modelLastAccess = new ConcurrentDictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, HashSet<ulong>> _modelAssemblies = new ConcurrentDictionary<string, HashSet<ulong>>(StringComparer.OrdinalIgnoreCase);
 
+        private string[] _cachedFoundVoiceNames = Array.Empty<string>();
+        private string[] _cachedLoadedVoiceNames = Array.Empty<string>();
+
         private readonly ConcurrentDictionary<string, bool> _evictedModels = new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private long _currentLoadedBytes;
 
@@ -50,6 +53,8 @@ namespace TTSCompany.Components.Server.Components
                     LogConstants.VOICE_MODEL_MEM_MANAGER_FOUND_VOICE_MODEL_WITH_SIZE.Log(nameof(VoiceModelMemoryManager), modelName, file.Length);
                 }
             }
+            UpdateFoundVoiceNamesCache();
+            UpdateLoadedVoiceNamesCache();
         }
 
         internal int GetAssemblyCountForModel(string modelName)
@@ -165,6 +170,9 @@ namespace TTSCompany.Components.Server.Components
             return string.Empty;
         }
 
+        internal string[] GetAllFoundTTSVoiceNames() => _cachedFoundVoiceNames;
+        internal string[] GetAllLoadedTTSVoiceNames() => _cachedLoadedVoiceNames;
+
         private string GetLoadModelString(string modelName, string voiceModelLocation)
         {
             return "{\"command\":\"load_model\",\"model\":\"" + JSONHelper.Escape(modelName) + "\",\"model_path\":\"" + JSONHelper.Escape(voiceModelLocation.TrimEnd('\\', '/')).Replace("\\", "\\\\") + "\",\"use_cuda\":false}\n";
@@ -188,6 +196,7 @@ namespace TTSCompany.Components.Server.Components
                 _evictedModels.TryRemove(modelName, out _);
                 long modelSize = _modelSizes.TryGetValue(modelName, out long s) ? s : _fallbackModelSizeBytes;
                 Interlocked.Add(ref _currentLoadedBytes, modelSize);
+                UpdateLoadedVoiceNamesCache();
                 LogConstants.PIPER_TTS_RELOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
             }
 
@@ -247,6 +256,7 @@ namespace TTSCompany.Components.Server.Components
                 }
 
                 LogConstants.PIPER_TTS_LOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
+                UpdateLoadedVoiceNamesCache();
             }
             else
             {
@@ -259,8 +269,8 @@ namespace TTSCompany.Components.Server.Components
                 }
 
                 LogConstants.PIPER_TTS_FAILED_LOADING_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
+                UpdateLoadedVoiceNamesCache();
             }
-
             return result;
         }
 
@@ -296,6 +306,7 @@ namespace TTSCompany.Components.Server.Components
                         _modelLastAccess.TryRemove(modelName, out _);
                     }
                 }
+                UpdateLoadedVoiceNamesCache();
                 return (true, string.Empty);
             }
 
@@ -318,6 +329,7 @@ namespace TTSCompany.Components.Server.Components
                     }
                 }
                 LogConstants.PIPER_TTS_UNLOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
+                UpdateLoadedVoiceNamesCache();
             } else
             {
                 LogConstants.PIPER_TTS_FAILED_UNLOADING_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
@@ -366,6 +378,7 @@ namespace TTSCompany.Components.Server.Components
                     _evictedModels.TryAdd(modelName, true);
                     long modelSize = _modelSizes.TryGetValue(modelName, out long s) ? s : _fallbackModelSizeBytes;
                     Interlocked.Add(ref _currentLoadedBytes, -modelSize);
+                    UpdateLoadedVoiceNamesCache();
                 }
                 else
                 {
@@ -376,6 +389,24 @@ namespace TTSCompany.Components.Server.Components
             {
                 LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(VoiceModelMemoryManager), nameof(ForceUnloadModelAsync), ex.Message);
             }
+        }
+
+        private void UpdateFoundVoiceNamesCache()
+        {
+            _cachedFoundVoiceNames = _modelLocations.Keys.ToArray();
+        }
+
+        private void UpdateLoadedVoiceNamesCache()
+        {
+            List<string> activeModels = new List<string>();
+            foreach (string modelName in _modelAssemblies.Keys)
+            {
+                if (!_evictedModels.ContainsKey(modelName))
+                {
+                    activeModels.Add(modelName);
+                }
+            }
+            _cachedLoadedVoiceNames = activeModels.ToArray();
         }
 
         private static long ConvertMBToLong(int valueInMb)
@@ -440,7 +471,8 @@ namespace TTSCompany.Components.Server.Components
                     return 3072;
                 }
             }
-            return 4096;
+            //return 4096;
+            return 128;
         }
         #endregion
     }

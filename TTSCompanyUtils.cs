@@ -33,11 +33,25 @@ namespace TTSCompany
             return TTSCompanyPlugin._tts._server._memoryManager.GetRandomFoundTTSVoiceName();
         }
 
+        /// <summary>Returns an array of names for all TTS voices found by the library, whether or not they are currently loaded into memory</summary>
+        /// <returns>An array of <c>string</c> names of all found TTS voice models</returns>
+        public static string[] GetAllFoundTTSVoiceNames()
+        {
+            return TTSCompanyPlugin._tts._server._memoryManager.GetAllFoundTTSVoiceNames();
+        }
+
         /// <summary>Returns the name of a random TTS voice that is currently loaded into memory</summary>
         /// <returns>The <c>string</c> name of a random TTS voice model</returns>
         public static string GetRandomLoadedTTSVoiceName()
         {
             return TTSCompanyPlugin._tts._server._memoryManager.GetRandomLoadedTTSVoiceName();
+        }
+
+        /// <summary>Returns an array of names for all TTS voices that are currently loaded into memory</summary>
+        /// <returns>An array of <c>string</c> names of all loaded TTS voice models</returns>
+        public static string[] GetAllLoadedTTSVoiceNames()
+        {
+            return TTSCompanyPlugin._tts._server._memoryManager.GetAllLoadedTTSVoiceNames();
         }
 
         /// <summary>Checks whether a network object is currently playing TTS audio</summary>

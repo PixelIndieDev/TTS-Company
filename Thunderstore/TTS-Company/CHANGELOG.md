@@ -1,4 +1,7 @@
 ## v1.1.1
+- Added GetAllFoundTTSVoiceNames() to the Utils
+- Added GetAllLoadedTTSVoiceNames() to the Utils
+- Fixed a missing capital letter in GetRandomLoadedTTSVoiceName()
 - Made some small performant improvements
 
 ## v1.1.0
