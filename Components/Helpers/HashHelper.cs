@@ -12,19 +12,13 @@ namespace TTSCompany.Components.Helpers
         private const ulong Prime = 0x100000001b3;
         private const ulong OffsetBasis = 0xcbf29ce484222325;
 
-        private static readonly ConcurrentDictionary<ulong, ulong> _assemblyHashCache = new ConcurrentDictionary<ulong, ulong>();
+        private static readonly ConcurrentDictionary<Assembly, ulong> _assemblyHashCache = new ConcurrentDictionary<Assembly, ulong>();
 
         internal static ulong GetTrackingKeyHash(ulong networkObjectId, Assembly callingAssembly)
         {
+            ulong hash = _assemblyHashCache.GetOrAdd(callingAssembly, asm => GetCallingAssemblyHash(asm));
             unchecked
             {
-                ulong assemblyHashUlong = GetCallingAssemblyHash(callingAssembly);
-                if (!_assemblyHashCache.TryGetValue(assemblyHashUlong, out ulong hash))
-                {
-                    hash = assemblyHashUlong;
-                    _assemblyHashCache.TryAdd(assemblyHashUlong, hash);
-                }
-
                 CombineULong(ref hash, networkObjectId);
                 return hash;
             }
@@ -34,12 +28,7 @@ namespace TTSCompany.Components.Helpers
         {
             unchecked
             {
-                if (!_assemblyHashCache.TryGetValue(GlobalCallerHash, out ulong hash))
-                {
-                    hash = GlobalCallerHash;
-                    _assemblyHashCache.TryAdd(GlobalCallerHash, hash);
-                }
-
+                ulong hash = GlobalCallerHash;
                 CombineULong(ref hash, networkObjectId);
                 return hash;
             }
