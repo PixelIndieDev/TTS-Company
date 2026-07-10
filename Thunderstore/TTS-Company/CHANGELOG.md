@@ -1,7 +1,7 @@
 ## v1.2.0
 - Added GetAllFoundTTSVoiceNames() to the Utils
 - Added GetAllLoadedTTSVoiceNames() to the Utils
-- Made some small performance improvements
+- Made some performance improvements
 - Changed some of the debug input names to provide more information
 - Fixed a missing capital letter in GetRandomLoadedTTSVoiceName()
 

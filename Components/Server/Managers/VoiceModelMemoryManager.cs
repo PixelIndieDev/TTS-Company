@@ -131,19 +131,8 @@ namespace TTSCompany.Components.Server.Components
                 return null;
             }
 
-            // Pick a target index
-            int targetIndex = UnityEngine.Random.Range(0, totalCount);
-            int currentIndex = 0;
-
-            foreach (KeyValuePair<string, string> kvp in _modelLocations)
-            {
-                if (currentIndex == targetIndex)
-                {
-                    return kvp.Key;
-                }
-                currentIndex++;
-            }
-            return string.Empty;
+            string[] names = _cachedFoundVoiceNames;
+            return names.Length == 0 ? null : names[UnityEngine.Random.Range(0, names.Length)];
         }
 
         internal string GetRandomLoadedTTSVoiceName()
@@ -154,20 +143,8 @@ namespace TTSCompany.Components.Server.Components
                 return null;
             }
 
-            // Pick a target index
-            int targetIndex = UnityEngine.Random.Range(0, totalCount);
-            int currentIndex = 0;
-
-            // Iterate through the dictionary without calling '.Keys'
-            foreach (KeyValuePair<string, HashSet<ulong>> kvp in _modelAssemblies)
-            {
-                if (currentIndex == targetIndex)
-                {
-                    return kvp.Key;
-                }
-                currentIndex++;
-            }
-            return string.Empty;
+            string[] names = _cachedLoadedVoiceNames;
+            return names.Length == 0 ? null : names[UnityEngine.Random.Range(0, names.Length)];
         }
 
         internal string[] GetAllFoundTTSVoiceNames() => _cachedFoundVoiceNames;

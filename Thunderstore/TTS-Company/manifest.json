@@ -1,6 +1,6 @@
 ﻿{
 "name": "TTSCompany",
-"version_number": "1.1.1",
+"version_number": "1.2.0",
 "website_url": "https://github.com/PixelIndieDev/TTS-Company",
 "description": "This library makes it easy to add TTS speech to your Lethal Company mods",
 "dependencies": [
