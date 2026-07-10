@@ -19,6 +19,8 @@ namespace TTSCompany.Components
 {
     internal sealed class TTSGenerator
     {
+        const float DecodeOggOffThreadMultiplier = 1f / 32768f;
+
         internal readonly PiperTTSServer _server = new PiperTTSServer();
 
         private readonly ConcurrentDictionary<string, BusyGeneration> _inFlightRequests = new ConcurrentDictionary<string, BusyGeneration>();
@@ -520,7 +522,7 @@ namespace TTSCompany.Components
                         {
                             for (int i = 0; i < packet.Length; i++)
                             {
-                                samples[offset + i] = packet[i] / 32768f;
+                                samples[offset + i] = packet[i] * DecodeOggOffThreadMultiplier;
                             }
                             offset += packet.Length;
                         }
