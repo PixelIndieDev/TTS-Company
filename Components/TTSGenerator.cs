@@ -50,6 +50,8 @@ namespace TTSCompany.Components
         private bool _disposed;
         private bool _isAvailable;
 
+        private volatile bool _cacheDirectoryEnsured;
+
         // cpu values
         private static readonly int CPU_totalCores = Environment.ProcessorCount;
         private static readonly int CPU_coresReservedForGame = Mathf.Max(1, Mathf.CeilToInt(CPU_totalCores * 0.1f));
@@ -110,8 +112,24 @@ namespace TTSCompany.Components
 
             bool started = await _server.StartAsync(TTSConstants.PIPER_SERVER_STARTUP_TIMEOUT_MS, cancellationToken).ConfigureAwait(false);
 
+            if (started)
+            {
+                EnsureCacheDirectoryExists();
+            }
+
             _isAvailable = started;
             return started;
+        }
+
+        private void EnsureCacheDirectoryExists()
+        {
+            if (_cacheDirectoryEnsured)
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(TTSConstants.TTS_VOICE_CACHE_SOUNDCLIPS_PATH);
+            _cacheDirectoryEnsured = true;
         }
 
         internal async Task ShutdownAsync()
@@ -125,7 +143,6 @@ namespace TTSCompany.Components
             _isAvailable = false;
 
             await _server.ShutdownAsync().ConfigureAwait(false);
-
             _semaphore?.Dispose();
         }
 
@@ -146,7 +163,6 @@ namespace TTSCompany.Components
             {
                 LogConstants.CODE_GENERIC_CATCH.Log(nameof(TTSGenerator), nameof(Dispose));
             }
-
             _semaphore?.Dispose();
         }
 
@@ -199,7 +215,7 @@ namespace TTSCompany.Components
                 return new TTSResult { AudioClip = null, Success = false };
             }
 
-            Directory.CreateDirectory(TTSConstants.TTS_VOICE_CACHE_SOUNDCLIPS_PATH);
+            EnsureCacheDirectoryExists();
             string hashCacheFileName = HashHelper.GetHashTTSFileNameWithFileType(textToSpeak, settings);
 
             if (string.IsNullOrWhiteSpace(hashCacheFileName))
@@ -267,20 +283,13 @@ namespace TTSCompany.Components
                 {
                     AudioClip lateClip = await LoadAudioClipFromDiskAsync(fullCachePath, hashCacheFileName);
                     return new TTSResult
-                    { 
+                    {
                         AudioClip = lateClip,
                         Success = lateClip != null
                     };
                 }
 
                 TTSResult endResult = new TTSResult();
-
-                bool isServerAlive = await _server.PingAsync(sharedCancellationToken);
-                if (!isServerAlive)
-                {
-                    return endResult;
-                }
-
                 LogConstants.TTS_GENERATOR_GENERATING_TTS.Log(nameof(TTSGenerator), textToSpeak, hashCacheFileName);
                 TTSRawResult synthResult = await _server.SynthesizeAsync(textToSpeak, hashCacheFileName, settings, sharedCancellationToken).ConfigureAwait(false);
                 if (!synthResult.IsSuccess)
@@ -414,7 +423,7 @@ namespace TTSCompany.Components
 
         private static void TryDeleteTempFile(string path)
         {
-            try 
+            try
             {
                 if (File.Exists(path))
                 {
@@ -510,9 +519,9 @@ namespace TTSCompany.Components
                         while (oggStream.HasNextPacket)
                         {
                             short[] packet = oggStream.DecodeNextPacket();
-                            if (packet != null) 
+                            if (packet != null)
                             {
-                                packets.Add(packet); 
+                                packets.Add(packet);
                                 totalSamples += packet.Length;
                             }
                         }

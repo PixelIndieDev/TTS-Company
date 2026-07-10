@@ -22,6 +22,10 @@ namespace TTSCompany.Components
         private int _port;
         private readonly StringBuilder _stderrLog = new StringBuilder();
 
+        private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
+        private TcpClient _connectionClient;
+        private NetworkStream _connectionStream;
+
         internal bool IsRunning => _process != null && !_process.HasExited;
         internal int Port => _port;
 
@@ -132,6 +136,7 @@ namespace TTSCompany.Components
             Process process = _process;
             if (process == null)
             {
+                DisposeConnectionClient();
                 return;
             }
 
@@ -173,6 +178,7 @@ namespace TTSCompany.Components
             finally
             {
                 _process = null;
+                DisposeConnectionClient();
                 LogConstants.PIPER_TTS_SERVER_STOPPED.Log(nameof(PiperTTSServer));
             }
         }
@@ -199,32 +205,92 @@ namespace TTSCompany.Components
 
         internal async Task<Dictionary<string, object>> SendSimpleCommandAsync(string requestJsonLine, CancellationToken cancellationToken, int timeoutMs = 30000)
         {
-            using (TcpClient client = new TcpClient())
             using (CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
             {
                 cts.CancelAfter(timeoutMs);
 
-                using (cts.Token.Register(() =>
+                await _connectionLock.WaitAsync(cts.Token).ConfigureAwait(false);
+                try
                 {
-                    try
+                    using (cts.Token.Register(() =>
                     {
-                        client.Close();
-                    }
-                    catch
+                        try
+                        {
+                            _connectionClient?.Close();
+                        }
+                        catch
+                        {
+                            LogConstants.CODE_GENERIC_CATCH.Log(nameof(PiperTTSServer), "SendSimpleCommandAsync");
+                        }
+                    }))
                     {
-                        LogConstants.CODE_GENERIC_CATCH.Log(nameof(PiperTTSServer), "SendSimpleCommandAsync");
+                        bool reusedExistingConnection = _connectionClient != null && _connectionClient.Connected;
+                        if (!reusedExistingConnection)
+                        {
+                            await OpenConnectionAsync(cts.Token).ConfigureAwait(false);
+                        }
+
+                        try
+                        {
+                            return await SendOnConnectionAsync(requestJsonLine, cts.Token).ConfigureAwait(false);
+                        }
+                        catch (Exception) when (reusedExistingConnection && !cts.IsCancellationRequested)
+                        {
+                            // pooled connection is stale
+                            DisposeConnectionClient();
+                            await OpenConnectionAsync(cts.Token).ConfigureAwait(false);
+                            return await SendOnConnectionAsync(requestJsonLine, cts.Token).ConfigureAwait(false);
+                        }
                     }
-                }))
+                }
+                finally
                 {
-                    await ConnectAsync(client, _port, cts.Token).ConfigureAwait(false);
-                    client.NoDelay = true;
-                    NetworkStream stream = client.GetStream();
+                    _connectionLock.Release();
+                }
+            }
+        }
 
-                    byte[] bytes = Encoding.UTF8.GetBytes(requestJsonLine);
-                    await stream.WriteAsync(bytes, 0, bytes.Length, cts.Token).ConfigureAwait(false);
+        private async Task<Dictionary<string, object>> SendOnConnectionAsync(string requestJsonLine, CancellationToken cancellationToken)
+        {
+            NetworkStream stream = _connectionStream;
 
-                    (string line, _) = await ReadLineWithLeftoverAsync(stream, cts.Token).ConfigureAwait(false);
-                    return JSONHelper.ParseFlatObject(line);
+            byte[] bytes = Encoding.UTF8.GetBytes(requestJsonLine);
+            await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
+
+            (string line, _) = await ReadLineWithLeftoverAsync(stream, cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(line))
+            {
+                LogConstants.CODE_GENERIC_EXCEPTION.Log(nameof(PiperTTSServer), nameof(SendOnConnectionAsync), "PiperTTS connection closed by server before a response was received");
+            }
+
+            return JSONHelper.ParseFlatObject(line);
+        }
+
+        private async Task OpenConnectionAsync(CancellationToken cancellationToken)
+        {
+            TcpClient client = new TcpClient();
+            await ConnectAsync(client, _port, cancellationToken).ConfigureAwait(false);
+            client.NoDelay = true;
+
+            _connectionClient = client;
+            _connectionStream = client.GetStream();
+        }
+
+        private void DisposeConnectionClient()
+        {
+            TcpClient old = _connectionClient;
+            _connectionClient = null;
+            _connectionStream = null;
+
+            if (old != null)
+            {
+                try
+                {
+                    old.Close();
+                }
+                catch
+                {
+                    LogConstants.CODE_GENERIC_CATCH.Log(nameof(PiperTTSServer), nameof(DisposeConnectionClient));
                 }
             }
         }
@@ -258,19 +324,29 @@ namespace TTSCompany.Components
                 return TTSRawResult.Cancelled();
             }
 
-            if (_memoryManager.WasVoiceModelEvicted(options.ModelName))
+            try
             {
-                (bool Success, string Error) result = await _memoryManager.ReloadModelAsync(options.ModelName, cancellationToken);
-                if (!result.Success)
+                if (_memoryManager.WasVoiceModelEvicted(options.ModelName))
                 {
-                    return TTSRawResult.Cancelled();
+                    (bool Success, string Error) result = await _memoryManager.ReloadModelAsync(options.ModelName, cancellationToken);
+                    if (!result.Success)
+                    {
+                        return TTSRawResult.Cancelled();
+                    }
+                }
+                else
+                {
+                    _memoryManager.UpdateLastUse(options.ModelName);
                 }
             }
-            else
+            catch (OperationCanceledException)
             {
-                _memoryManager.UpdateLastUse(options.ModelName);
+                return TTSRawResult.Cancelled();
             }
-
+            catch (Exception ex) when (ex is IOException || ex is SocketException || ex is ObjectDisposedException)
+            {
+                return TTSRawResult.Failure($"Piper server unreachable while preparing voice model: {ex.Message}");
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
 
