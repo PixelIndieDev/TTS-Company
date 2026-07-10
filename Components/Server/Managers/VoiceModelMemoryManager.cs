@@ -471,8 +471,7 @@ namespace TTSCompany.Components.Server.Components
                     return 3072;
                 }
             }
-            //return 4096;
-            return 128;
+            return 4096;
         }
         #endregion
     }
