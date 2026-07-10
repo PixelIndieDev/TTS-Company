@@ -35,7 +35,7 @@ namespace TTSCompany
 
         /// <summary>Returns the name of a random TTS voice that is currently loaded into memory</summary>
         /// <returns>The <c>string</c> name of a random TTS voice model</returns>
-        public static string GetRandomLoadedTTSVoicename()
+        public static string GetRandomLoadedTTSVoiceName()
         {
             return TTSCompanyPlugin._tts._server._memoryManager.GetRandomLoadedTTSVoiceName();
         }
