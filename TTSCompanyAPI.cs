@@ -17,9 +17,6 @@ namespace TTSCompany
 {
     public static class TTSCompanyAPI
     {
-        private static readonly PiperVoiceSettings DefaultVoiceSettings = new PiperVoiceSettings();
-        private static readonly TTSAudioSourceSettings DefaultTTSAudioSourceSettings = new TTSAudioSourceSettings();
-
         // -------------------- preload voice models --------------------
         // client side
         /// <summary>Asynchronously loads a TTS voice model into memory so it's ready to generate speech</summary>
@@ -79,7 +76,7 @@ namespace TTSCompany
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void AddTTSAudioSourceOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
-            audioSourceSettings = audioSourceSettings ?? DefaultTTSAudioSourceSettings;
+            audioSourceSettings = audioSourceSettings ?? TTSCompanyUtils.DefaultTTSAudioSourceSettings;
             ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
 
             if (LNetworkUtils.IsConnected) // is in-game, do normal server stuff
@@ -154,7 +151,7 @@ namespace TTSCompany
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void UpdateTTSAudioSourceSettingsOnNetworkObject(NetworkObjectReference networkObjectRefOfSpeaker, TTSAudioSourceSettings audioSourceSettings, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
-            audioSourceSettings = audioSourceSettings ?? DefaultTTSAudioSourceSettings;
+            audioSourceSettings = audioSourceSettings ?? TTSCompanyUtils.DefaultTTSAudioSourceSettings;
             ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
 
             if (LNetworkUtils.IsConnected) // is in-game, do normal server stuff
@@ -191,7 +188,7 @@ namespace TTSCompany
             }
 
             // if null, use the default
-            voiceSettings = voiceSettings ?? DefaultVoiceSettings;
+            voiceSettings = voiceSettings ?? TTSCompanyUtils.DefaultVoiceSettings;
 
             TTSCompanyUtils.GetAudioHashes(networkObjectRefOfSpeaker, useGlobalAudioSource, out ulong callingAHash, out ulong trackingKeyHash);
             TTSCompanyNetworking.Request_Server_SpeakTTS(new TTSSpeakTTS_NET(networkObjectRefOfSpeaker, callingAHash, textsToSpeak, voiceSettings, trackingKeyHash, noiseRangeMultiplier));
@@ -279,7 +276,7 @@ namespace TTSCompany
             }
 
             // if null, use the default
-            voiceSettings = voiceSettings ?? DefaultVoiceSettings;
+            voiceSettings = voiceSettings ?? TTSCompanyUtils.DefaultVoiceSettings;
 
             ulong trackingKeyHash = HashHelper.GetTrackingKeyHash(string.Join("|", textsToSpeak), voiceSettings);
 

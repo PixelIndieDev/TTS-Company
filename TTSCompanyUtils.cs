@@ -19,6 +19,9 @@ namespace TTSCompany
         private static readonly Regex SentenceRegex = new Regex(@"[^.!?]+[.!?]?", RegexOptions.Compiled);
 
         // -------------------- internal variables --------------------
+        internal static readonly PiperVoiceSettings DefaultVoiceSettings = new PiperVoiceSettings();
+        internal static readonly TTSAudioSourceSettings DefaultTTSAudioSourceSettings = new TTSAudioSourceSettings();
+
         internal static readonly ConditionalWeakTable<GameObject, NetworkObject> NetworkObjectCache = new ConditionalWeakTable<GameObject, NetworkObject>();
 
         // -------------------- public utils --------------------
