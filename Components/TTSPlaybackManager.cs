@@ -25,12 +25,15 @@ namespace TTSCompany.Components
 
         private IEnumerator ProcessAudioQueue(ulong speakerHash)
         {
+            GameObject cachedSpeakingNetworkObject = null;
             while (TTSCompanyBackend.WantedAudioClips.TryGetValue(speakerHash, out SpeakTTSAudioClipCache cache))
             {
                 if (cache._foundNetworkObject == null)
                 {
                     break;
                 }
+
+                cachedSpeakingNetworkObject = cache._foundNetworkObject;
 
                 if (cache._audioQueue.TryDequeue(out QueuedClip queued))
                 {
@@ -61,6 +64,14 @@ namespace TTSCompany.Components
 
             TTSCompanyBackend.WantedAudioClips.TryRemove(speakerHash, out SpeakTTSAudioClipCache removedCache);
             _activeCoroutines.Remove(speakerHash);
+
+            if (cachedSpeakingNetworkObject != null)
+            {
+                if (cachedSpeakingNetworkObject.TryGetComponent(out NetworkObject netObj))
+                {
+                    TTSCompanyBackend.SpeakingNetworkObjectIds.TryRemove(netObj.NetworkObjectId, out _);
+                }
+            }
         }
 
         internal void CancelPlayback(CancelAudioTTS_NET data)

@@ -1,9 +1,10 @@
 ## v1.2.0
 - Added GetAllFoundTTSVoiceNames() to the Utils
 - Added GetAllLoadedTTSVoiceNames() to the Utils
-- Made some performance improvements
+- Made performance improvements
 - Changed some of the debug input names to provide more information
 - Fixed a missing capital letter in GetRandomLoadedTTSVoiceName()
+- Fixed an issue that caused a memory leak
 
 ## v1.1.0
 - TTS speech now has the ability to be heard by entities

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using TTSCompany.Components;
 using TTSCompany.Components.Constants;
 using TTSCompany.Components.Enums;
 using TTSCompany.Components.Helpers;
-using TTSCompany.Components.Networking.Components.Structs;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -14,8 +14,12 @@ namespace TTSCompany
 {
     public static class TTSCompanyUtils
     {
+        // -------------------- private variables --------------------
         // matches sentence endings in ., !, or ?, or catches the trailing text
         private static readonly Regex SentenceRegex = new Regex(@"[^.!?]+[.!?]?", RegexOptions.Compiled);
+
+        // -------------------- internal variables --------------------
+        internal static readonly ConditionalWeakTable<GameObject, NetworkObject> NetworkObjectCache = new ConditionalWeakTable<GameObject, NetworkObject>();
 
         // -------------------- public utils --------------------
         // client side
@@ -60,7 +64,7 @@ namespace TTSCompany
         /// <returns><c>true</c> if the object is currently speaking TTS audio, <c>false</c> otherwise</returns>
         public static bool IsNetworkObjectCurrentlySpeaking(GameObject gameObject)
         {
-            if (gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            if (TryGetCachedNetworkObject(gameObject, out NetworkObject networkObject))
             {
                 return IsNetworkObjectCurrentlySpeaking(networkObject);
             }
@@ -76,15 +80,7 @@ namespace TTSCompany
                 return false;
             }
 
-            GameObject target = networkObject.gameObject;
-            foreach (SpeakTTSAudioClipCache cache in TTSCompanyBackend.WantedAudioClips.Values)
-            {
-                if (cache._foundNetworkObject == target)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return TTSCompanyBackend.SpeakingNetworkObjectIds.ContainsKey(networkObject.NetworkObjectId);
         }
 
         /// <summary>Checks whether a network object is currently waiting on TTS audio to finish generating</summary>
@@ -92,7 +88,7 @@ namespace TTSCompany
         /// <returns><c>true</c> if the object is currently waiting on TTS generation to complete, <c>false</c> otherwise</returns>
         public static bool IsNetworkObjectAwaitingTTSGeneration(GameObject gameObject)
         {
-            if (gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            if (TryGetCachedNetworkObject(gameObject, out NetworkObject networkObject))
             {
                 return IsNetworkObjectAwaitingTTSGeneration(networkObject);
             }
@@ -103,7 +99,11 @@ namespace TTSCompany
         /// <returns><c>true</c> if the object is currently waiting on TTS generation to complete, <c>false</c> otherwise</returns>
         public static bool IsNetworkObjectAwaitingTTSGeneration(NetworkObject networkObject)
         {
-            return networkObject != null && TTSCompanyBackend.GeneratingNetworkObjectIds.ContainsKey(networkObject.NetworkObjectId);
+            if (networkObject == null)
+            {
+                return false;
+            }
+            return TTSCompanyBackend.GeneratingNetworkObjectIds.ContainsKey(networkObject.NetworkObjectId);
         }
 
         /// <summary>Returns the current TTSNetworkObjectState of a network object (e.g. Invalid, Idle, GeneratingTTS, ActivelySpeaking)</summary>
@@ -111,7 +111,7 @@ namespace TTSCompany
         /// <returns>The object's current <c>TTSNetworkObjectState</c></returns>
         public static TTSNetworkObjectState GetTTSNetworkObjectState(GameObject gameObject)
         {
-            if (gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            if (TryGetCachedNetworkObject(gameObject, out NetworkObject networkObject))
             {
                 return GetTTSNetworkObjectState(networkObject);
             }
@@ -140,7 +140,7 @@ namespace TTSCompany
             return TTSNetworkObjectState.Idle;
         }
 
-        // -------------------- private utils --------------------
+        // -------------------- internal utils --------------------
         internal static string[] SplitTextToSpeak(string textToSpeak)
         {
             if (string.IsNullOrEmpty(textToSpeak))
@@ -284,6 +284,30 @@ namespace TTSCompany
             }
             LogConstants.UTILS_TIMEOUT_TIME_GENERATION.Log(nameof(TTSGenerator), string.Join(", ", textsToSpeak), totalWordCount, sentenceCount);
             return (totalWordCount, sentenceCount);
+        }
+
+        internal static bool TryGetCachedNetworkObject(GameObject gameObject, out NetworkObject networkObject)
+        {
+            networkObject = null;
+
+            if (gameObject == null)
+            {
+                return false;
+            }
+
+            if (!NetworkObjectCache.TryGetValue(gameObject, out networkObject))
+            {
+                if (gameObject.TryGetComponent(out networkObject))
+                {
+                    NetworkObjectCache.Remove(gameObject);
+                    NetworkObjectCache.Add(gameObject, networkObject);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return networkObject != null;
         }
     }
 }

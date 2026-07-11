@@ -66,7 +66,7 @@ namespace TTSCompany
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void AddTTSAudioSourceOnNetworkObject(GameObject objectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, TTSAudioSourceSettings audioSourceSettings = APIDefaultsConstants.TTS_AUDIO_SOURCE_SETTING_DEFAULT)
         {
-            if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            if (TTSCompanyUtils.TryGetCachedNetworkObject(objectRefOfSpeaker, out NetworkObject networkObject))
             {
                 NetworkObjectReference reference = new NetworkObjectReference(networkObject);
                 AddTTSAudioSourceOnNetworkObject(reference, useGlobalAudioSource, audioSourceSettings);
@@ -104,7 +104,7 @@ namespace TTSCompany
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void RemoveTTSAudioSourceOnNetworkObject(GameObject objectRefOfSpeaker)
         {
-            if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            if (TTSCompanyUtils.TryGetCachedNetworkObject(objectRefOfSpeaker, out NetworkObject networkObject))
             {
                 NetworkObjectReference reference = new NetworkObjectReference(networkObject);
                 RemoveTTSAudioSourceOnNetworkObject(reference);
@@ -141,7 +141,7 @@ namespace TTSCompany
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void UpdateTTSAudioSourceSettingsOnNetworkObject(GameObject objectRefOfSpeaker, TTSAudioSourceSettings audioSourceSettings, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
-            if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            if (TTSCompanyUtils.TryGetCachedNetworkObject(objectRefOfSpeaker, out NetworkObject networkObject))
             {
                 NetworkObjectReference reference = new NetworkObjectReference(networkObject);
                 UpdateTTSAudioSourceSettingsOnNetworkObject(reference, audioSourceSettings, useGlobalAudioSource);
@@ -227,7 +227,7 @@ namespace TTSCompany
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void SpeakTTSAtNetworkObject(GameObject objectRefOfSpeaker, string[] textsToSpeak, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT, PiperVoiceSettings voiceSettings = APIDefaultsConstants.PIPER_VOICE_SETTING_DEFAULT, float noiseRangeMultiplier = APIDefaultsConstants.NOISE_RANGE_MULTIPLIER_DEFAULT)
         {
-            if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            if (TTSCompanyUtils.TryGetCachedNetworkObject(objectRefOfSpeaker, out NetworkObject networkObject))
             {
                 NetworkObjectReference reference = new NetworkObjectReference(networkObject);
                 SpeakTTSAtNetworkObject(reference, textsToSpeak, useGlobalAudioSource, voiceSettings, noiseRangeMultiplier);
@@ -247,7 +247,7 @@ namespace TTSCompany
         /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         public static void StopSpeakingTTSAtNetworkObject(GameObject objectRefOfSpeaker, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
-            if (objectRefOfSpeaker.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            if (TTSCompanyUtils.TryGetCachedNetworkObject(objectRefOfSpeaker, out NetworkObject networkObject))
             {
                 NetworkObjectReference reference = new NetworkObjectReference(networkObject);
                 StopSpeakingTTSAtNetworkObject(reference, useGlobalAudioSource);
