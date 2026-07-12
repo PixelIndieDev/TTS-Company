@@ -1,3 +1,6 @@
+## 1.2.1
+- Replaced Concentus with a dependency
+
 ## v1.2.0
 - Added GetAllFoundTTSVoiceNames() to the Utils
 - Added GetAllLoadedTTSVoiceNames() to the Utils

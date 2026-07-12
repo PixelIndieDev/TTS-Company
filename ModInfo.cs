@@ -4,6 +4,6 @@
     {
         internal const string modGUID = "PixelIndieDev_TTSCompany";
         internal const string modName = "TTS Company";
-        internal const string modVersion = "1.2.0.0";
+        internal const string modVersion = "1.2.1.0";
     }
 }
