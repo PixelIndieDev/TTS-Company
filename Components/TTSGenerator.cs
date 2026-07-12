@@ -368,7 +368,7 @@ namespace TTSCompany.Components
                     {
                         IOpusEncoder encoder = OpusCodecFactory.CreateEncoder(OggConstants.OGG_SAMPLE_RATE, OggConstants.OGG_CHANNELS_AMOUNT, OpusApplication.OPUS_APPLICATION_VOIP);
                         encoder.Bitrate = OggConstants.OGG_BITRATE;
-                        encoder.UseVBR = true;
+                        encoder.UseConstrainedVBR = true;
 
                         OpusOggWriteStream oggStream = new OpusOggWriteStream(encoder, fs);
                         oggStream.WriteSamples(resampledShorts, 0, resampledCount);
