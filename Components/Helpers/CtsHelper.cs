@@ -13,9 +13,9 @@ namespace TTSCompany.Components.Helpers
                 return;
             }
 
-            try 
+            try
             {
-                cts.Cancel(); 
+                cts.Cancel();
             }
             catch (ObjectDisposedException)
             {

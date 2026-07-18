@@ -307,7 +307,8 @@ namespace TTSCompany.Components.Server.Components
                 }
                 LogConstants.PIPER_TTS_UNLOADED_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
                 UpdateLoadedVoiceNamesCache();
-            } else
+            }
+            else
             {
                 LogConstants.PIPER_TTS_FAILED_UNLOADING_VOICE_MODEL.Log(nameof(VoiceModelMemoryManager), modelName);
             }
