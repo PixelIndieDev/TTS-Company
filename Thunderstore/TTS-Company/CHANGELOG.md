@@ -1,6 +1,7 @@
 ## 1.2.1
 - TTSCompanyUtils.IsNetworkObjectCurrentlySpeaking() now has an useGlobalAudioSource option
 - TTSCompanyUtils.IsNetworkObjectAwaitingTTSGeneration() now has an useGlobalAudioSource option
+- TTSCompanyUtils.GetTTSNetworkObjectState() now has an useGlobalAudioSource option
 - Replaced Concentus with a Concentus dependency
 - Fixed '...' being read as seperate sentences
 

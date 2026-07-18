@@ -119,8 +119,9 @@ namespace TTSCompany
 
         /// <summary>Returns the current TTSNetworkObjectState of a network object (e.g. Invalid, Idle, GeneratingTTS, ActivelySpeaking)</summary>
         /// <param name="gameObject">The GameObject to check the state of</param>
+        /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <returns>The object's current <c>TTSNetworkObjectState</c></returns>
-        public static TTSNetworkObjectState GetTTSNetworkObjectState(GameObject gameObject)
+        public static TTSNetworkObjectState GetTTSNetworkObjectState(GameObject gameObject, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
             if (TryGetCachedNetworkObject(gameObject, out NetworkObject networkObject))
             {
@@ -130,20 +131,21 @@ namespace TTSCompany
         }
         /// <summary>Returns the current TTSNetworkObjectState of a network object (e.g. Invalid, Idle, GeneratingTTS, ActivelySpeaking)</summary>
         /// <param name="networkObject">The NetworkObject to check the state of</param>
+        /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <returns>The object's current <c>TTSNetworkObjectState</c></returns>
-        public static TTSNetworkObjectState GetTTSNetworkObjectState(NetworkObject networkObject)
+        public static TTSNetworkObjectState GetTTSNetworkObjectState(NetworkObject networkObject, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
             if (networkObject == null)
             {
                 return TTSNetworkObjectState.Invalid;
             }
 
-            if (IsNetworkObjectCurrentlySpeaking(networkObject))
+            if (IsNetworkObjectCurrentlySpeaking(networkObject, useGlobalAudioSource))
             {
                 return TTSNetworkObjectState.ActivelySpeaking;
             }
 
-            if (IsNetworkObjectAwaitingTTSGeneration(networkObject))
+            if (IsNetworkObjectAwaitingTTSGeneration(networkObject, useGlobalAudioSource))
             {
                 return TTSNetworkObjectState.GeneratingTTS;
             }
