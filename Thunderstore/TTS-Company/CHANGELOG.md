@@ -1,4 +1,4 @@
-## 1.2.1
+## v1.2.1
 - TTSCompanyUtils.IsNetworkObjectCurrentlySpeaking() now has an useGlobalAudioSource option
 - TTSCompanyUtils.IsNetworkObjectAwaitingTTSGeneration() now has an useGlobalAudioSource option
 - TTSCompanyUtils.GetTTSNetworkObjectState() now has an useGlobalAudioSource option
