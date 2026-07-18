@@ -1,8 +1,11 @@
-﻿using System.Collections;
+﻿using GameNetcodeStuff;
+using System.Collections;
 using System.Collections.Generic;
+using TTSCompany.Components.Constants;
 using TTSCompany.Components.Managers;
 using TTSCompany.Components.Networking;
 using TTSCompany.Components.Networking.Components.Structs;
+using TTSCompany.Debug;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -69,7 +72,8 @@ namespace TTSCompany.Components
             {
                 if (cachedSpeakingNetworkObject.TryGetComponent(out NetworkObject netObj))
                 {
-                    TTSCompanyBackend.SpeakingNetworkObjectIds.TryRemove(netObj.NetworkObjectId, out _);
+                    ulong assemblyHash = removedCache?._callingAssemblyHash ?? 0;
+                    TTSCompanyBackend.RemoveAssemblyTracking(TTSCompanyBackend.SpeakingNetworkObjectIds, netObj.NetworkObjectId, assemblyHash);
                 }
             }
         }
@@ -93,7 +97,7 @@ namespace TTSCompany.Components
 
                     if (cache._foundNetworkObject.TryGetComponent(out NetworkObject netObj))
                     {
-                        TTSCompanyBackend.SpeakingNetworkObjectIds.TryRemove(netObj.NetworkObjectId, out _);
+                        TTSCompanyBackend.RemoveAssemblyTracking(TTSCompanyBackend.SpeakingNetworkObjectIds, netObj.NetworkObjectId, cache._callingAssemblyHash);
                     }
                 }
             }

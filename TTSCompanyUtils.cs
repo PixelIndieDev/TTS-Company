@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -64,49 +65,56 @@ namespace TTSCompany
 
         /// <summary>Checks whether a network object is currently playing TTS audio</summary>
         /// <param name="gameObject">The GameObject to check</param>
+        /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <returns><c>true</c> if the object is currently speaking TTS audio, <c>false</c> otherwise</returns>
-        public static bool IsNetworkObjectCurrentlySpeaking(GameObject gameObject)
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static bool IsNetworkObjectCurrentlySpeaking(GameObject gameObject, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
             if (TryGetCachedNetworkObject(gameObject, out NetworkObject networkObject))
             {
-                return IsNetworkObjectCurrentlySpeaking(networkObject);
+                return IsNetworkObjectCurrentlySpeaking(networkObject, useGlobalAudioSource);
             }
             return false;
         }
         /// <summary>Checks whether a network object is currently playing TTS audio</summary>
         /// <param name="networkObject">The NetworkObject to check</param>
+        /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <returns><c>true</c> if the object is currently speaking TTS audio, <c>false</c> otherwise</returns>
-        public static bool IsNetworkObjectCurrentlySpeaking(NetworkObject networkObject)
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static bool IsNetworkObjectCurrentlySpeaking(NetworkObject networkObject, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
             if (networkObject == null)
             {
                 return false;
             }
-
-            return TTSCompanyBackend.SpeakingNetworkObjectIds.ContainsKey(networkObject.NetworkObjectId);
+            ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
+            return IsAssemblyTrackedFor(TTSCompanyBackend.SpeakingNetworkObjectIds, networkObject, callerHash);
         }
 
         /// <summary>Checks whether a network object is currently waiting on TTS audio to finish generating</summary>
         /// <param name="gameObject">The GameObject to check</param>
+        /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <returns><c>true</c> if the object is currently waiting on TTS generation to complete, <c>false</c> otherwise</returns>
-        public static bool IsNetworkObjectAwaitingTTSGeneration(GameObject gameObject)
+        public static bool IsNetworkObjectAwaitingTTSGeneration(GameObject gameObject, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
             if (TryGetCachedNetworkObject(gameObject, out NetworkObject networkObject))
             {
-                return IsNetworkObjectAwaitingTTSGeneration(networkObject);
+                return IsNetworkObjectAwaitingTTSGeneration(networkObject, useGlobalAudioSource);
             }
             return false;
         }
         /// <summary>Checks whether a network object is currently waiting on TTS audio to finish generating</summary>
         /// <param name="networkObject">The NetworkObject to check</param>
+        /// <param name="useGlobalAudioSource">Whether to use the shared global TTS audio source, or a separate one owned by your assembly</param>
         /// <returns><c>true</c> if the object is currently waiting on TTS generation to complete, <c>false</c> otherwise</returns>
-        public static bool IsNetworkObjectAwaitingTTSGeneration(NetworkObject networkObject)
+        public static bool IsNetworkObjectAwaitingTTSGeneration(NetworkObject networkObject, bool useGlobalAudioSource = APIDefaultsConstants.USE_GLOBAL_AUDIO_SOURCE_DEFAULT)
         {
             if (networkObject == null)
             {
                 return false;
             }
-            return TTSCompanyBackend.GeneratingNetworkObjectIds.ContainsKey(networkObject.NetworkObjectId);
+            ulong callerHash = useGlobalAudioSource ? HashHelper.GlobalCallerHash : HashHelper.GetCallingAssemblyHash(Assembly.GetCallingAssembly());
+            return IsAssemblyTrackedFor(TTSCompanyBackend.GeneratingNetworkObjectIds, networkObject, callerHash);
         }
 
         /// <summary>Returns the current TTSNetworkObjectState of a network object (e.g. Invalid, Idle, GeneratingTTS, ActivelySpeaking)</summary>
@@ -319,6 +327,21 @@ namespace TTSCompany
                 }
             }
             return networkObject != null;
+        }
+
+        // -------------------- private utils --------------------
+        private static bool IsAssemblyTrackedFor(ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, byte>> list, NetworkObject networkObject, ulong callerHash)
+        {
+            if (networkObject == null)
+            {
+                return false;
+            }
+
+            if (!list.TryGetValue(networkObject.NetworkObjectId, out ConcurrentDictionary<ulong, byte> hashes))
+            {
+                return false;
+            }
+            return hashes.ContainsKey(callerHash);
         }
     }
 }

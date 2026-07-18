@@ -1,6 +1,8 @@
 ## 1.2.1
-- Fixed '...' being read as seperate sentences
+- TTSCompanyUtils.IsNetworkObjectCurrentlySpeaking() now has an useGlobalAudioSource option
+- TTSCompanyUtils.IsNetworkObjectAwaitingTTSGeneration() now has an useGlobalAudioSource option
 - Replaced Concentus with a Concentus dependency
+- Fixed '...' being read as seperate sentences
 
 ## v1.2.0
 - Added GetAllFoundTTSVoiceNames() to the Utils

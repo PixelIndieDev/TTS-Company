@@ -19,8 +19,8 @@ namespace TTSCompany.Components
         private static readonly ConcurrentDictionary<ulong, CancellationTokenSource> ActivePreGenTasks = new ConcurrentDictionary<ulong, CancellationTokenSource>();
 
         internal static readonly ConcurrentDictionary<ulong, SpeakTTSAudioClipCache> WantedAudioClips = new ConcurrentDictionary<ulong, SpeakTTSAudioClipCache>();
-        internal static readonly ConcurrentDictionary<ulong, bool> SpeakingNetworkObjectIds = new ConcurrentDictionary<ulong, bool>();
-        internal static readonly ConcurrentDictionary<ulong, bool> GeneratingNetworkObjectIds = new ConcurrentDictionary<ulong, bool>();
+        internal static readonly ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, byte>> SpeakingNetworkObjectIds = new ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, byte>>();
+        internal static readonly ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, byte>> GeneratingNetworkObjectIds = new ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, byte>>();
 
         internal static readonly ConcurrentQueue<ulong> NewSpeakerQueue = new ConcurrentQueue<ulong>();
 
@@ -39,7 +39,7 @@ namespace TTSCompany.Components
                     TTSCompanyPlugin.instance.StopCoroutine(activeState.Coroutine);
                 }
 
-                GeneratingNetworkObjectIds.TryRemove(activeState.NetworkObjectId, out _);
+                RemoveAssemblyTracking(GeneratingNetworkObjectIds, activeState.NetworkObjectId, data._callingAssemblyHash);
                 ActiveTTSCoroutines.TryRemove(data._trackingKeyHash, out _);
             }
 
@@ -57,7 +57,7 @@ namespace TTSCompany.Components
 
             newState.Coroutine = TTSCompanyPlugin.instance.StartCoroutine(SpeakMultipleTTSInternalRoutine(data._sessionId, data._trackingKeyHash, data._networkObjectRefOfSpeaker, data._callingAssemblyHash, data._textsToSpeak, data._voiceSettings, data._noiseRangeMultiplier, newCts));
             ActiveTTSCoroutines[data._trackingKeyHash] = newState;
-            GeneratingNetworkObjectIds.TryAdd(data._networkObjectRefOfSpeaker.NetworkObjectId, false);
+            AddAssemblyTracking(GeneratingNetworkObjectIds, data._networkObjectRefOfSpeaker.NetworkObjectId, data._callingAssemblyHash);
         }
 
         internal static IEnumerator SpeakMultipleTTSInternalRoutine(ulong sessionId, ulong trackingKeyHash, NetworkObjectReference networkObjectRefOfSpeaker, ulong callingAssemblyHash, string[] textsToSpeak, PiperVoiceSettings voiceSettings, float noiseRangeMultiplier, CancellationTokenSource cts)
@@ -102,7 +102,7 @@ namespace TTSCompany.Components
                 if (ActiveTTSCoroutines.TryGetValue(trackingKeyHash, out ActiveTTSState current) && current.Cts == cts)
                 {
                     ActiveTTSCoroutines.TryRemove(trackingKeyHash, out _);
-                    GeneratingNetworkObjectIds.TryRemove(networkObjectRefOfSpeaker.NetworkObjectId, out _);
+                    RemoveAssemblyTracking(GeneratingNetworkObjectIds, networkObjectRefOfSpeaker.NetworkObjectId, callingAssemblyHash);
                 }
             }
         }
@@ -128,7 +128,7 @@ namespace TTSCompany.Components
             {
                 cache = new SpeakTTSAudioClipCache(receivedGameObject, callingAssemblyHash, audioClip, pauseDurations, noiseRangeMultiplier);
                 WantedAudioClips.TryAdd(taskid, cache);
-                SpeakingNetworkObjectIds.TryAdd(networkObject.NetworkObjectId, false);
+                AddAssemblyTracking(SpeakingNetworkObjectIds, networkObject.NetworkObjectId, callingAssemblyHash);
                 NewSpeakerQueue.Enqueue(taskid);
             }
 
@@ -183,6 +183,26 @@ namespace TTSCompany.Components
                 {
                     ActivePreGenTasks.TryRemove(trackingKeyHash, out _);
                 }
+            }
+        }
+
+        internal static void AddAssemblyTracking(ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, byte>> tracker, ulong networkObjectId, ulong assemblyHash)
+        {
+            ConcurrentDictionary<ulong, byte> assemblyHashes = tracker.GetOrAdd(networkObjectId, _ => new ConcurrentDictionary<ulong, byte>());
+            assemblyHashes.TryAdd(assemblyHash, 0);
+        }
+
+        internal static void RemoveAssemblyTracking(ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, byte>> tracker, ulong networkObjectId, ulong assemblyHash)
+        {
+            if (!tracker.TryGetValue(networkObjectId, out ConcurrentDictionary<ulong, byte> assemblyHashes))
+            {
+                return;
+            }
+
+            assemblyHashes.TryRemove(assemblyHash, out _);
+            if (assemblyHashes.IsEmpty)
+            {
+                tracker.TryRemove(networkObjectId, out _);
             }
         }
 
