@@ -1,4 +1,5 @@
 ## 1.2.1
+- Fixed '...' being read as seperate sentences
 - Replaced Concentus with a Concentus dependency
 
 ## v1.2.0

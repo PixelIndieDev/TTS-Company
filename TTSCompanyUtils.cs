@@ -151,6 +151,9 @@ namespace TTSCompany
                 return Array.Empty<string>();
             }
 
+            const string ellipsisPlaceholder = "_#_ELLIPSIS_#_";
+            string modifiedText = textToSpeak.Replace("...", ellipsisPlaceholder);
+
             MatchCollection matches = SentenceRegex.Matches(textToSpeak);
             List<string> sentences = new List<string>(matches.Count);
 
@@ -164,7 +167,7 @@ namespace TTSCompany
 
                 if (trimmed.Length > 0)
                 {
-                    sentences.Add(trimmed.ToString());
+                    sentences.Add(trimmed.ToString().Replace(ellipsisPlaceholder, "..."));
                 }
             }
 
@@ -223,6 +226,11 @@ namespace TTSCompany
             if (i < 0)
             {
                 return 0f;
+            }
+
+            if (i >= 2 && sentenceText[i] == '.' && sentenceText[i - 1] == '.' && sentenceText[i - 2] == '.')
+            {
+                return punctuationSilence;
             }
 
             switch (sentenceText[i])
